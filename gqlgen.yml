@@ -20,7 +20,7 @@ model:
 # Where should the resolver implementations go?
 resolver:
   layout: follow-schema
-  dir: internal/graph/resolver
+  dir: internal/graph/resolvers
   package: resolvers
   filename_template: "{name}.go"
   # Optional: turn on to not generate template comments above resolvers

@@ -5,8 +5,8 @@ package model
 type CreateMeetingInput struct {
 	Title           string   `json:"title"`
 	Description     *string  `json:"description,omitempty"`
-	StartTime       string   `json:"startTime"`
-	EndTime         string   `json:"endTime"`
+	StartTime       int      `json:"startTime"`
+	EndTime         int      `json:"endTime"`
 	ParticipantsIDs []string `json:"participantsIDs,omitempty"`
 	Notes           *string  `json:"notes,omitempty"`
 }
@@ -15,8 +15,8 @@ type Meeting struct {
 	ID           string    `json:"id"`
 	Title        string    `json:"title"`
 	Description  *string   `json:"description,omitempty"`
-	StartTime    string    `json:"startTime"`
-	EndTime      string    `json:"endTime"`
+	StartTime    int       `json:"startTime"`
+	EndTime      int       `json:"endTime"`
 	Participants []*User   `json:"participants,omitempty"`
 	Notes        *string   `json:"notes,omitempty"`
 	Reminder     *Reminder `json:"reminder,omitempty"`
@@ -31,14 +31,14 @@ type Query struct {
 type Reminder struct {
 	ID          string `json:"id"`
 	MeetingID   string `json:"meetingID"`
-	TriggerTime string `json:"triggerTime"`
+	TriggerTime int    `json:"triggerTime"`
 }
 
 type UpdateMeetingInput struct {
 	Title           *string  `json:"title,omitempty"`
 	Description     *string  `json:"description,omitempty"`
-	StartTime       *string  `json:"startTime,omitempty"`
-	EndTime         *string  `json:"endTime,omitempty"`
+	StartTime       *int     `json:"startTime,omitempty"`
+	EndTime         *int     `json:"endTime,omitempty"`
 	ParticipantsIDs []string `json:"participantsIDs,omitempty"`
 	Notes           *string  `json:"notes,omitempty"`
 }

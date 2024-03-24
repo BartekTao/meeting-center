@@ -13,8 +13,8 @@ type Meeting {
   id: ID!
   title: String!
   description: String
-  startTime: String!
-  endTime: String!
+  startTime: Int!
+  endTime: Int!
   participants: [User!]
   notes: String
   reminder: Reminder
@@ -29,14 +29,14 @@ type User {
 type Reminder {
   id: ID!
   meetingID: ID!
-  triggerTime: String!
+  triggerTime: Int!
 }
 
 input CreateMeetingInput {
   title: String!
   description: String
-  startTime: String!
-  endTime: String!
+  startTime: Int!
+  endTime: Int!
   participantsIDs: [ID!]
   notes: String
 }
@@ -44,8 +44,8 @@ input CreateMeetingInput {
 input UpdateMeetingInput {
   title: String
   description: String
-  startTime: String
-  endTime: String
+  startTime: Int
+  endTime: Int
   participantsIDs: [ID!]
   notes: String
 }
