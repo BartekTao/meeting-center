@@ -1,0 +1,51 @@
+type Query {
+  meetings(userID: ID!): [Meeting!]
+  meeting(id: ID!): Meeting
+}
+
+type Mutation {
+  createMeeting(input: CreateMeetingInput!): Meeting!
+  updateMeeting(id: ID!, input: UpdateMeetingInput!): Meeting!
+  deleteMeeting(id: ID!): Meeting!
+}
+
+type Meeting {
+  id: ID!
+  title: String!
+  description: String
+  startTime: String!
+  endTime: String!
+  participants: [User!]
+  notes: String
+  reminder: Reminder
+}
+
+type User {
+  id: ID!
+  name: String!
+  email: String!
+}
+
+type Reminder {
+  id: ID!
+  meetingID: ID!
+  triggerTime: String!
+}
+
+input CreateMeetingInput {
+  title: String!
+  description: String
+  startTime: String!
+  endTime: String!
+  participantsIDs: [ID!]
+  notes: String
+}
+
+input UpdateMeetingInput {
+  title: String
+  description: String
+  startTime: String
+  endTime: String
+  participantsIDs: [ID!]
+  notes: String
+}
