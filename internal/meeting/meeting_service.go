@@ -7,20 +7,28 @@ import (
 
 type MeetingManager interface {
 	Reserve(ctx context.Context, startTime, endTime time.Time) error
-	CancelReservation(id string) error
+	CancelReservation(ctx context.Context, id string) error
 	// GetDetails() MeetingRoomDetails
 }
 
 type MeetingRepository interface {
+	// TODO: write some database interface method
 }
 
-type BasicMeetingManager struct {
+type basicMeetingManager struct {
+	meetingRepository MeetingRepository
 }
 
-func (b *BasicMeetingManager) Reserve(ctx context.Context, startTime, endTime time.Time) error {
+func NewBasicMeetingManager(meetingRepository MeetingRepository) *basicMeetingManager {
+	return &basicMeetingManager{
+		meetingRepository: meetingRepository,
+	}
+}
+
+func (b *basicMeetingManager) Reserve(ctx context.Context, startTime, endTime time.Time) error {
 	return nil
 }
 
-func (b *BasicMeetingManager) CancelReservation(id string) error {
+func (b *basicMeetingManager) CancelReservation(ctx context.Context, id string) error {
 	return nil
 }
