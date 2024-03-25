@@ -13,5 +13,5 @@ meeting room project
 *more detail: see makefile*
 
 ## branch policy
-- Do not merge into main without PR and Reviewing
-- When develop any feature, create a new branch name feat/$(your_branch_name)
+- Do not merge into `main` without a PR and a review.
+- When developing any feature, create a new branch named `feat/$(your_branch_name)`.
