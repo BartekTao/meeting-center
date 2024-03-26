@@ -17,6 +17,6 @@ services:
     environment:
       - ME_CONFIG_MONGODB_ADMINUSERNAME=nycu
       - ME_CONFIG_MONGODB_ADMINPASSWORD=nycu
-      - ME_CONFIG_MONGODB_URL=mongodb://michael:secret@db:27017/
+      - ME_CONFIG_MONGODB_URL=mongodb://nycu:nycu@db:27017/
     depends_on:
       - db
