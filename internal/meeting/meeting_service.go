@@ -3,6 +3,8 @@ package meeting
 import (
 	"context"
 	"time"
+
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type MeetingManager interface {
@@ -11,24 +13,20 @@ type MeetingManager interface {
 	// GetDetails() MeetingRoomDetails
 }
 
-type MeetingRepository interface {
-	// TODO: write some database interface method
+type BasicMeetingManager struct {
+	mongoClient *mongo.Client
 }
 
-type basicMeetingManager struct {
-	meetingRepository MeetingRepository
-}
-
-func NewBasicMeetingManager(meetingRepository MeetingRepository) *basicMeetingManager {
-	return &basicMeetingManager{
-		meetingRepository: meetingRepository,
+func NewBasicMeetingManager(mongoClient *mongo.Client) *BasicMeetingManager {
+	return &BasicMeetingManager{
+		mongoClient: mongoClient,
 	}
 }
 
-func (b *basicMeetingManager) Reserve(ctx context.Context, startTime, endTime time.Time) error {
+func (b *BasicMeetingManager) Reserve(ctx context.Context, startTime, endTime time.Time) error {
 	return nil
 }
 
-func (b *basicMeetingManager) CancelReservation(ctx context.Context, id string) error {
+func (b *BasicMeetingManager) CancelReservation(ctx context.Context, id string) error {
 	return nil
 }
