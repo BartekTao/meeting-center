@@ -16,3 +16,12 @@ meeting room project
 # branch policy
 - Do not merge into `main` without a PR and a review.
 - When developing any feature, create a new branch named `feat/$(your_branch_name)`.
+
+# coding convention
+## golang
+- file name: hello_world.go
+- package name: short and lower case
+- function name: upper case camel in public, lower case camel in private
+- put your test in the same folder
+## mongoDb
+- lower case camel
