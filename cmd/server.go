@@ -45,7 +45,8 @@ func main() {
 
 	log.Println("Successfully connected and pinged MongoDB.")
 
-	meetingManager := meeting.NewBasicMeetingManager(mongoClient)
+	mongoMeetingRepo := infra.NewMongoMeetingRepository(mongoClient)
+	meetingManager := meeting.NewBasicMeetingManager(mongoMeetingRepo)
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolvers.NewResolver(meetingManager)}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))

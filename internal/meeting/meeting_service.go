@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"go.mongodb.org/mongo-driver/mongo"
+	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
 )
 
 type MeetingManager interface {
@@ -13,13 +13,17 @@ type MeetingManager interface {
 	// GetDetails() MeetingRoomDetails
 }
 
-type BasicMeetingManager struct {
-	mongoClient *mongo.Client
+type MeetingRepository interface {
+	CreateRoom(ctx context.Context, createRoomInput model.CreateRoomInput) (Room, error)
 }
 
-func NewBasicMeetingManager(mongoClient *mongo.Client) *BasicMeetingManager {
+type BasicMeetingManager struct {
+	meetingRepository MeetingRepository
+}
+
+func NewBasicMeetingManager(meetingRepository MeetingRepository) *BasicMeetingManager {
 	return &BasicMeetingManager{
-		mongoClient: mongoClient,
+		meetingRepository: meetingRepository,
 	}
 }
 

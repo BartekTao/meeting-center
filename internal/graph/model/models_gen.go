@@ -2,24 +2,12 @@
 
 package model
 
-type CreateMeetingInput struct {
-	Title           string   `json:"title"`
-	Description     *string  `json:"description,omitempty"`
-	StartTime       int      `json:"startTime"`
-	EndTime         int      `json:"endTime"`
-	ParticipantsIDs []string `json:"participantsIDs,omitempty"`
-	Notes           *string  `json:"notes,omitempty"`
-}
-
-type Meeting struct {
-	ID           string    `json:"id"`
-	Title        string    `json:"title"`
-	Description  *string   `json:"description,omitempty"`
-	StartTime    int       `json:"startTime"`
-	EndTime      int       `json:"endTime"`
-	Participants []*User   `json:"participants,omitempty"`
-	Notes        *string   `json:"notes,omitempty"`
-	Reminder     *Reminder `json:"reminder,omitempty"`
+type CreateRoomInput struct {
+	ID        *string  `json:"id,omitempty"`
+	RoomID    string   `json:"roomId"`
+	Capacity  int      `json:"capacity"`
+	Equipment []string `json:"equipment,omitempty"`
+	Rules     []string `json:"rules,omitempty"`
 }
 
 type Mutation struct {
@@ -28,23 +16,19 @@ type Mutation struct {
 type Query struct {
 }
 
-type Reminder struct {
-	ID          string `json:"id"`
-	MeetingID   string `json:"meetingID"`
-	TriggerTime int    `json:"triggerTime"`
+type Room struct {
+	ID        string   `json:"id"`
+	RoomID    string   `json:"roomId"`
+	Capacity  int      `json:"capacity"`
+	Equipment []string `json:"equipment,omitempty"`
+	Rules     []string `json:"rules,omitempty"`
 }
 
-type UpdateMeetingInput struct {
+type UpdateEventInput struct {
 	Title           *string  `json:"title,omitempty"`
 	Description     *string  `json:"description,omitempty"`
 	StartTime       *int     `json:"startTime,omitempty"`
 	EndTime         *int     `json:"endTime,omitempty"`
 	ParticipantsIDs []string `json:"participantsIDs,omitempty"`
 	Notes           *string  `json:"notes,omitempty"`
-}
-
-type User struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
 }

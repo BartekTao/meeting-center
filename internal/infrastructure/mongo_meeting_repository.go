@@ -2,7 +2,10 @@ package infra
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
+	"github.com/BartekTao/nycu-meeting-room-api/internal/meeting"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -17,4 +20,18 @@ func NewMongoDBClient(ctx context.Context, cfg MongoDBConfig) (*mongo.Client, er
 		return nil, err
 	}
 	return client, nil
+}
+
+type MongoMeetingRepository struct {
+	client *mongo.Client
+}
+
+func NewMongoMeetingRepository(client *mongo.Client) *MongoMeetingRepository {
+	return &MongoMeetingRepository{
+		client: client,
+	}
+}
+
+func (m *MongoMeetingRepository) CreateRoom(ctx context.Context, createRoomInput model.CreateRoomInput) (meeting.Room, error) {
+	panic(fmt.Errorf("not implemented CreateRoom - mongo repo"))
 }

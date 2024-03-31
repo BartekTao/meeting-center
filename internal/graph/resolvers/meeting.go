@@ -12,29 +12,19 @@ import (
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
 )
 
-// CreateMeeting is the resolver for the createMeeting field.
-func (r *mutationResolver) CreateMeeting(ctx context.Context, input model.CreateMeetingInput) (*model.Meeting, error) {
-	panic(fmt.Errorf("not implemented: CreateMeeting - createMeeting"))
+// CreateRoom is the resolver for the createRoom field.
+func (r *mutationResolver) CreateRoom(ctx context.Context, room model.CreateRoomInput) (*model.Room, error) {
+	panic(fmt.Errorf("not implemented: CreateRoom - createRoom"))
 }
 
-// UpdateMeeting is the resolver for the updateMeeting field.
-func (r *mutationResolver) UpdateMeeting(ctx context.Context, id string, input model.UpdateMeetingInput) (*model.Meeting, error) {
-	panic(fmt.Errorf("not implemented: UpdateMeeting - updateMeeting"))
+// Rooms is the resolver for the rooms field.
+func (r *queryResolver) Rooms(ctx context.Context, first *int, after *string) ([]*model.Room, error) {
+	panic(fmt.Errorf("not implemented: Rooms - rooms"))
 }
 
-// DeleteMeeting is the resolver for the deleteMeeting field.
-func (r *mutationResolver) DeleteMeeting(ctx context.Context, id string) (*model.Meeting, error) {
-	panic(fmt.Errorf("not implemented: DeleteMeeting - deleteMeeting"))
-}
-
-// Meetings is the resolver for the meetings field.
-func (r *queryResolver) Meetings(ctx context.Context, userID string) ([]*model.Meeting, error) {
-	panic(fmt.Errorf("not implemented: Meetings - meetings"))
-}
-
-// Meeting is the resolver for the meeting field.
-func (r *queryResolver) Meeting(ctx context.Context, id string) (*model.Meeting, error) {
-	panic(fmt.Errorf("not implemented: Meeting - meeting"))
+// Room is the resolver for the room field.
+func (r *queryResolver) Room(ctx context.Context, id string) (*model.Room, error) {
+	panic(fmt.Errorf("not implemented: Room - room"))
 }
 
 // Mutation returns graph.MutationResolver implementation.

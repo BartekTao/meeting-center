@@ -1,47 +1,66 @@
 type Query {
-  meetings(userID: ID!): [Meeting!]
-  meeting(id: ID!): Meeting
+  # Events(userID: ID!): [Event!]
+  # Event(id: ID!): Event
+  rooms(first: Int = 20, after: String): [Room!]!
+  room(id: ID!): Room!
 }
 
 type Mutation {
-  createMeeting(input: CreateMeetingInput!): Meeting!
-  updateMeeting(id: ID!, input: UpdateMeetingInput!): Meeting!
-  deleteMeeting(id: ID!): Meeting!
+  # createEvent(input: CreateEventInput!): Event!
+  # updateEvent(id: ID!, input: UpdateEventInput!): Event!
+  # deleteEvent(id: ID!): Event!
+  createRoom(room: CreateRoomInput!): Room!
 }
 
-type Meeting {
+type Room {
   id: ID!
-  title: String!
-  description: String
-  startTime: Int!
-  endTime: Int!
-  participants: [User!]
-  notes: String
-  reminder: Reminder
+  roomId: String!
+  capacity: Int!
+  equipment: [String!]
+  rules: [String!]
 }
 
-type User {
-  id: ID!
-  name: String!
-  email: String!
+# type Event {
+#   id: ID!
+#   title: String!
+#   description: String
+#   startTime: Int!
+#   endTime: Int!
+#   participants: [User!]
+#   notes: String
+#   reminder: Reminder
+# }
+
+# type User {
+#   id: ID!
+#   name: String!
+#   email: String!
+# }
+
+# type Reminder {
+#   id: ID!
+#   EventID: ID!
+#   triggerTime: Int!
+# }
+
+input CreateRoomInput {
+  id: ID
+  roomId: String!
+  capacity: Int!
+  equipment: [String!]
+  rules: [String!]
 }
 
-type Reminder {
-  id: ID!
-  meetingID: ID!
-  triggerTime: Int!
-}
+# input CreateEventInput {
+#   title: String!
+#   description: String
+#   startTime: Int!
+#   endTime: Int!
+#   participantsIDs: [ID!]
+#   notes: String
+# }
 
-input CreateMeetingInput {
-  title: String!
-  description: String
-  startTime: Int!
-  endTime: Int!
-  participantsIDs: [ID!]
-  notes: String
-}
-
-input UpdateMeetingInput {
+input UpdateEventInput {
   title: String
   description: String
   startTime: Int
