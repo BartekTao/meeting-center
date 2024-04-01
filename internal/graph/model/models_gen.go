@@ -2,15 +2,31 @@
 
 package model
 
-type CreateRoomInput struct {
-	ID        *string  `json:"id,omitempty"`
-	RoomID    string   `json:"roomId"`
-	Capacity  int      `json:"capacity"`
-	Equipment []string `json:"equipment,omitempty"`
-	Rules     []string `json:"rules,omitempty"`
+type Connection interface {
+	IsConnection()
+	GetEdges() []Edge
+	GetPageInfo() *PageInfo
+}
+
+type Edge interface {
+	IsEdge()
+	GetNode() Node
+	GetCursor() string
+}
+
+type Node interface {
+	IsNode()
+	GetID() string
 }
 
 type Mutation struct {
+}
+
+type PageInfo struct {
+	HasNextPage     bool    `json:"hasNextPage"`
+	HasPreviousPage bool    `json:"hasPreviousPage"`
+	StartCursor     *string `json:"startCursor,omitempty"`
+	EndCursor       *string `json:"endCursor,omitempty"`
 }
 
 type Query struct {
@@ -22,13 +38,43 @@ type Room struct {
 	Capacity  int      `json:"capacity"`
 	Equipment []string `json:"equipment,omitempty"`
 	Rules     []string `json:"rules,omitempty"`
+	IsDelete  *bool    `json:"isDelete,omitempty"`
 }
 
-type UpdateEventInput struct {
-	Title           *string  `json:"title,omitempty"`
-	Description     *string  `json:"description,omitempty"`
-	StartTime       *int     `json:"startTime,omitempty"`
-	EndTime         *int     `json:"endTime,omitempty"`
-	ParticipantsIDs []string `json:"participantsIDs,omitempty"`
-	Notes           *string  `json:"notes,omitempty"`
+func (Room) IsNode()            {}
+func (this Room) GetID() string { return this.ID }
+
+type RoomConnection struct {
+	Edges    []*RoomEdge `json:"edges,omitempty"`
+	PageInfo *PageInfo   `json:"pageInfo"`
+}
+
+func (RoomConnection) IsConnection() {}
+func (this RoomConnection) GetEdges() []Edge {
+	if this.Edges == nil {
+		return nil
+	}
+	interfaceSlice := make([]Edge, 0, len(this.Edges))
+	for _, concrete := range this.Edges {
+		interfaceSlice = append(interfaceSlice, concrete)
+	}
+	return interfaceSlice
+}
+func (this RoomConnection) GetPageInfo() *PageInfo { return this.PageInfo }
+
+type RoomEdge struct {
+	Node   *Room  `json:"node,omitempty"`
+	Cursor string `json:"cursor"`
+}
+
+func (RoomEdge) IsEdge()                {}
+func (this RoomEdge) GetNode() Node     { return *this.Node }
+func (this RoomEdge) GetCursor() string { return this.Cursor }
+
+type UpsertRoomInput struct {
+	ID        *string  `json:"id,omitempty"`
+	RoomID    string   `json:"roomId"`
+	Capacity  int      `json:"capacity"`
+	Equipment []string `json:"equipment,omitempty"`
+	Rules     []string `json:"rules,omitempty"`
 }

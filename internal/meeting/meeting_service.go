@@ -2,19 +2,21 @@ package meeting
 
 import (
 	"context"
-	"time"
+	"fmt"
 
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
 )
 
 type MeetingManager interface {
-	Reserve(ctx context.Context, startTime, endTime time.Time) error
-	CancelReservation(ctx context.Context, id string) error
-	// GetDetails() MeetingRoomDetails
+	UpsertRoom(ctx context.Context, room model.UpsertRoomInput) (*Room, error)
+	DeleteRoom(ctx context.Context, id string) (*Room, error)
+	QueryPaginatedRoom(ctx context.Context, first int, after string) (*Room, error)
+	QueryRoom(ctx context.Context, id string) (*Room, error)
+	QueryRooms(ctx context.Context, id string) (*Room, error)
 }
 
 type MeetingRepository interface {
-	CreateRoom(ctx context.Context, createRoomInput model.CreateRoomInput) (Room, error)
+	UpsertRoom(ctx context.Context, upsertRoomInput model.UpsertRoomInput) (*Room, error)
 }
 
 type BasicMeetingManager struct {
@@ -27,10 +29,22 @@ func NewBasicMeetingManager(meetingRepository MeetingRepository) *BasicMeetingMa
 	}
 }
 
-func (b *BasicMeetingManager) Reserve(ctx context.Context, startTime, endTime time.Time) error {
-	return nil
+func (b *BasicMeetingManager) UpsertRoom(ctx context.Context, upsertRoomInput model.UpsertRoomInput) (*Room, error) {
+	room, err := b.meetingRepository.UpsertRoom(ctx, upsertRoomInput)
+	if err != nil {
+		return nil, err
+	}
+	return room, nil
 }
-
-func (b *BasicMeetingManager) CancelReservation(ctx context.Context, id string) error {
-	return nil
+func (b *BasicMeetingManager) DeleteRoom(ctx context.Context, id string) (*Room, error) {
+	panic(fmt.Errorf("not implemented: DeleteRoom - deleteRoom"))
+}
+func (b *BasicMeetingManager) QueryPaginatedRoom(ctx context.Context, first int, after string) (*Room, error) {
+	panic(fmt.Errorf("not implemented: DeleteRoom - deleteRoom"))
+}
+func (b *BasicMeetingManager) QueryRoom(ctx context.Context, id string) (*Room, error) {
+	panic(fmt.Errorf("not implemented: DeleteRoom - deleteRoom"))
+}
+func (b *BasicMeetingManager) QueryRooms(ctx context.Context, id string) (*Room, error) {
+	panic(fmt.Errorf("not implemented: DeleteRoom - deleteRoom"))
 }

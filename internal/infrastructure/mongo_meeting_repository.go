@@ -32,6 +32,6 @@ func NewMongoMeetingRepository(client *mongo.Client) *MongoMeetingRepository {
 	}
 }
 
-func (m *MongoMeetingRepository) CreateRoom(ctx context.Context, createRoomInput model.CreateRoomInput) (meeting.Room, error) {
+func (m *MongoMeetingRepository) UpsertRoom(ctx context.Context, upsertRoomInput model.UpsertRoomInput) (*meeting.Room, error) {
 	panic(fmt.Errorf("not implemented CreateRoom - mongo repo"))
 }

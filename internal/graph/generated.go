@@ -48,28 +48,48 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		CreateRoom func(childComplexity int, room model.CreateRoomInput) int
+		DeleteRoom func(childComplexity int, id *string) int
+		UpsertRoom func(childComplexity int, room model.UpsertRoomInput) int
+	}
+
+	PageInfo struct {
+		EndCursor       func(childComplexity int) int
+		HasNextPage     func(childComplexity int) int
+		HasPreviousPage func(childComplexity int) int
+		StartCursor     func(childComplexity int) int
 	}
 
 	Query struct {
-		Room  func(childComplexity int, id string) int
-		Rooms func(childComplexity int, first *int, after *string) int
+		PaginatedRooms func(childComplexity int, first *int, after *string) int
+		Room           func(childComplexity int, id string) int
 	}
 
 	Room struct {
 		Capacity  func(childComplexity int) int
 		Equipment func(childComplexity int) int
 		ID        func(childComplexity int) int
+		IsDelete  func(childComplexity int) int
 		RoomID    func(childComplexity int) int
 		Rules     func(childComplexity int) int
+	}
+
+	RoomConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	RoomEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 }
 
 type MutationResolver interface {
-	CreateRoom(ctx context.Context, room model.CreateRoomInput) (*model.Room, error)
+	UpsertRoom(ctx context.Context, room model.UpsertRoomInput) (*model.Room, error)
+	DeleteRoom(ctx context.Context, id *string) (*model.Room, error)
 }
 type QueryResolver interface {
-	Rooms(ctx context.Context, first *int, after *string) ([]*model.Room, error)
+	PaginatedRooms(ctx context.Context, first *int, after *string) (*model.RoomConnection, error)
 	Room(ctx context.Context, id string) (*model.Room, error)
 }
 
@@ -92,17 +112,69 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
-	case "Mutation.createRoom":
-		if e.complexity.Mutation.CreateRoom == nil {
+	case "Mutation.deleteRoom":
+		if e.complexity.Mutation.DeleteRoom == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createRoom_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_deleteRoom_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateRoom(childComplexity, args["room"].(model.CreateRoomInput)), true
+		return e.complexity.Mutation.DeleteRoom(childComplexity, args["id"].(*string)), true
+
+	case "Mutation.upsertRoom":
+		if e.complexity.Mutation.UpsertRoom == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_upsertRoom_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpsertRoom(childComplexity, args["room"].(model.UpsertRoomInput)), true
+
+	case "PageInfo.endCursor":
+		if e.complexity.PageInfo.EndCursor == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.EndCursor(childComplexity), true
+
+	case "PageInfo.hasNextPage":
+		if e.complexity.PageInfo.HasNextPage == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.HasNextPage(childComplexity), true
+
+	case "PageInfo.hasPreviousPage":
+		if e.complexity.PageInfo.HasPreviousPage == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.HasPreviousPage(childComplexity), true
+
+	case "PageInfo.startCursor":
+		if e.complexity.PageInfo.StartCursor == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.StartCursor(childComplexity), true
+
+	case "Query.paginatedRooms":
+		if e.complexity.Query.PaginatedRooms == nil {
+			break
+		}
+
+		args, err := ec.field_Query_paginatedRooms_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.PaginatedRooms(childComplexity, args["first"].(*int), args["after"].(*string)), true
 
 	case "Query.room":
 		if e.complexity.Query.Room == nil {
@@ -115,18 +187,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Room(childComplexity, args["id"].(string)), true
-
-	case "Query.rooms":
-		if e.complexity.Query.Rooms == nil {
-			break
-		}
-
-		args, err := ec.field_Query_rooms_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.Rooms(childComplexity, args["first"].(*int), args["after"].(*string)), true
 
 	case "Room.capacity":
 		if e.complexity.Room.Capacity == nil {
@@ -149,6 +209,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Room.ID(childComplexity), true
 
+	case "Room.isDelete":
+		if e.complexity.Room.IsDelete == nil {
+			break
+		}
+
+		return e.complexity.Room.IsDelete(childComplexity), true
+
 	case "Room.roomId":
 		if e.complexity.Room.RoomID == nil {
 			break
@@ -163,6 +230,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Room.Rules(childComplexity), true
 
+	case "RoomConnection.edges":
+		if e.complexity.RoomConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.RoomConnection.Edges(childComplexity), true
+
+	case "RoomConnection.pageInfo":
+		if e.complexity.RoomConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.RoomConnection.PageInfo(childComplexity), true
+
+	case "RoomEdge.cursor":
+		if e.complexity.RoomEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.RoomEdge.Cursor(childComplexity), true
+
+	case "RoomEdge.node":
+		if e.complexity.RoomEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.RoomEdge.Node(childComplexity), true
+
 	}
 	return 0, false
 }
@@ -171,8 +266,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
-		ec.unmarshalInputCreateRoomInput,
-		ec.unmarshalInputUpdateEventInput,
+		ec.unmarshalInputUpsertRoomInput,
 	)
 	first := true
 
@@ -289,13 +383,28 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_createRoom_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_deleteRoom_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.CreateRoomInput
+	var arg0 *string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_upsertRoom_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.UpsertRoomInput
 	if tmp, ok := rawArgs["room"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("room"))
-		arg0, err = ec.unmarshalNCreateRoomInput2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐCreateRoomInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpsertRoomInput2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUpsertRoomInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -319,22 +428,7 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_room_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["id"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_rooms_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_paginatedRooms_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *int
@@ -355,6 +449,21 @@ func (ec *executionContext) field_Query_rooms_args(ctx context.Context, rawArgs 
 		}
 	}
 	args["after"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_room_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -396,8 +505,8 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Mutation_createRoom(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createRoom(ctx, field)
+func (ec *executionContext) _Mutation_upsertRoom(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_upsertRoom(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -410,7 +519,7 @@ func (ec *executionContext) _Mutation_createRoom(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateRoom(rctx, fc.Args["room"].(model.CreateRoomInput))
+		return ec.resolvers.Mutation().UpsertRoom(rctx, fc.Args["room"].(model.UpsertRoomInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -427,7 +536,7 @@ func (ec *executionContext) _Mutation_createRoom(ctx context.Context, field grap
 	return ec.marshalNRoom2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoom(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createRoom(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_upsertRoom(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -445,6 +554,8 @@ func (ec *executionContext) fieldContext_Mutation_createRoom(ctx context.Context
 				return ec.fieldContext_Room_equipment(ctx, field)
 			case "rules":
 				return ec.fieldContext_Room_rules(ctx, field)
+			case "isDelete":
+				return ec.fieldContext_Room_isDelete(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Room", field.Name)
 		},
@@ -456,15 +567,15 @@ func (ec *executionContext) fieldContext_Mutation_createRoom(ctx context.Context
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createRoom_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_upsertRoom_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_rooms(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_rooms(ctx, field)
+func (ec *executionContext) _Mutation_deleteRoom(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteRoom(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -477,7 +588,7 @@ func (ec *executionContext) _Query_rooms(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Rooms(rctx, fc.Args["first"].(*int), fc.Args["after"].(*string))
+		return ec.resolvers.Mutation().DeleteRoom(rctx, fc.Args["id"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -489,14 +600,14 @@ func (ec *executionContext) _Query_rooms(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Room)
+	res := resTmp.(*model.Room)
 	fc.Result = res
-	return ec.marshalNRoom2ᚕᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoomᚄ(ctx, field.Selections, res)
+	return ec.marshalNRoom2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoom(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_rooms(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_deleteRoom(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Query",
+		Object:     "Mutation",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -512,6 +623,8 @@ func (ec *executionContext) fieldContext_Query_rooms(ctx context.Context, field 
 				return ec.fieldContext_Room_equipment(ctx, field)
 			case "rules":
 				return ec.fieldContext_Room_rules(ctx, field)
+			case "isDelete":
+				return ec.fieldContext_Room_isDelete(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Room", field.Name)
 		},
@@ -523,7 +636,238 @@ func (ec *executionContext) fieldContext_Query_rooms(ctx context.Context, field 
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_rooms_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_deleteRoom_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HasNextPage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_hasPreviousPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HasPreviousPage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_hasPreviousPage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_startCursor(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_startCursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StartCursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_startCursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_endCursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EndCursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_endCursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_paginatedRooms(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_paginatedRooms(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().PaginatedRooms(rctx, fc.Args["first"].(*int), fc.Args["after"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.RoomConnection)
+	fc.Result = res
+	return ec.marshalNRoomConnection2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoomConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_paginatedRooms(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_RoomConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_RoomConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RoomConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_paginatedRooms_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -579,6 +923,8 @@ func (ec *executionContext) fieldContext_Query_room(ctx context.Context, field g
 				return ec.fieldContext_Room_equipment(ctx, field)
 			case "rules":
 				return ec.fieldContext_Room_rules(ctx, field)
+			case "isDelete":
+				return ec.fieldContext_Room_isDelete(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Room", field.Name)
 		},
@@ -930,6 +1276,247 @@ func (ec *executionContext) _Room_rules(ctx context.Context, field graphql.Colle
 func (ec *executionContext) fieldContext_Room_rules(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Room",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Room_isDelete(ctx context.Context, field graphql.CollectedField, obj *model.Room) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Room_isDelete(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsDelete, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Room_isDelete(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Room",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RoomConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.RoomConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RoomConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.RoomEdge)
+	fc.Result = res
+	return ec.marshalORoomEdge2ᚕᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoomEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RoomConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RoomConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_RoomEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_RoomEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RoomEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RoomConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.RoomConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RoomConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RoomConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RoomConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RoomEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.RoomEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RoomEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Room)
+	fc.Result = res
+	return ec.marshalORoom2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoom(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RoomEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RoomEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Room_id(ctx, field)
+			case "roomId":
+				return ec.fieldContext_Room_roomId(ctx, field)
+			case "capacity":
+				return ec.fieldContext_Room_capacity(ctx, field)
+			case "equipment":
+				return ec.fieldContext_Room_equipment(ctx, field)
+			case "rules":
+				return ec.fieldContext_Room_rules(ctx, field)
+			case "isDelete":
+				return ec.fieldContext_Room_isDelete(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Room", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RoomEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.RoomEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RoomEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RoomEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RoomEdge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -2713,8 +3300,8 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputCreateRoomInput(ctx context.Context, obj interface{}) (model.CreateRoomInput, error) {
-	var it model.CreateRoomInput
+func (ec *executionContext) unmarshalInputUpsertRoomInput(ctx context.Context, obj interface{}) (model.UpsertRoomInput, error) {
+	var it model.UpsertRoomInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -2768,71 +3355,57 @@ func (ec *executionContext) unmarshalInputCreateRoomInput(ctx context.Context, o
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateEventInput(ctx context.Context, obj interface{}) (model.UpdateEventInput, error) {
-	var it model.UpdateEventInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"title", "description", "startTime", "endTime", "participantsIDs", "notes"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "title":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Title = data
-		case "description":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Description = data
-		case "startTime":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startTime"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.StartTime = data
-		case "endTime":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endTime"))
-			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.EndTime = data
-		case "participantsIDs":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("participantsIDs"))
-			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ParticipantsIDs = data
-		case "notes":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notes"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Notes = data
-		}
-	}
-
-	return it, nil
-}
-
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
+
+func (ec *executionContext) _Connection(ctx context.Context, sel ast.SelectionSet, obj model.Connection) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.RoomConnection:
+		return ec._RoomConnection(ctx, sel, &obj)
+	case *model.RoomConnection:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._RoomConnection(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _Edge(ctx context.Context, sel ast.SelectionSet, obj model.Edge) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.RoomEdge:
+		return ec._RoomEdge(ctx, sel, &obj)
+	case *model.RoomEdge:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._RoomEdge(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj model.Node) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.Room:
+		return ec._Room(ctx, sel, &obj)
+	case *model.Room:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Room(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
 
 // endregion ************************** interface.gotpl ***************************
 
@@ -2857,13 +3430,68 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
-		case "createRoom":
+		case "upsertRoom":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createRoom(ctx, field)
+				return ec._Mutation_upsertRoom(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "deleteRoom":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteRoom(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var pageInfoImplementors = []string{"PageInfo"}
+
+func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet, obj *model.PageInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, pageInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PageInfo")
+		case "hasNextPage":
+			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hasPreviousPage":
+			out.Values[i] = ec._PageInfo_hasPreviousPage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "startCursor":
+			out.Values[i] = ec._PageInfo_startCursor(ctx, field, obj)
+		case "endCursor":
+			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2906,7 +3534,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "rooms":
+		case "paginatedRooms":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -2915,7 +3543,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_rooms(ctx, field)
+				res = ec._Query_paginatedRooms(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -2981,7 +3609,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
-var roomImplementors = []string{"Room"}
+var roomImplementors = []string{"Room", "Node"}
 
 func (ec *executionContext) _Room(ctx context.Context, sel ast.SelectionSet, obj *model.Room) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, roomImplementors)
@@ -3011,6 +3639,90 @@ func (ec *executionContext) _Room(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = ec._Room_equipment(ctx, field, obj)
 		case "rules":
 			out.Values[i] = ec._Room_rules(ctx, field, obj)
+		case "isDelete":
+			out.Values[i] = ec._Room_isDelete(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var roomConnectionImplementors = []string{"RoomConnection", "Connection"}
+
+func (ec *executionContext) _RoomConnection(ctx context.Context, sel ast.SelectionSet, obj *model.RoomConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, roomConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RoomConnection")
+		case "edges":
+			out.Values[i] = ec._RoomConnection_edges(ctx, field, obj)
+		case "pageInfo":
+			out.Values[i] = ec._RoomConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var roomEdgeImplementors = []string{"RoomEdge", "Edge"}
+
+func (ec *executionContext) _RoomEdge(ctx context.Context, sel ast.SelectionSet, obj *model.RoomEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, roomEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RoomEdge")
+		case "node":
+			out.Values[i] = ec._RoomEdge_node(ctx, field, obj)
+		case "cursor":
+			out.Values[i] = ec._RoomEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3375,11 +4087,6 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNCreateRoomInput2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐCreateRoomInput(ctx context.Context, v interface{}) (model.CreateRoomInput, error) {
-	res, err := ec.unmarshalInputCreateRoomInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3410,52 +4117,18 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNRoom2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoom(ctx context.Context, sel ast.SelectionSet, v model.Room) graphql.Marshaler {
-	return ec._Room(ctx, sel, &v)
+func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PageInfo(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNRoom2ᚕᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoomᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Room) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNRoom2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoom(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
+func (ec *executionContext) marshalNRoom2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoom(ctx context.Context, sel ast.SelectionSet, v model.Room) graphql.Marshaler {
+	return ec._Room(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNRoom2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoom(ctx context.Context, sel ast.SelectionSet, v *model.Room) graphql.Marshaler {
@@ -3466,6 +4139,20 @@ func (ec *executionContext) marshalNRoom2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑme
 		return graphql.Null
 	}
 	return ec._Room(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRoomConnection2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoomConnection(ctx context.Context, sel ast.SelectionSet, v model.RoomConnection) graphql.Marshaler {
+	return ec._RoomConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRoomConnection2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoomConnection(ctx context.Context, sel ast.SelectionSet, v *model.RoomConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RoomConnection(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -3481,6 +4168,11 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNUpsertRoomInput2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUpsertRoomInput(ctx context.Context, v interface{}) (model.UpsertRoomInput, error) {
+	res, err := ec.unmarshalInputUpsertRoomInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -3762,44 +4454,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) unmarshalOID2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]string, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNID2string(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalOID2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalNID2string(ctx, sel, v[i])
-	}
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
 	if v == nil {
 		return nil, nil
@@ -3830,6 +4484,61 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	}
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func (ec *executionContext) marshalORoom2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoom(ctx context.Context, sel ast.SelectionSet, v *model.Room) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Room(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalORoomEdge2ᚕᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoomEdge(ctx context.Context, sel ast.SelectionSet, v []*model.RoomEdge) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalORoomEdge2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoomEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalORoomEdge2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoomEdge(ctx context.Context, sel ast.SelectionSet, v *model.RoomEdge) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._RoomEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {

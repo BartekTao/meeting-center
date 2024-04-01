@@ -12,14 +12,30 @@ import (
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
 )
 
-// CreateRoom is the resolver for the createRoom field.
-func (r *mutationResolver) CreateRoom(ctx context.Context, room model.CreateRoomInput) (*model.Room, error) {
-	panic(fmt.Errorf("not implemented: CreateRoom - createRoom"))
+// UpsertRoom is the resolver for the upsertRoom field.
+func (r *mutationResolver) UpsertRoom(ctx context.Context, upsertRoomInput model.UpsertRoomInput) (*model.Room, error) {
+	room, err := r.meetingManager.UpsertRoom(ctx, upsertRoomInput)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Room{
+		ID:        room.ID.String(),
+		RoomID:    room.RoomID,
+		Capacity:  room.Capacity,
+		Equipment: room.Equipment,
+		Rules:     room.Rules,
+		IsDelete:  &room.IsDelete,
+	}, nil
 }
 
-// Rooms is the resolver for the rooms field.
-func (r *queryResolver) Rooms(ctx context.Context, first *int, after *string) ([]*model.Room, error) {
-	panic(fmt.Errorf("not implemented: Rooms - rooms"))
+// DeleteRoom is the resolver for the deleteRoom field.
+func (r *mutationResolver) DeleteRoom(ctx context.Context, id *string) (*model.Room, error) {
+	panic(fmt.Errorf("not implemented: DeleteRoom - deleteRoom"))
+}
+
+// PaginatedRooms is the resolver for the paginatedRooms field.
+func (r *queryResolver) PaginatedRooms(ctx context.Context, first *int, after *string) (*model.RoomConnection, error) {
+	panic(fmt.Errorf("not implemented: PaginatedRooms - paginatedRooms"))
 }
 
 // Room is the resolver for the room field.
