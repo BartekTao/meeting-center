@@ -37,7 +37,7 @@ func (b *BasicMeetingManager) UpsertRoom(ctx context.Context, upsertRoomInput mo
 	return room, nil
 }
 func (b *BasicMeetingManager) DeleteRoom(ctx context.Context, id string) (*Room, error) {
-	name := "This is me trying"
+	name := "try"
 	fmt.Println(name)
 	panic(fmt.Errorf("not implemented: DeleteRoom - deleteRoom"))
 }
