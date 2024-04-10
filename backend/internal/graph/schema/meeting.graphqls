@@ -1,0 +1,105 @@
+type Query {
+  # Events(userID: ID!): [Event!]
+  # Event(id: ID!): Event
+  paginatedRooms(first: Int = 20, after: String): RoomConnection!
+  room(id: ID!): Room!
+}
+
+type Mutation {
+  # createEvent(input: CreateEventInput!): Event!
+  # updateEvent(id: ID!, input: UpdateEventInput!): Event!
+  # deleteEvent(id: ID!): Event!
+  upsertRoom(room: UpsertRoomInput!): Room!
+  deleteRoom(id: ID): Room!
+}
+
+type Room implements Node {
+  id: ID!
+  roomId: String!
+  capacity: Int!
+  equipment: [String!]
+  rules: [String!]
+  isDelete: Boolean
+}
+
+interface Connection {
+  edges: [Edge]
+  pageInfo: PageInfo!
+}
+
+interface Edge {
+  node: Node
+  cursor: String!
+}
+
+interface Node {
+  id: ID!
+}
+
+type RoomConnection implements Connection {
+  edges: [RoomEdge]
+  pageInfo: PageInfo!
+}
+
+type RoomEdge implements Edge {
+  node: Room
+  cursor: String!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+input UpsertRoomInput {
+  id: ID
+  roomId: String!
+  capacity: Int!
+  equipment: [String!]
+  rules: [String!]
+}
+
+# type Event {
+#   id: ID!
+#   title: String!
+#   description: String
+#   startTime: Int!
+#   endTime: Int!
+#   participants: [User!]
+#   notes: String
+#   reminder: Reminder
+# }
+
+# type User {
+#   id: ID!
+#   name: String!
+#   email: String!
+# }
+
+# type Reminder {
+#   id: ID!
+#   EventID: ID!
+#   triggerTime: Int!
+# }
+
+
+
+# input CreateEventInput {
+#   title: String!
+#   description: String
+#   startTime: Int!
+#   endTime: Int!
+#   participantsIDs: [ID!]
+#   notes: String
+# }
+
+# input UpdateEventInput {
+#   title: String
+#   description: String
+#   startTime: Int
+#   endTime: Int
+#   participantsIDs: [ID!]
+#   notes: String
+# }

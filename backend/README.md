@@ -26,4 +26,7 @@ meeting room project
 ## mongoDb
 - lower case camel
 
+## graphQL
+- https://medium.com/@andriiandriiets/graphql-standards-and-practices-da3246dfb619
+
 - 

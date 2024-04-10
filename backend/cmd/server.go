@@ -45,8 +45,12 @@ func main() {
 
 	log.Println("Successfully connected and pinged MongoDB.")
 
-	meetingManager := meeting.NewBasicMeetingManager(mongoClient)
+	mongoMeetingRepo := infra.NewMongoMeetingRepository(mongoClient)
+	meetingManager := meeting.NewBasicMeetingManager(mongoMeetingRepo)
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolvers.NewResolver(meetingManager)}))
+
+	// TODO: add how to use google oauth on readme
+	// auth.SetGoogleOAuth()
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
