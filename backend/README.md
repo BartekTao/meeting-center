@@ -1,5 +1,5 @@
-# nycu-meeting-room
-meeting room project
+# meeting-center-backend
+meeting center project
 
 # Setup
 ## set up environment
@@ -11,11 +11,6 @@ meeting room project
 > see makefile to get more detail
 - make: run main api server
 - make gqlgen: regenerate graphQL API  
-
-
-# branch policy
-- Do not merge into `main` without a PR and a review.
-- When developing any feature, create a new branch named `feat/$(your_branch_name)`.
 
 # coding convention
 ## golang
