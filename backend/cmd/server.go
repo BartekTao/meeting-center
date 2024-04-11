@@ -12,6 +12,7 @@ import (
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/resolvers"
 	infra "github.com/BartekTao/nycu-meeting-room-api/internal/infrastructure"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/meeting"
+	"github.com/BartekTao/nycu-meeting-room-api/pkg/auth"
 )
 
 const defaultPort = "8080"
@@ -50,7 +51,7 @@ func main() {
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolvers.NewResolver(meetingManager)}))
 
 	// TODO: add how to use google oauth on readme
-	// auth.SetGoogleOAuth()
+	auth.SetGoogleOAuth()
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
