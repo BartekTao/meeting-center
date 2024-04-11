@@ -8,7 +8,8 @@ import (
 )
 
 type MeetingManager interface {
-	UpsertRoom(ctx context.Context, room model.UpsertRoomInput) (*Room, error)
+	//UpsertRoom(ctx context.Context, room model.UpsertRoomInput) (*Room, error)
+	UpsertRoom(ctx context.Context, upsertRoomInput model.UpsertRoomInput) (*Room, error)
 	DeleteRoom(ctx context.Context, id string) (*Room, error)
 	QueryPaginatedRoom(ctx context.Context, first int, after string) (*Room, error)
 	QueryRoom(ctx context.Context, id string) (*Room, error)
@@ -17,6 +18,7 @@ type MeetingManager interface {
 
 type MeetingRepository interface {
 	UpsertRoom(ctx context.Context, upsertRoomInput model.UpsertRoomInput) (*Room, error)
+	DeleteRoom(ctx context.Context, id string) (*Room, error)
 }
 
 type BasicMeetingManager struct {
@@ -36,17 +38,23 @@ func (b *BasicMeetingManager) UpsertRoom(ctx context.Context, upsertRoomInput mo
 	}
 	return room, nil
 }
+
 func (b *BasicMeetingManager) DeleteRoom(ctx context.Context, id string) (*Room, error) {
-	name := "try"
-	fmt.Println(name)
-	panic(fmt.Errorf("not implemented: DeleteRoom - deleteRoom"))
+	room, err := b.meetingRepository.DeleteRoom(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return room, nil
 }
+
 func (b *BasicMeetingManager) QueryPaginatedRoom(ctx context.Context, first int, after string) (*Room, error) {
 	panic(fmt.Errorf("not implemented: DeleteRoom - deleteRoom"))
 }
+
 func (b *BasicMeetingManager) QueryRoom(ctx context.Context, id string) (*Room, error) {
 	panic(fmt.Errorf("not implemented: DeleteRoom - deleteRoom"))
 }
+
 func (b *BasicMeetingManager) QueryRooms(ctx context.Context, id string) (*Room, error) {
 	panic(fmt.Errorf("not implemented: DeleteRoom - deleteRoom"))
 }

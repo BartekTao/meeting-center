@@ -137,7 +137,6 @@ func tracer() graphql.FieldMiddleware {
 
 		// Continue execution to the next resolver.
 		res, err = next(spanCtx)
-
 		// Record any errors that occurred during resolution.
 		if err != nil {
 			span.RecordError(err)

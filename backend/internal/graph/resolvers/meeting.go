@@ -30,6 +30,7 @@ func (r *mutationResolver) UpsertRoom(ctx context.Context, upsertRoomInput model
 
 // DeleteRoom is the resolver for the deleteRoom field.
 func (r *mutationResolver) DeleteRoom(ctx context.Context, id *string) (*model.Room, error) {
+
 	panic(fmt.Errorf("not implemented: DeleteRoom - deleteRoom"))
 }
 
