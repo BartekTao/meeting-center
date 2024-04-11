@@ -2,7 +2,9 @@ package infra
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"time"
 
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/meeting"
@@ -37,15 +39,15 @@ func NewMongoMeetingRepository(client *mongo.Client) *MongoMeetingRepository {
 func (m *MongoMeetingRepository) UpsertRoom(ctx context.Context, upsertRoomInput model.UpsertRoomInput) (*meeting.Room, error) {
 
 	client := m.client
-	collection := client.Database("testDB").Collection("rooms")
+	collection := client.Database("test-mongo").Collection("rooms")
 
-	objectID, err := primitive.ObjectIDFromHex(*upsertRoomInput.ID)
+	upsertRoomID, err := primitive.ObjectIDFromHex(*upsertRoomInput.ID)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	new_room := &meeting.Room{
-		ID:        objectID,
+		ID:        upsertRoomID,
 		RoomID:    upsertRoomInput.RoomID,
 		Capacity:  upsertRoomInput.Capacity,
 		Equipment: upsertRoomInput.Equipment,
@@ -56,21 +58,44 @@ func (m *MongoMeetingRepository) UpsertRoom(ctx context.Context, upsertRoomInput
 		UpdaterId: "None",
 	}
 
-	new_room_bson := bson.M{
-		"ID":        objectID,
+	// Execute the find operation
+	filter := bson.M{"ID": upsertRoomID}
+	update := bson.M{"$set": bson.M{
 		"RoomID":    upsertRoomInput.RoomID,
 		"Capacity":  upsertRoomInput.Capacity,
 		"Equipment": upsertRoomInput.Equipment,
 		"Rules":     upsertRoomInput.Rules,
-		"IsDelete":  false,
-		"CreatedAt": 0,
-		"UpdatedAt": 0,
-		"UpdaterId": "None",
+		"UpdatedAt": time.Now(),
+	}}
+
+	result, err := collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		log.Fatalf("Failed to update document: %v", err)
+		return nil, err
 	}
 
-	_, err = collection.InsertOne(ctx, new_room_bson)
-	if err != nil {
-		return nil, err
+	if result.ModifiedCount != 0 {
+		// Document with the same RoomID already exists, update successed
+		fmt.Printf("Updated %d document(s) successfully.\n", result.ModifiedCount)
+	} else {
+		// Document with the same RoomID doesn't exist, insert new room
+		new_room_bson := bson.M{
+			"ID":        upsertRoomID,
+			"RoomID":    upsertRoomInput.RoomID,
+			"Capacity":  upsertRoomInput.Capacity,
+			"Equipment": upsertRoomInput.Equipment,
+			"Rules":     upsertRoomInput.Rules,
+			"IsDelete":  false,
+			"CreatedAt": time.Now(),
+			"UpdatedAt": time.Now(),
+			"UpdaterId": "None",
+		}
+		_, err := collection.InsertOne(ctx, new_room_bson)
+		if err != nil {
+			log.Fatalf("Failed to insert document: %v", err)
+			return nil, err
+		}
+		fmt.Println("New room inserted successfully.")
 	}
 
 	return new_room, nil
