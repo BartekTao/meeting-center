@@ -1,32 +1,24 @@
-# nycu-meeting-room
-meeting room project
+# meeting-center-backend
 
-# Setup
-## set up environment
-1. install go with 1.22.1
-2. install makefile
-3. go install github.com/go-delve/delve/cmd/dlv@latest (for debug mode in docker, but not yet ready)
-
-## makefile cli
-> see makefile to get more detail
-- make: run main api server
-- make gqlgen: regenerate graphQL API  
-
-
-# branch policy
+## branch policy
 - Do not merge into `main` without a PR and a review.
 - When developing any feature, create a new branch named `feat/$(your_branch_name)`.
 
-# coding convention
-## golang
-- file name: hello_world.go
-- package name: short and lower case
-- function name: upper case camel in public, lower case camel in private
-- put your test in the same folder
-## mongoDb
-- lower case camel
+## set up
+### required
+- install docker
+- install docker-compose
 
-## graphQL
-- https://medium.com/@andriiandriiets/graphql-standards-and-practices-da3246dfb619
+### start backend service
+#### part 1: run server
+- `cd backend`
+- copy tmp.env to .env, then set GOOGLE_OAUTH_CLIENT_SECRET and GOOGLE_OAUTH_CLIENT_ID on .env
+- `docker build -f .\deployment\Dockerfile -t meeting-center-api .`
+- `docker-compose -f ./deployment/Docker-compose.yml up -d`
+- remove cli: `docker-compose -f ./deployment/Docker-compose.yml down`
+#### part 2: use login
+- call `http://localhost:8080/auth/google/login` to get token
+- open `http://localhost:8080` to see graphQL doc
+- set `{ "Authorization": "Bearer your-token" }` on header to call other api
 
-- 
+### start frontend service

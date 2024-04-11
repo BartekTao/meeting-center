@@ -22,3 +22,4 @@
 go.work
 
 meeting-room-api
+backend/.env
