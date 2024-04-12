@@ -36,7 +36,15 @@ func (r *mutationResolver) DeleteRoom(ctx context.Context, id *string) (*model.R
 
 // PaginatedRooms is the resolver for the paginatedRooms field.
 func (r *queryResolver) PaginatedRooms(ctx context.Context, first *int, after *string) (*model.RoomConnection, error) {
-	panic(fmt.Errorf("not implemented: PaginatedRooms - paginatedRooms"))
+	RoomConnection, err := r.meetingManager.QueryPaginatedRoom(ctx, *first, *after)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.RoomConnection{
+		Edges:    RoomConnection.Edges,
+		PageInfo: RoomConnection.PageInfo,
+	}, nil
 }
 
 // Room is the resolver for the room field.

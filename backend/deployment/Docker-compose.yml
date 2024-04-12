@@ -26,16 +26,16 @@ services:
       - meeting-center-backend-network
     depends_on:
       - db
-  meeting-center-api:
-    image: meeting-center-api
-    ports:
-      - 8080:8080
-    env_file:
-      - ../.env
-    networks:
-      - meeting-center-backend-network
-    depends_on:
-      - db
+  # meeting-center-api:
+  #   image: meeting-center-api
+  #   ports:
+  #     - 8080:8080
+  #   env_file:
+  #     - ../.env
+  #   networks:
+  #     - meeting-center-backend-network
+  #   depends_on:
+  #     - db
 
 networks:
   meeting-center-backend-network:

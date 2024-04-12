@@ -2,6 +2,7 @@ package infra
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"time"
@@ -104,7 +105,7 @@ func (m *MongoMeetingRepository) UpsertRoom(ctx context.Context, upsertRoomInput
 func (m *MongoMeetingRepository) DeleteRoom(ctx context.Context, id string) (*meeting.Room, error) {
 
 	client := m.client
-	collection := client.Database("testDB").Collection("rooms")
+	collection := client.Database("test-mongo").Collection("rooms")
 
 	filter := bson.M{"RoomId": id}
 
@@ -117,4 +118,72 @@ func (m *MongoMeetingRepository) DeleteRoom(ctx context.Context, id string) (*me
 	}
 
 	return nil, nil
+}
+
+func (m *MongoMeetingRepository) QueryPaginatedRoom(ctx context.Context, first int, after string) (*model.RoomConnection, error) {
+
+	filter := bson.M{}
+	if after != "" {
+		decodedCursor, err := decodeCursor(after)
+		if err != nil {
+			return nil, err
+		}
+		filter["_id"] = bson.M{"$gt": decodedCursor}
+	}
+
+	cursor, err := m.client.Database("test-mongo").Collection("rooms").Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var rooms []*model.Room
+	for cursor.Next(ctx) {
+		var room model.Room
+		if err := cursor.Decode(&room); err != nil {
+			return nil, err
+		}
+		rooms = append(rooms, &room)
+		if len(rooms) >= first {
+			break
+		}
+	}
+
+	edges := make([]*model.RoomEdge, len(rooms))
+	for i, room := range rooms {
+		edges[i] = &model.RoomEdge{
+			Node:   room,
+			Cursor: encodeCursor(room.ID),
+		}
+	}
+	hasNextPage := len(rooms) > first
+
+	pageInfo := &model.PageInfo{
+		HasNextPage: hasNextPage,
+	}
+
+	if len(rooms) > 0 {
+		startCursor := encodeCursor(rooms[0].ID)
+		pageInfo.StartCursor = &startCursor
+		endCursor := encodeCursor(rooms[len(rooms)-1].ID)
+		pageInfo.EndCursor = &endCursor
+	}
+
+	roomConnection := &model.RoomConnection{
+		Edges:    edges,
+		PageInfo: pageInfo,
+	}
+	return roomConnection, nil
+}
+
+func encodeCursor(id string) string {
+	return base64.StdEncoding.EncodeToString([]byte(id))
+}
+
+func decodeCursor(cursorString string) (string, error) {
+	decodedBytes, err := base64.StdEncoding.DecodeString(cursorString)
+	if err != nil {
+		return "", err
+	}
+	return string(decodedBytes), nil
 }
