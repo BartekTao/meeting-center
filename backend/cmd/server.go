@@ -13,6 +13,7 @@ import (
 	infra "github.com/BartekTao/nycu-meeting-room-api/internal/infrastructure"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/meeting"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/auth"
+	"github.com/BartekTao/nycu-meeting-room-api/pkg/middleware"
 )
 
 const defaultPort = "8080"
@@ -50,10 +51,16 @@ func main() {
 	meetingManager := meeting.NewBasicMeetingManager(mongoMeetingRepo)
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolvers.NewResolver(meetingManager)}))
 
+	jwtSecret := os.Getenv("JWT_KEY")
+	if jwtSecret == "" {
+		log.Fatal("You must set the JWT_KEY environment variable")
+	}
+	jwtMiddleware := middleware.JWTMiddleware(jwtSecret)
+
 	auth.SetGoogleOAuth()
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	http.Handle("/query", jwtMiddleware(srv))
 
 	// health check
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
