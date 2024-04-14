@@ -19,7 +19,7 @@ func (r *mutationResolver) UpsertRoom(ctx context.Context, upsertRoomInput model
 		return nil, err
 	}
 	return &model.Room{
-		ID:        room.ID.String(),
+		ID:        room.ID.Hex(),
 		RoomID:    room.RoomID,
 		Capacity:  room.Capacity,
 		Equipment: room.Equipment,
