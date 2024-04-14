@@ -30,8 +30,18 @@ func (r *mutationResolver) UpsertRoom(ctx context.Context, upsertRoomInput model
 
 // DeleteRoom is the resolver for the deleteRoom field.
 func (r *mutationResolver) DeleteRoom(ctx context.Context, id *string) (*model.Room, error) {
-
-	panic(fmt.Errorf("not implemented: DeleteRoom - deleteRoom"))
+	room, err := r.meetingManager.DeleteRoom(ctx, *id)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Room{
+		ID:        room.ID.String(),
+		RoomID:    room.RoomID,
+		Capacity:  room.Capacity,
+		Equipment: room.Equipment,
+		Rules:     room.Rules,
+		IsDelete:  &room.IsDelete,
+	}, nil
 }
 
 // PaginatedRooms is the resolver for the paginatedRooms field.
