@@ -40,6 +40,7 @@ func JWTMiddleware(secret string) func(http.Handler) http.Handler {
 			} else if claims, ok := token.Claims.(*MeetingCenterClaims); ok {
 				ctx := context.WithValue(r.Context(), UserCtxKey, claims)
 				next.ServeHTTP(w, r.WithContext(ctx))
+
 				return
 			} else {
 				log.Panicln("unknown claims type, cannot proceed")

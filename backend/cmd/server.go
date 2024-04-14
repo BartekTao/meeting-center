@@ -2,10 +2,15 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
+	"net"
 	"net/http"
 	"os"
+	"os/signal"
+	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph"
@@ -14,42 +19,74 @@ import (
 	"github.com/BartekTao/nycu-meeting-room-api/internal/meeting"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/auth"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/middleware"
+	"github.com/BartekTao/nycu-meeting-room-api/pkg/otelwrapper"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
 )
 
 const defaultPort = "8080"
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatalln(err)
+	}
+}
+
+func run() (err error) {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
 	}
+	// Handle SIGINT (CTRL+C) gracefully.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
 
-	mongoURI := os.Getenv("MONGO_URI")
-	if mongoURI == "" {
-		log.Fatal("You must set the MONGO_URI environment variable")
-	}
-	ctx := context.Background()
-
-	mongoClient, err := infra.NewMongoDBClient(ctx, infra.MongoDBConfig{URI: mongoURI})
+	// Set up OpenTelemetry.
+	otelShutdown, err := otelwrapper.SetupOTelSDK(ctx)
 	if err != nil {
-		log.Panic(err)
+		return
 	}
-
+	// Handle shutdown properly so nothing leaks.
 	defer func() {
-		if err := mongoClient.Disconnect(ctx); err != nil {
-			log.Panic(err)
-		}
+		err = errors.Join(err, otelShutdown(context.Background()))
 	}()
-	err = mongoClient.Ping(ctx, nil)
-	if err != nil {
-		log.Panic("Failed to ping MongoDB:", err)
+
+	// Start HTTP server.
+	srv := &http.Server{
+		Addr:         ":8080",
+		BaseContext:  func(_ net.Listener) context.Context { return ctx },
+		ReadTimeout:  time.Second,
+		WriteTimeout: 10 * time.Second,
+		Handler:      newHTTPHandler(),
+	}
+	srvErr := make(chan error, 1)
+	go func() {
+		srvErr <- srv.ListenAndServe()
+	}()
+
+	// Wait for interruption.
+	select {
+	case err = <-srvErr:
+		// Error when starting HTTP server.
+		return
+	case <-ctx.Done():
+		// Wait for first CTRL+C.
+		// Stop receiving signal notifications as soon as possible.
+		stop()
 	}
 
-	log.Println("Successfully connected and pinged MongoDB.")
+	// When Shutdown is called, ListenAndServe immediately returns ErrServerClosed.
+	err = srv.Shutdown(context.Background())
+	return
+}
+
+func newHTTPHandler() http.Handler {
+	mux := http.NewServeMux()
+
+	mongoClient := infra.SetUpMongoDB()
 
 	mongoMeetingRepo := infra.NewMongoMeetingRepository(mongoClient)
 	meetingManager := meeting.NewBasicMeetingManager(mongoMeetingRepo)
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolvers.NewResolver(meetingManager)}))
 
 	jwtSecret := os.Getenv("JWT_KEY")
 	if jwtSecret == "" {
@@ -57,16 +94,47 @@ func main() {
 	}
 	jwtMiddleware := middleware.JWTMiddleware(jwtSecret)
 
-	auth.SetGoogleOAuth()
+	authHandler := auth.NewGoogleOAuthHandler()
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", jwtMiddleware(srv))
+	mux.HandleFunc("/auth/google/login", authHandler.Login)
+	mux.HandleFunc("/auth/google/callback", authHandler.Callback)
 
-	// health check
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
+	// Setup GraphQL server
+	graphqlServer := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolvers.NewResolver(meetingManager)}))
+	// graphqlServer.Use(Tracer())
+	otelGraphqlHandler := otelhttp.NewHandler(graphqlServer, "GraphQL")
+	jwtGraphqlHandler := jwtMiddleware(otelGraphqlHandler)
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	// Wrap the GraphQL server with OpenTelemetry middleware
+	otelHandler := otelhttp.WithRouteTag("/query", jwtGraphqlHandler)
+	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	mux.Handle("/query", otelHandler)
+
+	// Add HTTP instrumentation for the whole server.
+	handler := otelhttp.NewHandler(mux, "/")
+	return handler
+}
+
+func Tracer() graphql.FieldMiddleware {
+	tracer := otel.Tracer("gqlgen-tracer")
+
+	return func(ctx context.Context, next graphql.Resolver) (res interface{}, err error) {
+		// Get the field name as operation name.
+		rc := graphql.GetResolverContext(ctx)
+		operationName := rc.Object + "." + rc.Field.Name
+
+		// Start a new span.
+		spanCtx, span := tracer.Start(ctx, operationName)
+		defer span.End()
+
+		// Continue execution to the next resolver.
+		res, err = next(spanCtx)
+
+		// Record any errors that occurred during resolution.
+		if err != nil {
+			span.RecordError(err)
+		}
+
+		return res, err
+	}
 }
