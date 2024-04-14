@@ -12,6 +12,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/resolvers"
@@ -20,6 +21,7 @@ import (
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/auth"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/middleware"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/otelwrapper"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 )
@@ -101,7 +103,13 @@ func newHTTPHandler() http.Handler {
 
 	// Setup GraphQL server
 	graphqlServer := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolvers.NewResolver(meetingManager)}))
-	// graphqlServer.Use(Tracer())
+	graphqlServer.AroundFields(tracer())
+	graphqlServer.SetErrorPresenter(func(ctx context.Context, e error) *gqlerror.Error {
+		gqlErr := graphql.DefaultErrorPresenter(ctx, e)
+		gqlErr.Message = "internal server error"
+		return gqlErr
+	})
+	graphqlServer.Use(extension.FixedComplexityLimit(100))
 	otelGraphqlHandler := otelhttp.NewHandler(graphqlServer, "GraphQL")
 	jwtGraphqlHandler := jwtMiddleware(otelGraphqlHandler)
 
@@ -115,12 +123,12 @@ func newHTTPHandler() http.Handler {
 	return handler
 }
 
-func Tracer() graphql.FieldMiddleware {
+func tracer() graphql.FieldMiddleware {
 	tracer := otel.Tracer("gqlgen-tracer")
 
 	return func(ctx context.Context, next graphql.Resolver) (res interface{}, err error) {
 		// Get the field name as operation name.
-		rc := graphql.GetResolverContext(ctx)
+		rc := graphql.GetFieldContext(ctx)
 		operationName := rc.Object + "." + rc.Field.Name
 
 		// Start a new span.
