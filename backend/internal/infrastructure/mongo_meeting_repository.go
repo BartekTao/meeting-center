@@ -43,66 +43,58 @@ func (m *MongoMeetingRepository) UpsertRoom(ctx context.Context, upsertRoomInput
 
 	collection := m.room_collection
 
-	upsertRoomID, err := primitive.ObjectIDFromHex(*upsertRoomInput.ID)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Execute the update operation
-	filter := bson.M{"ID": upsertRoomID}
-	update := bson.M{"$set": bson.M{
-		"RoomID":    upsertRoomInput.RoomID,
-		"Capacity":  upsertRoomInput.Capacity,
-		"Equipment": upsertRoomInput.Equipment,
-		"Rules":     upsertRoomInput.Rules,
-		"UpdatedAt": time.Now().Unix(),
-	}}
-
-	result, err := collection.UpdateOne(ctx, filter, update)
-	if err != nil {
-		log.Fatalf("Failed to update document: %v", err)
-		return nil, err
-	}
-
-	fmt.Print(result)
-	var output_room meeting.Room
-
-	if result.ModifiedCount != 0 {
-		// Document with the same RoomID already exists, update succeeded
-		fmt.Printf("Updated %d document(s) successfully.\n", result.ModifiedCount)
-		// Retrieve the updated room document
-		err = collection.FindOne(ctx, filter).Decode(&output_room)
+	if upsertRoomInput.ID == nil {
+		currentTime := time.Now().Unix()
+		newRoom := meeting.Room{
+			RoomID:    upsertRoomInput.RoomID,
+			Capacity:  upsertRoomInput.Capacity,
+			Equipment: upsertRoomInput.Equipment,
+			Rules:     upsertRoomInput.Rules,
+			IsDelete:  false,
+			CreatedAt: currentTime,
+			UpdatedAt: currentTime,
+		}
+		result, err := collection.InsertOne(ctx, newRoom)
 		if err != nil {
-			log.Fatalf("Failed to decode updated room document: %v", err)
+			log.Fatalf("Failed to insert new room: %v", err)
 			return nil, err
 		}
+		newRoom.ID = result.InsertedID.(primitive.ObjectID)
+
+		return &newRoom, nil
 	} else {
-		// Document with the same RoomID doesn't exist, insert new room
-		newRoom := bson.M{
-			"ID":        upsertRoomID,
-			"RoomID":    upsertRoomInput.RoomID,
-			"Capacity":  upsertRoomInput.Capacity,
-			"Equipment": upsertRoomInput.Equipment,
-			"Rules":     upsertRoomInput.Rules,
-			"IsDelete":  false,
-			"CreatedAt": time.Now().Unix(),
-			"UpdatedAt": time.Now().Unix(),
-			"UpdaterId": "None",
-		}
-		_, err := collection.InsertOne(ctx, newRoom)
+		id, err := primitive.ObjectIDFromHex(*upsertRoomInput.ID)
 		if err != nil {
-			log.Fatalf("Failed to insert document: %v", err)
+			log.Fatalf("Invalid ID format: %v", err)
 			return nil, err
 		}
-		fmt.Println("New room inserted successfully.")
-		err = collection.FindOne(ctx, filter).Decode(&output_room)
+		filter := bson.M{"_id": id}
+		update := bson.M{
+			"$set": bson.M{
+				"roomID":    upsertRoomInput.RoomID,
+				"capacity":  upsertRoomInput.Capacity,
+				"equipment": upsertRoomInput.Equipment,
+				"rules":     upsertRoomInput.Rules,
+				"updatedAt": time.Now().Unix(),
+			},
+		}
+		result, err := collection.UpdateOne(ctx, filter, update)
 		if err != nil {
-			log.Fatalf("Failed to decode inserted room document: %v", err)
+			log.Fatalf("Failed to update room: %v", err)
 			return nil, err
 		}
-	}
+		if result.MatchedCount == 0 {
+			return nil, fmt.Errorf("no room found with ID %s", *upsertRoomInput.ID)
+		}
 
-	return &output_room, nil
+		var updatedRoom meeting.Room
+		if err := collection.FindOne(ctx, filter).Decode(&updatedRoom); err != nil {
+			log.Fatalf("Failed to retrieve updated room: %v", err)
+			return nil, err
+		}
+
+		return &updatedRoom, nil
+	}
 }
 
 func (m *MongoMeetingRepository) DeleteRoom(ctx context.Context, id string) (*meeting.Room, error) {
