@@ -3,12 +3,15 @@ GO_CMD=go
 MAIN_FILE=./cmd/server.go
 
 all:
-	$(GO_CMD) run $(MAIN_FILE)
+	docker-compose -f ./deployment/Docker-compose.yml up -d
+
+down:
+	docker-compose -f ./deployment/Docker-compose.yml down
 
 db-up:
-	docker-compose -f ./deployment/Docker-compose.yml up -d
+	docker-compose -f ./deployment/Docker-compose-mongodb.yml up -d
 db-down:
-	docker-compose -f ./deployment/Docker-compose.yml down
+	docker-compose -f ./deployment/Docker-compose-mongodb.yml down
 	
 build:
 	$(GO_CMD) build -o meeting-room-api $(MAIN_FILE)
