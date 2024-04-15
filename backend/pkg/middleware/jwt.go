@@ -35,7 +35,7 @@ func JWTMiddleware(secret string) func(http.Handler) http.Handler {
 				return []byte(secret), nil
 			})
 			if err != nil {
-				log.Panicln(err)
+				log.Println(err)
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			} else if claims, ok := token.Claims.(*MeetingCenterClaims); ok {
 				ctx := context.WithValue(r.Context(), UserCtxKey, claims)
@@ -43,7 +43,7 @@ func JWTMiddleware(secret string) func(http.Handler) http.Handler {
 
 				return
 			} else {
-				log.Panicln("unknown claims type, cannot proceed")
+				log.Println("unknown claims type, cannot proceed")
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			}
 
