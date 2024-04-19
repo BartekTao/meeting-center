@@ -153,7 +153,7 @@ func (m *MongoMeetingRepository) QueryPaginatedRoom(ctx context.Context, first i
 	for i, room := range rooms {
 		edges[i] = &model.RoomEdge{
 			Node:   room,
-			Cursor: encodeCursor(room.ID),
+			Cursor: encodeCursor(room.RoomID),
 		}
 	}
 	hasNextPage := len(rooms) > first
@@ -163,9 +163,9 @@ func (m *MongoMeetingRepository) QueryPaginatedRoom(ctx context.Context, first i
 	}
 
 	if len(rooms) > 0 {
-		startCursor := encodeCursor(rooms[0].ID)
+		startCursor := encodeCursor(rooms[0].RoomID)
 		pageInfo.StartCursor = &startCursor
-		endCursor := encodeCursor(rooms[len(rooms)-1].ID)
+		endCursor := encodeCursor(rooms[len(rooms)-1].RoomID)
 		pageInfo.EndCursor = &endCursor
 	}
 
