@@ -128,7 +128,7 @@ func (m *MongoMeetingRepository) QueryPaginatedRoom(ctx context.Context, first i
 		if err != nil {
 			return nil, err
 		}
-		filter["_id"] = bson.M{"$gt": decodedCursor}
+		filter["roomId"] = bson.M{"$gt": decodedCursor}
 	}
 
 	cursor, err := m.client.Database("test-mongo").Collection("rooms").Find(ctx, filter)
@@ -137,6 +137,7 @@ func (m *MongoMeetingRepository) QueryPaginatedRoom(ctx context.Context, first i
 	}
 	defer cursor.Close(ctx)
 
+	actualCount := 0
 	var rooms []*model.Room
 	for cursor.Next(ctx) {
 		var room model.Room
@@ -144,7 +145,11 @@ func (m *MongoMeetingRepository) QueryPaginatedRoom(ctx context.Context, first i
 			return nil, err
 		}
 		rooms = append(rooms, &room)
-		if len(rooms) >= first {
+		actualCount++
+		if actualCount >= first {
+			if cursor.Next(ctx) {
+				actualCount++
+			}
 			break
 		}
 	}
@@ -156,7 +161,7 @@ func (m *MongoMeetingRepository) QueryPaginatedRoom(ctx context.Context, first i
 			Cursor: encodeCursor(room.RoomID),
 		}
 	}
-	hasNextPage := len(rooms) > first
+	hasNextPage := actualCount > first
 
 	pageInfo := &model.PageInfo{
 		HasNextPage: hasNextPage,
