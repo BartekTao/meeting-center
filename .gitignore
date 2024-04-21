@@ -23,3 +23,5 @@ go.work
 
 meeting-room-api
 backend/.env
+
+.DS_Store
