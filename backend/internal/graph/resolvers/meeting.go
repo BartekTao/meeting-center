@@ -13,18 +13,18 @@ import (
 )
 
 // UpsertRoom is the resolver for the upsertRoom field.
-func (r *mutationResolver) UpsertRoom(ctx context.Context, upsertRoomInput model.UpsertRoomInput) (*model.Room, error) {
-	room, err := r.meetingManager.UpsertRoom(ctx, upsertRoomInput)
+func (r *mutationResolver) UpsertRoom(ctx context.Context, room model.UpsertRoomInput) (*model.Room, error) {
+	res, err := r.meetingManager.UpsertRoom(ctx, room)
 	if err != nil {
 		return nil, err
 	}
 	return &model.Room{
-		ID:        room.ID.Hex(),
-		RoomID:    room.RoomID,
-		Capacity:  room.Capacity,
-		Equipment: room.Equipment,
-		Rules:     room.Rules,
-		IsDelete:  &room.IsDelete,
+		ID:        res.ID.Hex(),
+		RoomID:    res.RoomID,
+		Capacity:  res.Capacity,
+		Equipment: res.Equipment,
+		Rules:     res.Rules,
+		IsDelete:  &res.IsDelete,
 	}, nil
 }
 
@@ -42,6 +42,16 @@ func (r *mutationResolver) DeleteRoom(ctx context.Context, id *string) (*model.R
 		Rules:     room.Rules,
 		IsDelete:  &room.IsDelete,
 	}, nil
+}
+
+// UpsertEvent is the resolver for the upsertEvent field.
+func (r *mutationResolver) UpsertEvent(ctx context.Context, input model.UpsertEventInput) (*model.Event, error) {
+	panic(fmt.Errorf("not implemented: UpsertEvent - upsertEvent"))
+}
+
+// DeleteEvent is the resolver for the deleteEvent field.
+func (r *mutationResolver) DeleteEvent(ctx context.Context, id string) (*model.Event, error) {
+	panic(fmt.Errorf("not implemented: DeleteEvent - deleteEvent"))
 }
 
 // PaginatedRooms is the resolver for the paginatedRooms field.
@@ -62,13 +72,26 @@ func (r *queryResolver) Room(ctx context.Context, id string) (*model.Room, error
 	panic(fmt.Errorf("not implemented: Room - room"))
 }
 
+// UserEvents is the resolver for the userEvents field.
+func (r *queryResolver) UserEvents(ctx context.Context, userID string) ([]*model.Event, error) {
+	panic(fmt.Errorf("not implemented: UserEvents - userEvents"))
+}
+
+// Event is the resolver for the event field.
+func (r *queryResolver) Event(ctx context.Context, id string) (*model.Event, error) {
+	panic(fmt.Errorf("not implemented: Event - event"))
+}
+
+// PaginatedAvailableRooms is the resolver for the paginatedAvailableRooms field.
+func (r *queryResolver) PaginatedAvailableRooms(ctx context.Context, from int, to int, first *int, after *string) (*model.RoomConnection, error) {
+	panic(fmt.Errorf("not implemented: PaginatedAvailableRooms - paginatedAvailableRooms"))
+}
+
 // Mutation returns graph.MutationResolver implementation.
 func (r *Resolver) Mutation() graph.MutationResolver { return &mutationResolver{r} }
 
 // Query returns graph.QueryResolver implementation.
 func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
 
-type (
-	mutationResolver struct{ *Resolver }
-	queryResolver    struct{ *Resolver }
-)
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
