@@ -35,7 +35,7 @@ func (r *mutationResolver) DeleteRoom(ctx context.Context, id *string) (*model.R
 		return nil, err
 	}
 	return &model.Room{
-		ID:        room.ID.String(),
+		ID:        room.ID.Hex(),
 		RoomID:    room.RoomID,
 		Capacity:  room.Capacity,
 		Equipment: room.Equipment,
@@ -60,5 +60,7 @@ func (r *Resolver) Mutation() graph.MutationResolver { return &mutationResolver{
 // Query returns graph.QueryResolver implementation.
 func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)
