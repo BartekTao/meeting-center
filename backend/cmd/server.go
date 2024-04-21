@@ -22,6 +22,7 @@ import (
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/middleware"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/otelwrapper"
 	"github.com/vektah/gqlparser/v2/gqlerror"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 )
@@ -53,13 +54,16 @@ func run() (err error) {
 		err = errors.Join(err, otelShutdown(context.Background()))
 	}()
 
+	mongoClient := infra.SetUpMongoDB()
+	defer infra.ShutdownMongoDB(mongoClient)
+
 	// Start HTTP server.
 	srv := &http.Server{
 		Addr:         ":8080",
 		BaseContext:  func(_ net.Listener) context.Context { return ctx },
 		ReadTimeout:  time.Second,
 		WriteTimeout: 10 * time.Second,
-		Handler:      newHTTPHandler(),
+		Handler:      newHTTPHandler(mongoClient),
 	}
 	srvErr := make(chan error, 1)
 	go func() {
@@ -82,10 +86,8 @@ func run() (err error) {
 	return
 }
 
-func newHTTPHandler() http.Handler {
+func newHTTPHandler(mongoClient *mongo.Client) http.Handler {
 	mux := http.NewServeMux()
-
-	mongoClient := infra.SetUpMongoDB()
 
 	mongoMeetingRepo := infra.NewMongoMeetingRepository(mongoClient)
 	meetingManager := meeting.NewBasicMeetingManager(mongoMeetingRepo)

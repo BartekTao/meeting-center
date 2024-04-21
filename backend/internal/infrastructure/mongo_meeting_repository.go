@@ -32,11 +32,6 @@ func SetUpMongoDB() *mongo.Client {
 		log.Panic(err)
 	}
 
-	defer func() {
-		if err := mongoClient.Disconnect(ctx); err != nil {
-			log.Panic(err)
-		}
-	}()
 	err = mongoClient.Ping(ctx, nil)
 	if err != nil {
 		log.Panic("Failed to ping MongoDB:", err)
@@ -44,6 +39,15 @@ func SetUpMongoDB() *mongo.Client {
 
 	log.Println("Successfully connected and pinged MongoDB.")
 	return mongoClient
+}
+
+func ShutdownMongoDB(mongoClient *mongo.Client) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := mongoClient.Disconnect(ctx); err != nil {
+		log.Panic("Failed to disconnect MongoDB:", err)
+	}
+	log.Println("MongoDB client disconnected successfully.")
 }
 
 func NewMongoDBClient(ctx context.Context, cfg MongoDBConfig) (*mongo.Client, error) {
@@ -131,7 +135,7 @@ func (m *MongoMeetingRepository) DeleteRoom(ctx context.Context, id string) (*me
 		log.Fatal(err)
 	}
 
-	filter := bson.M{"ID": deleteRoomID}
+	filter := bson.M{"_id": deleteRoomID}
 	update := bson.M{"$set": bson.M{
 		"IsDelete":  true,
 		"UpdatedAt": time.Now().Unix(),
