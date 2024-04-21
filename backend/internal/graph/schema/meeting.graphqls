@@ -1,16 +1,18 @@
 type Query {
-  # Events(userID: ID!): [Event!]
-  # Event(id: ID!): Event
   paginatedRooms(first: Int = 20, after: String): RoomConnection!
   room(id: ID!): Room!
+
+  userEvents(userID: ID!): [Event!]
+  event(id: ID!): Event
+  paginatedAvailableRooms(from: Int!, to: Int!, first: Int = 20, after: String): RoomConnection!
 }
 
 type Mutation {
-  # createEvent(input: CreateEventInput!): Event!
-  # updateEvent(id: ID!, input: UpdateEventInput!): Event!
-  # deleteEvent(id: ID!): Event!
   upsertRoom(room: UpsertRoomInput!): Room!
   deleteRoom(id: ID): Room!
+
+  upsertEvent(input: UpsertEventInput!): Event!
+  deleteEvent(id: ID!): Event!
 }
 
 type Room implements Node {
@@ -20,6 +22,13 @@ type Room implements Node {
   equipment: [String!]
   rules: [String!]
   isDelete: Boolean
+  bookings: [Booking!]
+}
+
+type Booking {
+  startAt: Int!
+  endAt: Int!
+  bookedBy: User!
 }
 
 interface Connection {
@@ -61,45 +70,33 @@ input UpsertRoomInput {
   rules: [String!]
 }
 
-# type Event {
-#   id: ID!
-#   title: String!
-#   description: String
-#   startTime: Int!
-#   endTime: Int!
-#   participants: [User!]
-#   notes: String
-#   reminder: Reminder
-# }
+type Event {
+  id: ID!
+  title: String!
+  description: String
+  startAt: Int!
+  endAt: Int!
+  room: Room
+  participants: [User!]
+  notes: String
+  remindAt: Int!
+  creator: User!
+}
 
-# type User {
-#   id: ID!
-#   name: String!
-#   email: String!
-# }
+type User {
+  id: ID!
+  name: String!
+  email: String!
+}
 
-# type Reminder {
-#   id: ID!
-#   EventID: ID!
-#   triggerTime: Int!
-# }
-
-
-
-# input CreateEventInput {
-#   title: String!
-#   description: String
-#   startTime: Int!
-#   endTime: Int!
-#   participantsIDs: [ID!]
-#   notes: String
-# }
-
-# input UpdateEventInput {
-#   title: String
-#   description: String
-#   startTime: Int
-#   endTime: Int
-#   participantsIDs: [ID!]
-#   notes: String
-# }
+input UpsertEventInput {
+  id: ID
+  title: String!
+  description: String
+  startAt: Int!
+  endAt: Int!
+  roomId: ID
+  participantsIDs: [ID!]
+  notes: String
+  remindAt: Int!
+}
