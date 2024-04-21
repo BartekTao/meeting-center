@@ -19,7 +19,7 @@ func (r *mutationResolver) UpsertRoom(ctx context.Context, upsertRoomInput model
 		return nil, err
 	}
 	return &model.Room{
-		ID:        room.ID.String(),
+		ID:        room.ID.Hex(),
 		RoomID:    room.RoomID,
 		Capacity:  room.Capacity,
 		Equipment: room.Equipment,
@@ -30,8 +30,18 @@ func (r *mutationResolver) UpsertRoom(ctx context.Context, upsertRoomInput model
 
 // DeleteRoom is the resolver for the deleteRoom field.
 func (r *mutationResolver) DeleteRoom(ctx context.Context, id *string) (*model.Room, error) {
-
-	panic(fmt.Errorf("not implemented: DeleteRoom - deleteRoom"))
+	room, err := r.meetingManager.DeleteRoom(ctx, *id)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Room{
+		ID:        room.ID.Hex(),
+		RoomID:    room.RoomID,
+		Capacity:  room.Capacity,
+		Equipment: room.Equipment,
+		Rules:     room.Rules,
+		IsDelete:  &room.IsDelete,
+	}, nil
 }
 
 // PaginatedRooms is the resolver for the paginatedRooms field.
@@ -58,5 +68,7 @@ func (r *Resolver) Mutation() graph.MutationResolver { return &mutationResolver{
 // Query returns graph.QueryResolver implementation.
 func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)

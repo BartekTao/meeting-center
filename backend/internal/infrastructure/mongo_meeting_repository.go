@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
@@ -19,6 +20,36 @@ type MongoDBConfig struct {
 	URI string
 }
 
+func SetUpMongoDB() *mongo.Client {
+	mongoURI := os.Getenv("MONGO_URI")
+	if mongoURI == "" {
+		log.Fatal("You must set the MONGO_URI environment variable")
+	}
+	ctx := context.Background()
+
+	mongoClient, err := NewMongoDBClient(ctx, MongoDBConfig{URI: mongoURI})
+	if err != nil {
+		log.Panic(err)
+	}
+
+	err = mongoClient.Ping(ctx, nil)
+	if err != nil {
+		log.Panic("Failed to ping MongoDB:", err)
+	}
+
+	log.Println("Successfully connected and pinged MongoDB.")
+	return mongoClient
+}
+
+func ShutdownMongoDB(mongoClient *mongo.Client) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := mongoClient.Disconnect(ctx); err != nil {
+		log.Panic("Failed to disconnect MongoDB:", err)
+	}
+	log.Println("MongoDB client disconnected successfully.")
+}
+
 func NewMongoDBClient(ctx context.Context, cfg MongoDBConfig) (*mongo.Client, error) {
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.URI))
 	if err != nil {
@@ -28,100 +59,111 @@ func NewMongoDBClient(ctx context.Context, cfg MongoDBConfig) (*mongo.Client, er
 }
 
 type MongoMeetingRepository struct {
-	client *mongo.Client
+	client          *mongo.Client
+	room_collection mongo.Collection
 }
 
 func NewMongoMeetingRepository(client *mongo.Client) *MongoMeetingRepository {
 	return &MongoMeetingRepository{
-		client: client,
+		client:          client,
+		room_collection: *client.Database("test-mongo").Collection("rooms"),
 	}
 }
 
 func (m *MongoMeetingRepository) UpsertRoom(ctx context.Context, upsertRoomInput model.UpsertRoomInput) (*meeting.Room, error) {
+	collection := m.room_collection
 
-	client := m.client
-	collection := client.Database("test-mongo").Collection("rooms")
+	if upsertRoomInput.ID == nil {
+		currentTime := time.Now().Unix()
+		newRoom := meeting.Room{
+			RoomID:    upsertRoomInput.RoomID,
+			Capacity:  upsertRoomInput.Capacity,
+			Equipment: upsertRoomInput.Equipment,
+			Rules:     upsertRoomInput.Rules,
+			IsDelete:  false,
+			CreatedAt: currentTime,
+			UpdatedAt: currentTime,
+		}
+		result, err := collection.InsertOne(ctx, newRoom)
+		if err != nil {
+			log.Fatalf("Failed to insert new room: %v", err)
+			return nil, err
+		}
+		newRoom.ID = result.InsertedID.(primitive.ObjectID)
 
-	upsertRoomID, err := primitive.ObjectIDFromHex(*upsertRoomInput.ID)
+		return &newRoom, nil
+	} else {
+		id, err := primitive.ObjectIDFromHex(*upsertRoomInput.ID)
+		if err != nil {
+			log.Fatalf("Invalid ID format: %v", err)
+			return nil, err
+		}
+		filter := bson.M{"_id": id}
+		update := bson.M{
+			"$set": bson.M{
+				"roomID":    upsertRoomInput.RoomID,
+				"capacity":  upsertRoomInput.Capacity,
+				"equipment": upsertRoomInput.Equipment,
+				"rules":     upsertRoomInput.Rules,
+				"updatedAt": time.Now().Unix(),
+			},
+		}
+		result, err := collection.UpdateOne(ctx, filter, update)
+		if err != nil {
+			log.Fatalf("Failed to update room: %v", err)
+			return nil, err
+		}
+		if result.MatchedCount == 0 {
+			return nil, fmt.Errorf("no room found with ID %s", *upsertRoomInput.ID)
+		}
+
+		var updatedRoom meeting.Room
+		if err := collection.FindOne(ctx, filter).Decode(&updatedRoom); err != nil {
+			log.Fatalf("Failed to retrieve updated room: %v", err)
+			return nil, err
+		}
+
+		return &updatedRoom, nil
+	}
+}
+
+func (m *MongoMeetingRepository) DeleteRoom(ctx context.Context, id string) (*meeting.Room, error) {
+	collection := m.room_collection
+
+	deleteRoomID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	new_room := &meeting.Room{
-		ID:        upsertRoomID,
-		RoomID:    upsertRoomInput.RoomID,
-		Capacity:  upsertRoomInput.Capacity,
-		Equipment: upsertRoomInput.Equipment,
-		Rules:     upsertRoomInput.Rules,
-		IsDelete:  false,
-		CreatedAt: 0,
-		UpdatedAt: 0,
-		UpdaterId: "None",
-	}
-
-	// Execute the find operation
-	filter := bson.M{"ID": upsertRoomID}
+	filter := bson.M{"_id": deleteRoomID}
 	update := bson.M{"$set": bson.M{
-		"RoomID":    upsertRoomInput.RoomID,
-		"Capacity":  upsertRoomInput.Capacity,
-		"Equipment": upsertRoomInput.Equipment,
-		"Rules":     upsertRoomInput.Rules,
-		"UpdatedAt": time.Now(),
+		"IsDelete":  true,
+		"UpdatedAt": time.Now().Unix(),
 	}}
 
 	result, err := collection.UpdateOne(ctx, filter, update)
+
+	if result.ModifiedCount == 0 { // Check if the document was found and soft deleted
+		fmt.Println("Document with the given ID not found")
+		return nil, mongo.ErrNoDocuments
+	} else if err != nil { // other failures
+		log.Fatalf("Failed to soft delete document: %v", err)
+		return nil, err
+	}
+
+	fmt.Printf("Deleted %d document(s) successfully.\n", result.ModifiedCount)
+
+	var deleted_room meeting.Room
+	err = collection.FindOne(ctx, filter).Decode(&deleted_room)
 	if err != nil {
-		log.Fatalf("Failed to update document: %v", err)
+		log.Fatalf("Failed to decode updated room document: %v", err)
 		return nil, err
 	}
 
-	if result.ModifiedCount != 0 {
-		// Document with the same RoomID already exists, update successed
-		fmt.Printf("Updated %d document(s) successfully.\n", result.ModifiedCount)
-	} else {
-		// Document with the same RoomID doesn't exist, insert new room
-		new_room_bson := bson.M{
-			"ID":        upsertRoomID,
-			"RoomID":    upsertRoomInput.RoomID,
-			"Capacity":  upsertRoomInput.Capacity,
-			"Equipment": upsertRoomInput.Equipment,
-			"Rules":     upsertRoomInput.Rules,
-			"IsDelete":  false,
-			"CreatedAt": time.Now(),
-			"UpdatedAt": time.Now(),
-			"UpdaterId": "None",
-		}
-		_, err := collection.InsertOne(ctx, new_room_bson)
-		if err != nil {
-			log.Fatalf("Failed to insert document: %v", err)
-			return nil, err
-		}
-		fmt.Println("New room inserted successfully.")
-	}
-
-	return new_room, nil
-}
-
-func (m *MongoMeetingRepository) DeleteRoom(ctx context.Context, id string) (*meeting.Room, error) {
-
-	client := m.client
-	collection := client.Database("test-mongo").Collection("rooms")
-
-	filter := bson.M{"RoomId": id}
-
-	result, err := collection.DeleteOne(ctx, filter)
-
-	if result.DeletedCount == 0 { // Check if the document was found and deleted
-		return nil, mongo.ErrNoDocuments // Document with the given roomID not found
-	} else if err != nil {
-		return nil, err
-	}
-
-	return nil, nil
+	return &deleted_room, nil
 }
 
 func (m *MongoMeetingRepository) QueryPaginatedRoom(ctx context.Context, first int, after string) (*model.RoomConnection, error) {
-
 	filter := bson.M{}
 	if after != "" {
 		decodedCursor, err := decodeCursor(after)
