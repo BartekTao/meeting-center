@@ -11,23 +11,7 @@
             <div class="">
               <div class="item">
                 <div class="row">
-                  <div class="col-lg-12" v-for="item in items" :key="item.name">
-                    <div class="listing-item">
-                      <div class="left-image">
-                        <a href="#"><img :src="item.image_url" :alt="item.name"></a>
-                      </div>
-                      <div class="right-content align-self-center">
-                        <a href="#"><h4>會議名稱：{{ item.name }}</h4></a>
-                        <ul class="info">
-                          <li>人數限制：{{ item.people_limit }}</li>
-                          <li>可否飲食：{{ item.can_eat ? '是' : '否' }}</li>
-                        </ul><br>
-                        <div class="main-white-button">
-                          <a class="openFormBtn" @click="openForm"><img :src="tapImage" alt="Booking">預約</a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <EventItem v-for="item in items" :key="item.name" :item="item" @openForm="openForm"/>
                 </div>
               </div>
               
@@ -67,8 +51,9 @@
   </template>
   
   <script>
+  import EventItem from './EventItem.vue';
   export default {
-    name: 'QueryItem',
+    name: 'QueryItems',
     data() {
       return {
         time_period: ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30',
@@ -89,22 +74,28 @@
             name: '001',
             image_url: require('../assets/images/listing-01.jpg'),
             people_limit: 12,
-            can_eat: false
+            can_eat: false,
+            reservatorList: ['', '', 'Ivan', '', '', 'Ray', '', '', '', 'Ivan', 'Kevin', 'Ray', 'John', '', '', '', 'Ray', ''],
           },
           {
             name: '002',
             image_url: require('../assets/images/listing-01.jpg'),
             people_limit: 24,
-            can_eat: false
+            can_eat: false,
+            reservatorList: ['', '', 'Ivan', '', '', 'Ray', '', '', '', 'Ivan', 'Kevin', 'Ray', 'John', '', '', '', 'Ray', ''],
           },
           {
             name: '003',
             image_url: require('../assets/images/listing-01.jpg'),
             people_limit: 32,
-            can_eat: true
+            can_eat: true,
+            reservatorList: ['', '', 'Ivan', '', '', 'Ray', '', '', '', 'Ivan', 'Kevin', 'Ray', 'John', '', '', '', 'Ray', ''],
           },
         ]
       };
+    },
+    components: {
+      EventItem
     },
     methods: {
       openForm() {

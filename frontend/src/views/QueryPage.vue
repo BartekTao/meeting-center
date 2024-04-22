@@ -1,17 +1,20 @@
 <template>
   <QueryBar />
-  <QueryItem />
+  <QueryItems />
+  <ItemPeriod />
 </template>
 
 <script>
 import QueryBar from '@/components/QueryBar.vue'
-import QueryItem from '@/components/QueryItem.vue'
+import QueryItems from '@/components/QueryItems.vue'
+import ItemPeriod from '@/components/ItemPeriod.vue';
 
 export default {
   name: 'QueryPage',
   components: {
     QueryBar,
-    QueryItem
+    QueryItems,
+    ItemPeriod
   }
 }
 </script>

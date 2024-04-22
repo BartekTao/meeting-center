@@ -20,7 +20,10 @@
                         <a href="#"><h4>會議名稱：{{ item.name }}</h4></a>
                         <ul class="info">
                           <li>人數限制：{{ item.people_limit }}</li>
-                          <li>可否飲食：{{ item.can_eat ? '是' : '否' }}</li>
+                          <li>可否進食：{{ item.can_eat ? '是' : '否' }}</li>
+                          <li>可否喝水：{{ item.can_drink ? '是' : '否' }}</li>
+                          <li>有大桌子：{{ item.has_projector ? '是' : '否' }}</li>
+                          <li>有投影機：{{ item.has_big_table ? '是' : '否' }}</li>
                         </ul><br>
                         <div class="flex-container">
                           <div class="main-white-button">
@@ -50,8 +53,17 @@
           <label for="people_limit">人數限制：</label>
           <input type="number" id="people_limit" name="people_limit" v-model.number="formInfo.people_limit" required><br><br>
       
-          <label for="can_eat">可否飲食：</label>
+          <label for="can_eat">可否進食：</label>
           <input type="checkbox" id="can_eat" name="can_eat" v-model="formInfo.can_eat"><br><br>
+  
+          <label for="can_drink">可否喝水：</label>
+          <input type="checkbox" id="can_drink" name="can_drink" v-model="formInfo.can_drink"><br><br>
+  
+          <label for="has_big_table">有大桌子：</label>
+          <input type="checkbox" id="has_big_table" name="has_big_table" v-model="formInfo.can_drink"><br><br>
+  
+          <label for="has_projector">有投影機：</label>
+          <input type="checkbox" id="has_projector" name="has_projector" v-model="formInfo.can_drink"><br><br>
   
           <button type="submit" @click.prevent="submitForm">預約</button>
           <button type="button" @click="closeForm">取消</button>
@@ -61,6 +73,7 @@
   </template>
   
   <script>
+  
   export default {
     data() {
       return {
@@ -74,12 +87,18 @@
           image_url: require('../assets/images/listing-01.jpg'),
           people_limit: 2,
           can_eat: true,
+          can_drink: true,
+          has_projector: true,
+          has_big_table: true
         },
         formInfo: {
           name: '',
           image_url: require('../assets/images/listing-01.jpg'),
           people_limit: 2,
           can_eat: true,
+          can_drink: true,
+          has_projector: true,
+          has_big_table: true
         },
         items: [
           { 
@@ -87,21 +106,30 @@
             name: '001',
             image_url: require('../assets/images/listing-01.jpg'),
             people_limit: 12,
-            can_eat: false
+            can_eat: false,
+            can_drink: false,
+            has_projector: true,
+            has_big_table: false
           },
           {
             index: '2',
             name: '002',
             image_url: require('../assets/images/listing-01.jpg'),
             people_limit: 24,
-            can_eat: false
+            can_eat: false,
+            can_drink: false,
+            has_projector: true,
+            has_big_table: false
           },
           {
             index: '3',
             name: '003',
             image_url: require('../assets/images/listing-01.jpg'),
             people_limit: 32,
-            can_eat: true
+            can_eat: true,
+            can_drink: false,
+            has_projector: true,
+            has_big_table: false
           }
         ]
       }
