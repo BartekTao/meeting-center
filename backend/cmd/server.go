@@ -21,6 +21,7 @@ import (
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/auth"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/middleware"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/otelwrapper"
+	"github.com/rs/cors"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -89,6 +90,14 @@ func run() (err error) {
 func newHTTPHandler(mongoClient *mongo.Client) http.Handler {
 	mux := http.NewServeMux()
 
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:8888"},
+		AllowedMethods:   []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+		MaxAge:           86400,
+	})
+
 	mongoMeetingRepo := infra.NewMongoMeetingRepository(mongoClient)
 	meetingManager := meeting.NewBasicMeetingManager(mongoMeetingRepo)
 
@@ -117,8 +126,9 @@ func newHTTPHandler(mongoClient *mongo.Client) http.Handler {
 
 	// Wrap the GraphQL server with OpenTelemetry middleware
 	otelHandler := otelhttp.WithRouteTag("/query", jwtGraphqlHandler)
+	corsHandler := c.Handler(otelHandler)
 	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	mux.Handle("/query", otelHandler)
+	mux.Handle("/query", corsHandler)
 
 	// Add HTTP instrumentation for the whole server.
 	handler := otelhttp.NewHandler(mux, "/")
