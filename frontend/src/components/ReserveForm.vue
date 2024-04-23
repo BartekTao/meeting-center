@@ -86,7 +86,7 @@
       openForm(item) {
         this.formDisplay = true;
         console.log('Opening form for:', item.name);
-        this.roomName = item.name;
+        this.formInfo.roomName = item.name;
       },
       closeForm() {
         this.formDisplay = false;

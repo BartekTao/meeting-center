@@ -26,7 +26,7 @@
             <li>可否飲食：{{ item.can_eat ? '是' : '否' }}</li>
           </ul><br>
           <div class="main-white-button">
-            <a class="openFormBtn" @click="$emit('openForm', item)"><img :src="$parent.tapImage" alt="Booking">預約</a>
+            <a class="openFormBtn" @click="$emit('openForm', item)"><img :src="tapImage" alt="Booking">預約</a>
           </div>
         </div>
       </div>
@@ -37,18 +37,16 @@
   import ItemPeriod from './ItemPeriod.vue';
 
   export default {
-    name: 'EventItem',
+    name: 'ReserveBlock',
     props: ['item'],
     methods: {
-      openForm() {
-        this.$emit('openForm');
-      },
       updateShowReservator(value) {
         this.showReservator = value;
       }
     },
     data() {
         return {
+        tapImage: require('@/assets/images/tap.png'),
         showReservator: '',
         };
     },
