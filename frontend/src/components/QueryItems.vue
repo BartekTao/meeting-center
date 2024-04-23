@@ -1,10 +1,29 @@
 <template>
-    <RoomBlock v-for="item in items" :key="item.name" :item="item" @openForm="openForm(item)"/>
+    <div class="recent-listing" id="items">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-12">
+            <div class="section-heading">
+              <h2>查詢空間</h2>
+            </div>
+          </div>
+          <div class="col-lg-12">
+            <div class="">
+              <div class="item">
+                <div class="row">
+                  <EventItem v-for="item in items" :key="item.name" :item="item" @openForm="openForm(item)"/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <ReserveForm ref="reserveFormComponent"/>
   </template>
   
   <script>
-  import RoomBlock from './RoomBlock.vue';
+  import EventItem from './EventItem.vue';
   import ReserveForm from './ReserveForm.vue';
 
   export default {
@@ -38,7 +57,7 @@
       };
     },
     components: {
-      RoomBlock,
+      EventItem,
       ReserveForm
     },
     methods: {
