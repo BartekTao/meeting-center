@@ -1,91 +1,56 @@
-    <template>
+<template>
     <div>
-        <button @click="createRoom">Create Room</button>
+        <button @click="fetchSchema">Fetch GraphQL Schema</button>
     </div>
     </template>
-
+    
     <script>
-    import gql from 'graphql-tag';
-    // import client from '@/apollo-client'; 
-
-    import { ApolloClient, createHttpLink, InMemoryCache } from '@apollo/client/core'
+    import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client/core';
     import { setContext } from '@apollo/client/link/context';
-
-    const httpLink = createHttpLink({
-    uri: 'http://localhost:4000/graphql', 
-    });
-
-    const authLink = setContext((_, { headers }) => {
-    return {
-    headers: {
-    ...headers,
-    authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxMzc4NzkzM30.4TXPDGZjEb-fwEoluJIdD0KP5f_iqBlAAhbI-4Tb1-c",
-    }
-    }
-    });
-
-    const client = new ApolloClient({
-    link: authLink.concat(httpLink),
-    cache: new InMemoryCache(),
-    });
-
+    import gql from 'graphql-tag';
+    
     export default {
-    name: 'CreateRoom',
-    methods: {
-        createRoom() {
-        const mutation = gql`
-            mutation myCreate($myinput: UpsertRoomInput!) {
-            upsertRoom(room: $myinput) {
-                id
-                roomId
-                capacity
-                equipment
-                rules
-                isDelete
+      name: 'GraphQLTester',
+      methods: {
+        fetchSchema() {
+          const httpLink = createHttpLink({
+            uri: 'http://localhost:8080/query', 
+          });
+    
+          const authLink = setContext((_, { headers }) => {
+            return {
+              headers: {
+                ...headers,
+                authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxMzg4MTQzOH0.sm2X27FYWEE4l6ph2lssQSpywtJQBfbRz7iS-6g_Xhw",
+              }
             }
+          });
+    
+          const client = new ApolloClient({
+            link: authLink.concat(httpLink),
+            cache: new InMemoryCache(),
+          });
+    
+          const GET_SCHEMA_QUERY = gql`
+            {
+              __schema {
+                queryType {
+                  name
+                }
+              }
             }
-        `;
-
-        const variables = {
-            myinput: {
-            roomId: "xxx7777",
-            capacity: 15,
-            equipment: ["projector", "big table"],
-            rules: ["no food", "no drinks"]
-            }
-        };
-
-        client.mutate({
-            mutation,
-            variables
-        }).then(result => {
-            console.log('Room Created: ', result.data.upsertRoom);
-        }).catch(error => {
-            console.error('Error creating room: ', error);
-        });
+          `;
+    
+          client.query({
+            query: GET_SCHEMA_QUERY
+          }).then(response => {
+            console.log("Schema fetched successfully:", response.data);
+          }).catch(error => {
+            console.error("Failed to fetch schema:", error);
+          });
+          
         }
-        }
+      }
     }
-
-
-    const TEST_QUERY = gql`
-    {
-        __schema {
-        queryType {
-            name
-        }
-        }
-    }
-    `;
-
-    client.query({
-    query: TEST_QUERY
-    })
-    .then(response => {
-    console.log("連線成功：", response.data);
-    })
-    .catch(error => {
-    console.error("連線失敗：", error);
-    });
-
     </script>
+    

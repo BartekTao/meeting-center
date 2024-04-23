@@ -27,11 +27,11 @@ import JsPreloader from '@/components/JsPreloader.vue';
 
 export default {
   name: 'App',
-  // data () {
-  //   return {
-  //     first_data: '',
-  //   };
-  // },
+  data () {
+    return {
+      first_data: '',
+    };
+  },
   components: {
     BackgroundHeader,
     JsPreloader,

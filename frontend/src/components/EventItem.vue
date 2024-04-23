@@ -5,18 +5,18 @@
           <a><img :src="item.image_url" :alt="item.name"></a>
         </div>
         <div class="right-content align-self-center">
-          <a><h4>會議名稱：{{ item.name }}</h4></a>
+          <a><h4>會議室名稱：{{ item.name }}</h4></a>
           <!-- <div>{{ showReservator }}</div> -->
           <ItemPeriod 
             period-name="早上："
             :reservator-list="item.reservatorList.slice(0, 6)"
-            info-progress-width="250"
+            :info-progress-width="250"
             @update-show-reservator="updateShowReservator"
           />
           <ItemPeriod 
             period-name="下午："
             :reservator-list="item.reservatorList.slice(6)"
-            info-progress-width="500"
+            :info-progress-width="500"
             @update-show-reservator="updateShowReservator"
           />
           <div style="height: 20px;"></div>
@@ -25,7 +25,7 @@
             <li>可否飲食：{{ item.can_eat ? '是' : '否' }}</li>
           </ul><br>
           <div class="main-white-button">
-            <a class="openFormBtn" @click="openForm"><img :src="$parent.tapImage" alt="Booking">預約</a>
+            <a class="openFormBtn" @click="$emit('openForm', item)"><img :src="$parent.tapImage" alt="Booking">預約</a>
           </div>
         </div>
       </div>

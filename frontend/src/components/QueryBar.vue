@@ -62,8 +62,6 @@
   </template>
   
   <script>
-  import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client/core';
-  import { BOOKS_QUERY } from './QueryObj.vue';
 
   export default {
     name: 'QueryBar',
@@ -106,31 +104,7 @@
         const mm = String(today.getMonth() + 1).padStart(2, '0');
         const yyyy = today.getFullYear();
         return `${yyyy}-${mm}-${dd}`;
-      },
-      fetchBooks() {
-        const httpLink = createHttpLink({
-          uri: 'http://localhost:4000/' // 替换为您的 GraphQL API URI
-        });
-
-        const client = new ApolloClient({
-          link: httpLink,
-          cache: new InMemoryCache()
-        });
-
-        client.query({
-          query: BOOKS_QUERY
-        }).then(result => {
-          console.log(result.data);
-          if (result.data && result.data.books && result.data.books.length > 0) {
-            this.first_data = result.data.books[0];  // 更新 first_data 为查询结果的第一条数据
-          }
-        }).catch(error => {
-          console.error("Error fetching the books:", error);
-        });
       }
-    },
-    mounted() {
-      this.fetchBooks();
     },
   };
   </script>
