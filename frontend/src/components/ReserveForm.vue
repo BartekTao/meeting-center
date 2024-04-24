@@ -3,8 +3,24 @@
         <form id="submitForm">
             <div class="row mb-4">
                 <div class="col-sm-12">
-                    <h3 class="text-center">會議室名稱：{{ roomName }}</h3>
+                    <h3 class="text-center">會議室名稱：{{ roomInfo.roomName }}</h3>
                 </div>
+            </div>
+            <div class="row mb-2">
+                <ItemPeriod 
+                    period-name="早上："
+                    :reservator-list="roomInfo.reservatorList.slice(0, 6)"
+                    :info-progress-width="250"
+                    :margin-left='170'
+                    @update-show-reservator="updateShowReservator"
+                />
+                <ItemPeriod 
+                    period-name="下午："
+                    :reservator-list="roomInfo.reservatorList.slice(6)"
+                    :info-progress-width="500"
+                    :margin-left='170'
+                    @update-show-reservator="updateShowReservator"
+                />
             </div>
             <div class="row mb-2">
                 <label for="name" class="col-sm-2 col-form-label">會議標題：</label>
@@ -63,12 +79,17 @@
   </template>
   
   <script>
+  import ItemPeriod from './ItemPeriod.vue';
+
   export default {
     name: 'ReserveForm',
     data() {
       return {
+        roomInfo: {
+            reservatorList: [],
+            roomName: '',
+        },
         formInfo: {
-          roomName: '',
           name: 'Ray',
           email: 'example@gmail.com',
           start_time: '10:00',
@@ -79,14 +100,16 @@
         formDisplay: false,
         time_period: ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30',
           '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00',
-          '15:30', '16:00', '16:30', '17:00', '17:30', '18:00']
+          '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'],
+        showReservator: '',
       };
     },
     methods: {
       openForm(item) {
         this.formDisplay = true;
-        console.log('Opening form for:', item.name);
-        this.formInfo.roomName = item.name;
+        // console.log('Opening form for:', item.name);
+        this.roomInfo.roomName = item.name;
+        this.roomInfo.reservatorList = item.reservatorList;
       },
       closeForm() {
         this.formDisplay = false;
@@ -94,7 +117,13 @@
       submitForm() {
         alert(JSON.stringify(this.formInfo, null, 2));
         this.closeForm();
+      },
+      updateShowReservator(value) {
+        this.showReservator = value;
       }
+    },
+    components: {
+        ItemPeriod
     }
   }
   </script>

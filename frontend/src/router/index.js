@@ -1,16 +1,16 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import QueryPage from '../views/QueryPage.vue'
+import ReservePage from '../views/ReservePage.vue'
 
 const routes = [
   {
     path: '/',
     name: 'home',
-    component: QueryPage
+    component: ReservePage
   },
   {
-    path: '/reservation',
+    path: '/reserved-page',
     name: '已預約空間',
-    component: () => import('../views/ReservationPage.vue')
+    component: () => import('../views/ReservedPage.vue')
   },
   {
     path: '/manager',

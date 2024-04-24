@@ -1,7 +1,7 @@
 <template>
     <div class="period-container">
         <div class="period-name">{{ periodName }}</div>
-        <div class="progress-stacked" :style="{ width: infoProgressWidth + 'px' }">
+        <div class="progress-stacked" :style="{ width: infoProgressWidth + 'px', 'margin-left': marginLeft + 'px' }">
         <div v-for="(unit, index) in reservatorList" :key="index" 
             class="progress" 
             :style="{ width: unitWidth + '%' }"
@@ -20,7 +20,8 @@
     props: {
       periodName: String,
       reservatorList: Array,
-      infoProgressWidth: Number
+      infoProgressWidth: Number,
+      marginLeft: Number,
     },
     computed: {
       unitWidth() {

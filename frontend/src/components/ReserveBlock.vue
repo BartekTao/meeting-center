@@ -12,12 +12,14 @@
             period-name="早上："
             :reservator-list="item.reservatorList.slice(0, 6)"
             :info-progress-width="250"
+            :margin-left='0'
             @update-show-reservator="updateShowReservator"
           />
           <ItemPeriod 
             period-name="下午："
             :reservator-list="item.reservatorList.slice(6)"
             :info-progress-width="500"
+            :margin-left='0'
             @update-show-reservator="updateShowReservator"
           />
           <div style="height: 20px;"></div>

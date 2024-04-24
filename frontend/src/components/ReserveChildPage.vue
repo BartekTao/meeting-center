@@ -5,7 +5,6 @@
           <div class="col-lg-12">
             <div class="section-heading">
               <h2>已預約空間</h2>
-              <!-- <h6>Check Them Out</h6> -->
             </div>
           </div>
           <div class="col-lg-12">
