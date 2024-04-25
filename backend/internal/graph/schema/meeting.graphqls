@@ -1,5 +1,5 @@
 type Query {
-  paginatedRooms(first: Int = 20, after: String): RoomConnection!
+  paginatedRooms(first: Int = 20, last: Int, before: String, after: String): RoomConnection!
   room(id: ID!): Room!
 
   userEvents(userID: ID!): [Event!]

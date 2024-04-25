@@ -11,7 +11,7 @@ type MeetingManager interface {
 	//UpsertRoom(ctx context.Context, room model.UpsertRoomInput) (*Room, error)
 	UpsertRoom(ctx context.Context, upsertRoomInput model.UpsertRoomInput) (*Room, error)
 	DeleteRoom(ctx context.Context, id string) (*Room, error)
-	QueryPaginatedRoom(ctx context.Context, first int, after string) (*model.RoomConnection, error)
+	QueryPaginatedRoom(ctx context.Context, first int, last int, before string, after string) (*model.RoomConnection, error)
 	QueryRoom(ctx context.Context, id string) (*Room, error)
 	QueryRooms(ctx context.Context, id string) (*Room, error)
 }
@@ -19,7 +19,7 @@ type MeetingManager interface {
 type MeetingRepository interface {
 	UpsertRoom(ctx context.Context, upsertRoomInput model.UpsertRoomInput) (*Room, error)
 	DeleteRoom(ctx context.Context, id string) (*Room, error)
-	QueryPaginatedRoom(ctx context.Context, first int, after string) (*model.RoomConnection, error)
+	QueryPaginatedRoom(ctx context.Context, first int, last int, before string, after string) (*model.RoomConnection, error)
 }
 
 type BasicMeetingManager struct {
@@ -48,9 +48,9 @@ func (b *BasicMeetingManager) DeleteRoom(ctx context.Context, id string) (*Room,
 	return room, nil
 }
 
-func (b *BasicMeetingManager) QueryPaginatedRoom(ctx context.Context, first int, after string) (*model.RoomConnection, error) {
+func (b *BasicMeetingManager) QueryPaginatedRoom(ctx context.Context, first int, last int, before string, after string) (*model.RoomConnection, error) {
 	// panic(fmt.Errorf("not implemented: DeleteRoom - deleteRoom"))
-	room, err := b.meetingRepository.QueryPaginatedRoom(ctx, first, after)
+	room, err := b.meetingRepository.QueryPaginatedRoom(ctx, first, last, before, after)
 	if err != nil {
 		return nil, err
 	}

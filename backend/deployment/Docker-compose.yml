@@ -30,15 +30,15 @@ services:
       - ME_CONFIG_MONGODB_URL=mongodb://nycu:nycu@db:27017/
     depends_on:
       - db
-  meeting-center-api:
-    image: meeting-center-api
-    ports:
-      - 8080:8080
-    env_file:
-      - ../.env
-    depends_on:
-      - db
-      - jaeger
+  # meeting-center-api:
+  #   image: meeting-center-api
+  #   ports:
+  #     - 8080:8080
+  #   env_file:
+  #     - ../.env
+  #   depends_on:
+  #     - db
+  #     - jaeger
 
 volumes:
   mongo-data:

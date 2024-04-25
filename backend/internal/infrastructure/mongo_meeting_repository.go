@@ -163,14 +163,23 @@ func (m *MongoMeetingRepository) DeleteRoom(ctx context.Context, id string) (*me
 	return &deleted_room, nil
 }
 
-func (m *MongoMeetingRepository) QueryPaginatedRoom(ctx context.Context, first int, after string) (*model.RoomConnection, error) {
+func (m *MongoMeetingRepository) QueryPaginatedRoom(ctx context.Context, first int, last int, before string, after string) (*model.RoomConnection, error) {
 	filter := bson.M{}
+
 	if after != "" {
 		decodedCursor, err := decodeCursor(after)
 		if err != nil {
 			return nil, err
 		}
 		filter["roomId"] = bson.M{"$gt": decodedCursor}
+	}
+
+	if before != "" {
+		decodedCursor, err := decodeCursor(before)
+		if err != nil {
+			return nil, err
+		}
+		filter["roomId"] = bson.M{"$lt": decodedCursor}
 	}
 
 	cursor, err := m.client.Database("test-mongo").Collection("rooms").Find(ctx, filter)
@@ -203,10 +212,13 @@ func (m *MongoMeetingRepository) QueryPaginatedRoom(ctx context.Context, first i
 			Cursor: encodeCursor(room.RoomID),
 		}
 	}
+
+	hasPreviousPage := actualCount > last
 	hasNextPage := actualCount > first
 
 	pageInfo := &model.PageInfo{
-		HasNextPage: hasNextPage,
+		HasNextPage:     hasNextPage,
+		HasPreviousPage: hasPreviousPage,
 	}
 
 	if len(rooms) > 0 {

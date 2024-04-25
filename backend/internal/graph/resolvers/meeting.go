@@ -55,8 +55,8 @@ func (r *mutationResolver) DeleteEvent(ctx context.Context, id string) (*model.E
 }
 
 // PaginatedRooms is the resolver for the paginatedRooms field.
-func (r *queryResolver) PaginatedRooms(ctx context.Context, first *int, after *string) (*model.RoomConnection, error) {
-	RoomConnection, err := r.meetingManager.QueryPaginatedRoom(ctx, *first, *after)
+func (r *queryResolver) PaginatedRooms(ctx context.Context, first *int, last *int, before *string, after *string) (*model.RoomConnection, error) {
+	RoomConnection, err := r.meetingManager.QueryPaginatedRoom(ctx, *first, *last, *before, *after)
 	if err != nil {
 		return nil, err
 	}

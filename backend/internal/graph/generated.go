@@ -83,7 +83,7 @@ type ComplexityRoot struct {
 	Query struct {
 		Event                   func(childComplexity int, id string) int
 		PaginatedAvailableRooms func(childComplexity int, from int, to int, first *int, after *string) int
-		PaginatedRooms          func(childComplexity int, first *int, after *string) int
+		PaginatedRooms          func(childComplexity int, first *int, last *int, before *string, after *string) int
 		Room                    func(childComplexity int, id string) int
 		UserEvents              func(childComplexity int, userID string) int
 	}
@@ -122,7 +122,7 @@ type MutationResolver interface {
 	DeleteEvent(ctx context.Context, id string) (*model.Event, error)
 }
 type QueryResolver interface {
-	PaginatedRooms(ctx context.Context, first *int, after *string) (*model.RoomConnection, error)
+	PaginatedRooms(ctx context.Context, first *int, last *int, before *string, after *string) (*model.RoomConnection, error)
 	Room(ctx context.Context, id string) (*model.Room, error)
 	UserEvents(ctx context.Context, userID string) ([]*model.Event, error)
 	Event(ctx context.Context, id string) (*model.Event, error)
@@ -349,7 +349,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.PaginatedRooms(childComplexity, args["first"].(*int), args["after"].(*string)), true
+		return e.complexity.Query.PaginatedRooms(childComplexity, args["first"].(*int), args["last"].(*int), args["before"].(*string), args["after"].(*string)), true
 
 	case "Query.room":
 		if e.complexity.Query.Room == nil {
@@ -743,15 +743,33 @@ func (ec *executionContext) field_Query_paginatedRooms_args(ctx context.Context,
 		}
 	}
 	args["first"] = arg0
-	var arg1 *string
-	if tmp, ok := rawArgs["after"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+	var arg1 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["after"] = arg1
+	args["last"] = arg1
+	var arg2 *string
+	if tmp, ok := rawArgs["before"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["before"] = arg2
+	var arg3 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg3
 	return args, nil
 }
 
@@ -1903,7 +1921,7 @@ func (ec *executionContext) _Query_paginatedRooms(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().PaginatedRooms(rctx, fc.Args["first"].(*int), fc.Args["after"].(*string))
+		return ec.resolvers.Query().PaginatedRooms(rctx, fc.Args["first"].(*int), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["after"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
