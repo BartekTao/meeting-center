@@ -77,7 +77,7 @@
             console.error("Error creating or updating room:", error);
           });
         },
-        getAllRooms() {
+        QueryAllRooms() {
 
           const GET_ALL_ROOMS_QUERY = gql`
             query {
@@ -116,7 +116,7 @@
             });
 
             // console.log("Rooms fetched successfully:", new_rooms);
-            this.$emit('getAllRooms', new_rooms);
+            this.$emit('QueryAllRooms', new_rooms);
             console.log(new_rooms);
           }).catch(error => {
             console.error("Failed to fetch rooms:", error);

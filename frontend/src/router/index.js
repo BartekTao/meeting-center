@@ -15,7 +15,7 @@ const routes = [
   {
     path: '/manager',
     name: '後台管理',
-    component: () => import('../views/ManagerPage.vue')
+    component: () => import('../views/RoomPage.vue')
   },
 ]
 

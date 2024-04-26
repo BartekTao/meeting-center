@@ -1,7 +1,7 @@
 <template>
     <div>
       <head-page pageContent="後台管理"></head-page>
-      <manager-item :items="items" @open-form="openForm"></manager-item>
+      <room-list :items="items" @open-form="openForm"></room-list>
       <room-edit-form :formDisplay="formDisplay" :formInfo="formInfo" @close-form="closeForm" @update-info="handleUpdate"></room-edit-form>
       <comm-with-gql ref="commWithGql"></comm-with-gql>
     </div>
@@ -9,14 +9,14 @@
   
   <script>
   import HeadPage from '@/components/HeadPage.vue';
-  import ManagerItem from '@/components/ManagerItem.vue';
+  import RoomList from '@/components/RoomList.vue';
   import CommWithGql from '@/components/CommWithGql.vue'
   import RoomEditForm from '@/components/RoomEditForm.vue';
   
   export default {
     components: {
       HeadPage,
-      ManagerItem,
+      RoomList,
       CommWithGql,
       RoomEditForm
     },

@@ -147,7 +147,7 @@ export default {
     submitForm() {
       console.log(this.localFormInfo)
       this.$refs.commWithGql.createRoom(this.localFormInfo);
-      this.$refs.commWithGql.getAllRooms();
+      this.$refs.commWithGql.QueryAllRooms();
       this.closeForm();
     },
     closeForm() {
