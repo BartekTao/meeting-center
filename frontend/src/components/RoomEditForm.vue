@@ -147,16 +147,15 @@ export default {
     submitForm() {
       console.log(this.localFormInfo)
       this.$refs.commWithGql.createRoom(this.localFormInfo);
+      this.$refs.commWithGql.getAllRooms();
       this.closeForm();
-      // this.$emit('submit-form', this.localFormInfo);
-      // this.localFormInfo = JSON.parse(JSON.stringify(this.InitFormInfo));
     },
     closeForm() {
       this.$emit('close-form');
     },
     updateValue(field, value) {
       this.$emit('update-info', { field, value });
-    }
+    },
   }
 };
 </script>

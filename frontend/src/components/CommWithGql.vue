@@ -143,6 +143,7 @@
 
             // console.log("Rooms fetched successfully:", new_rooms);
             this.$emit('getAllRooms', new_rooms);
+            console.log(new_rooms);
           }).catch(error => {
             console.error("Failed to fetch rooms:", error);
           });

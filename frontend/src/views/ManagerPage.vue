@@ -1,7 +1,7 @@
 <template>
     <div>
       <head-page pageContent="後台管理"></head-page>
-      <manager-item :items="items" @open-form="openForm" @overwriteItem="handleOverwriteItem"></manager-item>
+      <manager-item :items="items" @open-form="openForm"></manager-item>
       <room-edit-form :formDisplay="formDisplay" :formInfo="formInfo" @close-form="closeForm" @update-info="handleUpdate"></room-edit-form>
       <comm-with-gql ref="commWithGql"></comm-with-gql>
     </div>
@@ -67,12 +67,6 @@
       };
     },  
     methods: {
-      handleOverwriteItem(index, newItem) {
-        const idx = this.items.findIndex(item => item.index === index);
-        if (idx !== -1) {
-          Object.assign(this.items[idx], newItem);
-        }
-      },
       openForm(item) {
         this.formDisplay = true;
         
@@ -94,7 +88,7 @@
       },
       handleUpdate({ field, value }) {
         this.$set(this.formInfo, field, value);
-      }
+      },
     },
     mounted() {
       this.itemsIndex = this.items.length;
