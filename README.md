@@ -22,3 +22,16 @@
 - set `{ "Authorization": "Bearer your-token" }` on header to call other api
 
 ### start frontend service
+
+#### Project setup
+```
+cd frontend
+npm install
+```
+
+#### Run the serve
+```
+npm run serve
+```
+
+Visit http://localhost:8888
