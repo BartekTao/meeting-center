@@ -164,15 +164,8 @@ func (m *MongoMeetingRepository) DeleteRoom(ctx context.Context, id string) (*me
 }
 
 func (m *MongoMeetingRepository) QueryPaginatedRoom(ctx context.Context, first int, last int, before string, after string) (*model.RoomConnection, error) {
+	collection := m.room_collection
 	filter := bson.M{}
-
-	if after != "" {
-		decodedCursor, err := decodeCursor(after)
-		if err != nil {
-			return nil, err
-		}
-		filter["roomId"] = bson.M{"$gt": decodedCursor}
-	}
 
 	if before != "" {
 		decodedCursor, err := decodeCursor(before)
@@ -182,14 +175,27 @@ func (m *MongoMeetingRepository) QueryPaginatedRoom(ctx context.Context, first i
 		filter["roomId"] = bson.M{"$lt": decodedCursor}
 	}
 
-	cursor, err := m.client.Database("test-mongo").Collection("rooms").Find(ctx, filter)
+	if after != "" {
+		decodedCursor, err := decodeCursor(after)
+		if err != nil {
+			return nil, err
+		}
+		filter["roomId"] = bson.M{"$gt": decodedCursor}
+	}
+
+	options := options.Find()
+	if last > 0 {
+		options.SetSort(bson.D{{Key: "roomId", Value: -1}})
+	}
+
+	cursor, err := collection.Find(ctx, filter, options)
 	if err != nil {
 		return nil, err
 	}
 	defer cursor.Close(ctx)
 
-	actualCount := 0
 	var rooms []*model.Room
+	var actualCount int
 	for cursor.Next(ctx) {
 		var room model.Room
 		if err := cursor.Decode(&room); err != nil {
@@ -197,12 +203,37 @@ func (m *MongoMeetingRepository) QueryPaginatedRoom(ctx context.Context, first i
 		}
 		rooms = append(rooms, &room)
 		actualCount++
-		if actualCount >= first {
+
+		if first > 0 && actualCount >= first {
 			if cursor.Next(ctx) {
 				actualCount++
 			}
 			break
 		}
+		if last > 0 && actualCount >= last {
+			if cursor.Next(ctx) {
+				actualCount++
+			}
+			break
+		}
+	}
+
+	var hasNextPage, hasPreviousPage bool
+	if first != 0 && after != "" {
+		hasPreviousPage = true
+		hasNextPage = actualCount > first
+	} else if first != 0 && after == "" {
+		hasNextPage = actualCount > first
+	} else if last != 0 && before != "" {
+		hasPreviousPage = actualCount > last
+		hasNextPage = true
+	} else if last != 0 && before == "" {
+		hasPreviousPage = actualCount > last
+	}
+
+	pageInfo := &model.PageInfo{
+		HasNextPage:     hasNextPage,
+		HasPreviousPage: hasPreviousPage,
 	}
 
 	edges := make([]*model.RoomEdge, len(rooms))
@@ -211,14 +242,6 @@ func (m *MongoMeetingRepository) QueryPaginatedRoom(ctx context.Context, first i
 			Node:   room,
 			Cursor: encodeCursor(room.RoomID),
 		}
-	}
-
-	hasPreviousPage := actualCount > last
-	hasNextPage := actualCount > first
-
-	pageInfo := &model.PageInfo{
-		HasNextPage:     hasNextPage,
-		HasPreviousPage: hasPreviousPage,
 	}
 
 	if len(rooms) > 0 {
@@ -232,6 +255,7 @@ func (m *MongoMeetingRepository) QueryPaginatedRoom(ctx context.Context, first i
 		Edges:    edges,
 		PageInfo: pageInfo,
 	}
+
 	return roomConnection, nil
 }
 
