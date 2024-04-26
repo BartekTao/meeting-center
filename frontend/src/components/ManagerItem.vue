@@ -59,30 +59,10 @@
     },
     data() {
       return {
-        formDisplay: false,
-        editIndex: 'none',
         docImage: require('@/assets/images/google-docs.png'),
         deleteImage: require('@/assets/images/delete.png'),
         image_url: require('../assets/images/listing-01.jpg'),
-        initialFormInfo: {
-          name: '',
-          image_url: require('../assets/images/listing-01.jpg'),
-          people_limit: 2,
-          can_eat: true,
-          can_drink: true,
-          has_projector: true,
-          has_big_table: true
-        },
         test_items: [],
-        formInfo: {
-          name: '',
-          image_url: require('../assets/images/listing-01.jpg'),
-          people_limit: 2,
-          can_eat: true,
-          can_drink: true,
-          has_projector: true,
-          has_big_table: true
-        },
       }
     },
     props: ['items'],

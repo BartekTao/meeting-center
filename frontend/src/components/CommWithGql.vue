@@ -1,7 +1,8 @@
     <template>
-      <div>
-          <button @click="createRoom(new_room)">Fetch GraphQL Schema</button>
-      </div>
+      <!-- <div>
+          <button @click="createRoom(test_room)">Fetch GraphQL Schema</button>
+      </div> -->
+      <div></div>
     </template>
     
     <script>
@@ -15,12 +16,12 @@
         return {
           rooms: [],
           pageInfo: {},
-          new_room: {
-            roomId: "xxx7777",
-            capacity: 13,
-            equipment: ["projector", "big table"],
-            rules: ["no food", "no drinks"]
-          }
+          // test_room: {
+          //   roomId: "xxx7777",
+          //   capacity: 13,
+          //   equipment: ["projector", "big table"],
+          //   rules: ["no food", "no drinks"]
+          // }
         };
       },
       created() {
@@ -75,9 +76,6 @@
           }).catch(error => {
             console.error("Error creating or updating room:", error);
           });
-        },
-        handleCreateRoom() {
-          this.createRoom(this.new_room);
         },
         getAllRooms() {
 
