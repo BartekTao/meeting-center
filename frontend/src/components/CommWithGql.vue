@@ -23,9 +23,6 @@
           }
         };
       },
-      mounted() {
-        this.getAllRooms();
-      },
       created() {
         const httpLink = createHttpLink({
           uri: 'http://localhost:8080/query', 
@@ -49,27 +46,6 @@
         generateRandomId() {
           const randomId = Math.floor(Math.random() * 900000000) + 100000000;
           return randomId.toString();
-        },
-        fetchSchema() {
-    
-          const GET_SCHEMA_QUERY = gql`
-            {
-              __schema {
-                queryType {
-                  name
-                }
-              }
-            }
-          `;
-    
-          this.client.query({
-            query: GET_SCHEMA_QUERY
-          }).then(response => {
-            console.log("Schema fetched successfully:", response.data);
-          }).catch(error => {
-            console.error("Failed to fetch schema:", error);
-          });
-          
         },
         createRoom(roomInput) {
 

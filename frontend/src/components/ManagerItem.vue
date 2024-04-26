@@ -54,6 +54,9 @@
     components: {
       CommWithGql
     },
+    mounted() {
+      this.$refs.commWithGql.getAllRooms();
+    },
     data() {
       return {
         formDisplay: false,

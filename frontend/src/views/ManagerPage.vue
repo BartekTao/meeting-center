@@ -81,7 +81,6 @@
             rules: this.init_room.rules
           };
         }
-        // console.log(this.formInfo)
       },
       closeForm() {
         this.formDisplay = false;
