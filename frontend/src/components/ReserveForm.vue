@@ -83,21 +83,18 @@
 
   export default {
     name: 'ReserveForm',
+    emits: ['close-form'],
+    props: ['roomInfo', 'formDisplay', 'userName'],
     data() {
       return {
-        roomInfo: {
-            reservatorList: [],
-            roomName: '',
-        },
         formInfo: {
-          name: 'Ray',
+          name: this.userName,
           email: 'example@gmail.com',
           start_time: '10:00',
           end_time: '12:00',
           content: 'test content',
           file: ''
         },
-        formDisplay: false,
         time_period: ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30',
           '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00',
           '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'],
@@ -105,21 +102,17 @@
       };
     },
     methods: {
-      openForm(item) {
-        this.formDisplay = true;
-        // console.log('Opening form for:', item.name);
-        this.roomInfo.roomName = item.name;
-        this.roomInfo.reservatorList = item.reservatorList;
-      },
-      closeForm() {
-        this.formDisplay = false;
-      },
       submitForm() {
-        alert(JSON.stringify(this.formInfo, null, 2));
+        console.log(this.formInfo);
+        console.log(this.roomInfo);
+        
         this.closeForm();
       },
       updateShowReservator(value) {
         this.showReservator = value;
+      },
+      closeForm() {
+        this.$emit('close-form');
       }
     },
     components: {

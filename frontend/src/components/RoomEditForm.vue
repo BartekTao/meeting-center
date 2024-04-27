@@ -72,23 +72,15 @@ export default {
       CommWithGql
     },
   emits: ['close-form', 'updateInfo'],
-  props: ['formInfo', 'formDisplay'],
+  props: ['roomInfo', 'formDisplay'],
   data() {
     return {
       image_url: require('../assets/images/listing-01.jpg'),
-      new_room: {
-        name: '',
-        image_url: '',
-        people_limit: 0,
-        can_eat: false,
-        can_drink: false,
-        has_big_table: false,
-        has_projector: false}
     };
   },
   computed: {
     localFormInfo() {
-      return JSON.parse(JSON.stringify(this.formInfo));
+      return JSON.parse(JSON.stringify(this.roomInfo));
     },
     canDrink: {
       get() {
@@ -147,7 +139,7 @@ export default {
     submitForm() {
       console.log(this.localFormInfo)
       this.$refs.commWithGql.createRoom(this.localFormInfo);
-      this.$refs.commWithGql.QueryAllRooms();
+      this.$refs.commWithGql.queryAllRooms();
       this.closeForm();
     },
     closeForm() {

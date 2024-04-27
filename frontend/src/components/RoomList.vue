@@ -1,5 +1,5 @@
 <template>
-  <comm-with-gql @query-all-rooms="QueryAllRooms" ref="commWithGql"></comm-with-gql>
+  <comm-with-gql @query-all-rooms="queryAllRooms" ref="commWithGql"></comm-with-gql>
   <div class="recent-listing" id="items">
     <div class="container">
       <div class="row">
@@ -55,7 +55,7 @@
       CommWithGql
     },
     mounted() {
-      this.$refs.commWithGql.QueryAllRooms();
+      this.$refs.commWithGql.queryAllRooms();
     },
     data() {
       return {
@@ -65,7 +65,6 @@
         test_items: [],
       }
     },
-    props: ['items'],
     emits: ['open-form', 'delete-item'],
     methods: {
       openForm(item) {
@@ -74,7 +73,7 @@
       deleteRoom(targetIndex) {
         this.$refs.commWithGql.deleteRoom(targetIndex);
       },
-      QueryAllRooms(rooms) {
+      queryAllRooms(rooms) {
         this.test_items = rooms
       }
     },

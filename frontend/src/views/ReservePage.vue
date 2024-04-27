@@ -1,7 +1,7 @@
 <template>
-  <ReserveBar />
-  <ReserveList :items="items" :openForm="openForm"/>
-  <ReserveForm ref="reserveFormComponent"/>
+  <ReserveBar/>
+  <ReserveList :openForm="openForm" :bookingAction="bookingAction" :editAction="editAction" :deleteAction="deleteAction"/>
+  <ReserveForm :formDisplay="formDisplay" :roomInfo="roomInfo" :userName="userName" @close-form="closeForm"/>
 </template>
 
 <script>
@@ -18,41 +18,49 @@ export default {
   },
   data() {
     return {
+      bookingAction: true,
+      editAction: false,
+      deleteAction: false,
+      formDisplay: false,
+      roomInfo: {
+          reservatorList: [],
+          roomName: '',
+      },
       userName: "Ray",
-      items: [
-        {
-          name: '001',
-          image_url: require('../assets/images/listing-01.jpg'),
-          people_limit: 12,
-          can_eat: false,
-          reservatorList: ['', '', 'Ivan', '', '', 'Ray', '', '', '', 'Ivan', 'Kevin', 'Ray', 'John', '', '', '', 'Ray', ''],
-        },
-        {
-          name: '002',
-          image_url: require('../assets/images/listing-01.jpg'),
-          people_limit: 24,
-          can_eat: false,
-          reservatorList: ['', '', 'Ivan', '', '', 'Ray', '', '', '', 'Ivan', 'Kevin', 'Ray', 'John', '', '', '', 'Ray', ''],
-        },
-        {
-          name: '003',
-          image_url: require('../assets/images/listing-01.jpg'),
-          people_limit: 32,
-          can_eat: true,
-          reservatorList: ['', '', 'Ivan', '', '', 'Ray', '', '', '', 'Ivan', 'Kevin', 'Ray', 'John', '', '', '', 'Ray', ''],
-        }
-      ],
-      time_period: ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30',
-        '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00',
-        '15:30', '16:00', '16:30', '17:00', '17:30', '18:00']
     };
   },
   methods: {
     openForm(item) {
-      if (this.$refs.reserveFormComponent) {
-        this.$refs.reserveFormComponent.openForm(item);
-      }
-    }
+      this.formDisplay = true;
+      this.roomInfo.id = item.id;
+      this.roomInfo.roomName = item.roomId;
+      this.roomInfo.reservatorList = item.reservatorList;
+    },
+    closeForm() {
+      this.formDisplay = false;
+    },
   }
 }
 </script>
+
+<!-- 
+<style>
+
+.info {
+  display: flex;        /* 使用 Flexbox 佈局 */
+  flex-wrap: wrap;      /* 允許項目換行 */
+  list-style: none;     /* 去除列表前的標記 */
+  padding: 0;           /* 去除預設的內距 */
+  margin: 0;            /* 去除預設的外距 */
+}
+
+.info li {
+  flex: 0 0 20%;        /* 每個 li 佔總寬度的 20% */
+  box-sizing: border-box; /* 盒子模型調整，邊界和內距不再另外計算 */
+  padding: 0.5rem;      /* 略微增加內距以便閱讀 */
+  border: 1px solid #ccc; /* 加上邊框以視覺區分 */
+  text-align: center;   /* 文字置中 */
+  background-color: white; /* 淺藍色背景 */
+}
+
+</style> -->

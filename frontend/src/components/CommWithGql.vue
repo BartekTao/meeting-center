@@ -16,12 +16,6 @@
         return {
           rooms: [],
           pageInfo: {},
-          // test_room: {
-          //   roomId: "xxx7777",
-          //   capacity: 13,
-          //   equipment: ["projector", "big table"],
-          //   rules: ["no food", "no drinks"]
-          // }
         };
       },
       created() {
@@ -33,7 +27,7 @@
           return {
             headers: {
               ...headers,
-              authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNDEzMTM3OX0.NWw0D5TapK8A8T7XI74E16Tjt23AMblu1bUUxBbPZhU",
+              authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNDIxODY1NX0.hhySvgS5mJx4YH8_GF3QUKKaDCPtJYIT44ahJ2BBagY",
             }
           }
         });
@@ -77,7 +71,7 @@
             console.error("Error creating or updating room:", error);
           });
         },
-        QueryAllRooms() {
+        queryAllRooms() {
 
           const GET_ALL_ROOMS_QUERY = gql`
             query {
@@ -116,7 +110,7 @@
             });
 
             // console.log("Rooms fetched successfully:", new_rooms);
-            this.$emit('QueryAllRooms', new_rooms);
+            this.$emit('queryAllRooms', new_rooms);
             console.log(new_rooms);
           }).catch(error => {
             console.error("Failed to fetch rooms:", error);

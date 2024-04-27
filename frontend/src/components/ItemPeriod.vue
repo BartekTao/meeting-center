@@ -45,5 +45,8 @@
     display: flex;          
     align-items: center;    
 }
+.occupied {
+    background-color: #E0F2FE;  
+}
 
 </style>
