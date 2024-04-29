@@ -3,7 +3,7 @@ package infra
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
+	"errors"
 	"log"
 	"os"
 	"time"
@@ -75,7 +75,7 @@ func NewMongoMeetingRepository(client *mongo.Client) *MongoMeetingRepository {
 func (m *MongoMeetingRepository) UpsertRoom(ctx context.Context, upsertRoomInput model.UpsertRoomInput) (*meeting.Room, error) {
 	collection := m.room_collection
 
-	if upsertRoomInput.ID == nil {
+	if upsertRoomInput.ID == nil { // Insert new room
 		currentTime := time.Now().Unix()
 		newRoom := meeting.Room{
 			RoomID:    upsertRoomInput.RoomID,
@@ -88,19 +88,22 @@ func (m *MongoMeetingRepository) UpsertRoom(ctx context.Context, upsertRoomInput
 		}
 		result, err := collection.InsertOne(ctx, newRoom)
 		if err != nil {
-			log.Fatalf("Failed to insert new room: %v", err)
+			log.Printf("Failed to insert new room: %v", err)
 			return nil, err
 		}
 		newRoom.ID = result.InsertedID.(primitive.ObjectID)
 
 		return &newRoom, nil
-	} else {
+	} else { // Update existing room
 		id, err := primitive.ObjectIDFromHex(*upsertRoomInput.ID)
 		if err != nil {
-			log.Fatalf("Invalid ID format: %v", err)
+			log.Printf("Invalid ID format: %v", err)
 			return nil, err
 		}
-		filter := bson.M{"_id": id}
+		filter := bson.M{
+			"_id":      id,
+			"isDelete": false,
+		}
 		update := bson.M{
 			"$set": bson.M{
 				"roomID":    upsertRoomInput.RoomID,
@@ -110,19 +113,18 @@ func (m *MongoMeetingRepository) UpsertRoom(ctx context.Context, upsertRoomInput
 				"updatedAt": time.Now().Unix(),
 			},
 		}
-		result, err := collection.UpdateOne(ctx, filter, update)
-		if err != nil {
-			log.Fatalf("Failed to update room: %v", err)
-			return nil, err
-		}
-		if result.MatchedCount == 0 {
-			return nil, fmt.Errorf("no room found with ID %s", *upsertRoomInput.ID)
-		}
 
 		var updatedRoom meeting.Room
-		if err := collection.FindOne(ctx, filter).Decode(&updatedRoom); err != nil {
-			log.Fatalf("Failed to retrieve updated room: %v", err)
-			return nil, err
+		err = collection.FindOneAndUpdate(ctx, filter, update).Decode(&updatedRoom)
+		if err != nil {
+			// ErrNoDocuments means that the filter did not match any documents in the collection.
+			if errors.Is(err, mongo.ErrNoDocuments) {
+				log.Printf("Document with the given ID not found or deleted: %v", err)
+				return nil, err
+			} else {
+				log.Printf("Failed to update new room: %v", err)
+				return nil, err
+			}
 		}
 
 		return &updatedRoom, nil
@@ -134,35 +136,56 @@ func (m *MongoMeetingRepository) DeleteRoom(ctx context.Context, id string) (*me
 
 	deleteRoomID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
-	filter := bson.M{"_id": deleteRoomID}
+	filter := bson.M{
+		"_id":      deleteRoomID,
+		"isDelete": false,
+	}
 	update := bson.M{"$set": bson.M{
-		"IsDelete":  true,
+		"isDelete":  true,
 		"UpdatedAt": time.Now().Unix(),
 	}}
 
-	result, err := collection.UpdateOne(ctx, filter, update)
-
-	if result.ModifiedCount == 0 { // Check if the document was found and soft deleted
-		fmt.Println("Document with the given ID not found")
-		return nil, mongo.ErrNoDocuments
-	} else if err != nil { // other failures
-		log.Fatalf("Failed to soft delete document: %v", err)
-		return nil, err
-	}
-
-	fmt.Printf("Deleted %d document(s) successfully.\n", result.ModifiedCount)
-
-	var deleted_room meeting.Room
-	err = collection.FindOne(ctx, filter).Decode(&deleted_room)
+	var updatedRoom meeting.Room
+	err = collection.FindOneAndUpdate(ctx, filter, update).Decode(&updatedRoom)
 	if err != nil {
-		log.Fatalf("Failed to decode updated room document: %v", err)
-		return nil, err
+		// ErrNoDocuments means that the filter did not match any documents in the collection.
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			log.Printf("Document with the given ID not found or has been deleted: %v", err)
+			return nil, err
+		} else {
+			log.Printf("Failed to soft delete room: %v", err)
+			return nil, err
+		}
 	}
 
-	return &deleted_room, nil
+	// Should the ID be released once a room was soft deleted?
+
+	return &updatedRoom, nil
+
+	/*
+		result, err := collection.UpdateOne(ctx, filter, update)
+
+		if result.ModifiedCount == 0 { // Check if the document was found and soft deleted
+			fmt.Println("Document with the given ID not found")
+			return nil, mongo.ErrNoDocuments
+		} else if err != nil { // other failures
+			return nil, err
+		}
+
+		fmt.Printf("Deleted %d document(s) successfully.\n", result.ModifiedCount)
+
+		var deleted_room meeting.Room
+		err = collection.FindOne(ctx, filter).Decode(&deleted_room)
+		if err != nil {
+			log.Fatalf("Failed to decode updated room document: %v", err)
+			return nil, err
+		}
+
+		return &deleted_room, nil
+	*/
 }
 
 func (m *MongoMeetingRepository) QueryPaginatedRoom(ctx context.Context, first int, last int, before string, after string) (*model.RoomConnection, error) {
@@ -274,9 +297,102 @@ func decodeCursor(cursorString string) (string, error) {
 }
 
 func (m *MongoMeetingRepository) UpsertEvent(ctx context.Context, upsertEventInput model.UpsertEventInput) (*meeting.Event, error) {
-	panic(fmt.Errorf("not implemented: DeleteRoom - deleteRoom"))
+	collection := m.event_collection
+
+	if upsertEventInput.ID == nil { // Insert new event
+		currentTime := time.Now().Unix()
+		newEvent := meeting.Event{
+			Title:           upsertEventInput.Title,
+			Description:     upsertEventInput.Description,
+			StartAt:         upsertEventInput.StartAt,
+			EndAt:           upsertEventInput.EndAt,
+			RoomID:          upsertEventInput.RoomID,
+			ParticipantsIDs: upsertEventInput.ParticipantsIDs,
+			Notes:           upsertEventInput.Notes,
+			RemindAt:        upsertEventInput.RemindAt,
+			IsDelete:        false,
+			CreatedAt:       currentTime,
+			UpdatedAt:       currentTime,
+		}
+		result, err := collection.InsertOne(ctx, newEvent)
+		if err != nil {
+			log.Printf("Failed to insert new event: %v", err)
+			return nil, err
+		}
+		newEvent.ID = result.InsertedID.(primitive.ObjectID)
+
+		return &newEvent, nil
+	} else { // Update existing event
+		id, err := primitive.ObjectIDFromHex(*upsertEventInput.ID)
+		if err != nil {
+			log.Printf("Invalid ID format: %v", err)
+			return nil, err
+		}
+		filter := bson.M{
+			"_id":      id,
+			"isDelete": false,
+		}
+		update := bson.M{
+			"$set": bson.M{
+				"title":           upsertEventInput.Title,
+				"description":     upsertEventInput.Description,
+				"startAt":         upsertEventInput.StartAt,
+				"endAt":           upsertEventInput.EndAt,
+				"roomId":          upsertEventInput.RoomID,
+				"participantsIDs": upsertEventInput.ParticipantsIDs,
+				"notes":           upsertEventInput.Notes,
+				"remindAt":        upsertEventInput.RemindAt,
+				"updatedAt":       time.Now().Unix(),
+			},
+		}
+
+		var updatedEvent meeting.Event
+		err = collection.FindOneAndUpdate(ctx, filter, update).Decode(&updatedEvent)
+		if err != nil {
+			// ErrNoDocuments means that the filter did not match any documents in the collection.
+			if errors.Is(err, mongo.ErrNoDocuments) {
+				log.Printf("Document with the given ID not found or deleted: %v", err)
+				return nil, err
+			} else {
+				log.Printf("Failed to update new event: %v", err)
+				return nil, err
+			}
+		}
+
+		return &updatedEvent, nil
+	}
 }
 
 func (m *MongoMeetingRepository) DeleteEvent(ctx context.Context, id string) (*meeting.Event, error) {
-	panic(fmt.Errorf("not implemented: DeleteRoom - deleteRoom"))
+	collection := m.event_collection
+
+	deleteEventID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Println(err)
+	}
+
+	filter := bson.M{
+		"_id":      deleteEventID,
+		"isDelete": false,
+	}
+	update := bson.M{"$set": bson.M{
+		"isDelete":  true,
+		"UpdatedAt": time.Now().Unix(),
+	}}
+
+	var updatedEvent meeting.Event
+	err = collection.FindOneAndUpdate(ctx, filter, update).Decode(&updatedEvent)
+	if err != nil {
+		// ErrNoDocuments means that the filter did not match any documents in the collection.
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			log.Printf("Document with the given ID not found or has been deleted: %v", err)
+			return nil, err
+		} else {
+			log.Printf("Failed to soft delete event: %v", err)
+			return nil, err
+		}
+	}
+
+	// Should the ID be released once a room was soft deleted?
+	return &updatedEvent, nil
 }
