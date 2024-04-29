@@ -46,7 +46,35 @@ func (r *mutationResolver) DeleteRoom(ctx context.Context, id *string) (*model.R
 
 // UpsertEvent is the resolver for the upsertEvent field.
 func (r *mutationResolver) UpsertEvent(ctx context.Context, input model.UpsertEventInput) (*model.Event, error) {
-	panic(fmt.Errorf("not implemented: UpsertEvent - upsertEvent"))
+	event, upsert_err := r.meetingManager.UpsertEvent(ctx, input)
+	if upsert_err != nil {
+		return nil, upsert_err
+	}
+
+	temp_room, query_err := r.meetingManager.QueryRoom(ctx, *event.RoomID)
+	if query_err != nil {
+		return nil, query_err
+	}
+	room := &model.Room{
+		ID:        temp_room.ID.Hex(),
+		RoomID:    temp_room.RoomID,
+		Capacity:  temp_room.Capacity,
+		Equipment: temp_room.Equipment,
+		Rules:     temp_room.Rules,
+		IsDelete:  &temp_room.IsDelete,
+	}
+
+	return &model.Event{
+		ID:          event.ID.Hex(),
+		Title:       event.Title,
+		Description: event.Description,
+		StartAt:     event.StartAt,
+		EndAt:       event.EndAt,
+		Room:        room,
+		//Participants: ,
+		Notes:    event.Notes,
+		RemindAt: event.RemindAt,
+	}, nil
 }
 
 // DeleteEvent is the resolver for the deleteEvent field.
