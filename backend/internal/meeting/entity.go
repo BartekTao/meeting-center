@@ -13,3 +13,12 @@ type Room struct {
 	UpdatedAt int64              `bson:"updatedAt"`
 	UpdaterId string             `bson:"updaterId"`
 }
+
+type Event struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty"`
+	EventID   string             `bson:"eventID"`
+	IsDelete  bool               `bson:"isDelete"`
+	CreatedAt int64              `bson:"createdAt"`
+	UpdatedAt int64              `bson:"updatedAt"`
+	UpdaterId string             `bson:"updaterId"`
+}

@@ -59,14 +59,16 @@ func NewMongoDBClient(ctx context.Context, cfg MongoDBConfig) (*mongo.Client, er
 }
 
 type MongoMeetingRepository struct {
-	client          *mongo.Client
-	room_collection mongo.Collection
+	client           *mongo.Client
+	room_collection  mongo.Collection
+	event_collection mongo.Collection
 }
 
 func NewMongoMeetingRepository(client *mongo.Client) *MongoMeetingRepository {
 	return &MongoMeetingRepository{
-		client:          client,
-		room_collection: *client.Database("test-mongo").Collection("rooms"),
+		client:           client,
+		room_collection:  *client.Database("test-mongo").Collection("rooms"),
+		event_collection: *client.Database("test-mongo").Collection("events"),
 	}
 }
 
@@ -269,4 +271,12 @@ func decodeCursor(cursorString string) (string, error) {
 		return "", err
 	}
 	return string(decodedBytes), nil
+}
+
+func (m *MongoMeetingRepository) UpsertEvent(ctx context.Context, upsertEventInput model.UpsertEventInput) (*meeting.Event, error) {
+	panic(fmt.Errorf("not implemented: DeleteRoom - deleteRoom"))
+}
+
+func (m *MongoMeetingRepository) DeleteEvent(ctx context.Context, id string) (*meeting.Event, error) {
+	panic(fmt.Errorf("not implemented: DeleteRoom - deleteRoom"))
 }
