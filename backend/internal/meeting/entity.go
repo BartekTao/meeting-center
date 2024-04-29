@@ -15,10 +15,17 @@ type Room struct {
 }
 
 type Event struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty"`
-	EventID   string             `bson:"eventID"`
-	IsDelete  bool               `bson:"isDelete"`
-	CreatedAt int64              `bson:"createdAt"`
-	UpdatedAt int64              `bson:"updatedAt"`
-	UpdaterId string             `bson:"updaterId"`
+	ID              primitive.ObjectID `bson:"_id,omitempty"`
+	Title           string             `bson:"title"`
+	Description     *string            `bson:"description"`
+	StartAt         int                `bson:"startAt"`
+	EndAt           int                `bson:"endAt"`
+	RoomID          *string            `bson:"roomId"`
+	ParticipantsIDs []string           `bson:"participantsIDs"`
+	Notes           *string            `bson:"notes"`
+	RemindAt        int                `bson:"remindAt"`
+	IsDelete        bool               `bson:"isDelete"`
+	CreatedAt       int64              `bson:"createdAt"`
+	UpdatedAt       int64              `bson:"updatedAt"`
+	UpdaterId       string             `bson:"updaterId"`
 }
