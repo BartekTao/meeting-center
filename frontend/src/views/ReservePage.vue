@@ -35,11 +35,7 @@ export default {
         position: 'absolute',
         maxWidth: '18rem',
         zIndex: 1000,
-      },
-      time_period: [],
-      reservator: '',
-      start_time: '',
-      end_time: ''
+      }
     };
   },
   methods: {
@@ -58,9 +54,6 @@ export default {
     hideDiv() {
       this.$refs.eventInfo.hideDiv();
     }
-  },
-  mounted() {
-    this.time_period = this.$names;
   }
 }
 </script>
