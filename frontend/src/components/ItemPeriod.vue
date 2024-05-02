@@ -18,6 +18,7 @@
   <script>
   // import { inject } from 'vue';
   export default {
+    emits: ['showDiv', 'hideDiv'],
     props: {
       periodName: String,
       reservatorList: Array,

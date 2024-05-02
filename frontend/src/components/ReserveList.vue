@@ -29,6 +29,7 @@
   
   export default {
     name: 'ReserveList',
+    emits: ['showDiv', 'hideDiv'],
     data() {
       return {
         room_list: [

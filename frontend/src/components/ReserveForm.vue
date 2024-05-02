@@ -13,6 +13,8 @@
                     :info-progress-width="250"
                     :margin-left='170'
                     @update-show-reservator="updateShowReservator"
+                    @showDiv="$emit('showDiv', $event)"
+                    @hideDiv="$emit('hideDiv')"
                 />
                 <ItemPeriod 
                     period-name="下午："
@@ -20,6 +22,8 @@
                     :info-progress-width="500"
                     :margin-left='170'
                     @update-show-reservator="updateShowReservator"
+                    @showDiv="$emit('showDiv', $event)"
+                    @hideDiv="$emit('hideDiv')"
                 />
             </div>
             <div class="row mb-2">
@@ -83,7 +87,7 @@
 
   export default {
     name: 'ReserveForm',
-    emits: ['close-form'],
+    emits: ['close-form', 'showDiv', 'hideDiv'],
     props: ['roomInfo', 'formDisplay', 'userName'],
     data() {
       return {

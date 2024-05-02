@@ -57,6 +57,7 @@
 
   export default {
     name: 'ReserveBlock',
+    emits: ['showDiv', 'hideDiv', 'openForm'],
     props: ['item', 'bookingAction', 'editAction', 'deleteAction'],
     methods: {
       updateShowReservator(value) {
