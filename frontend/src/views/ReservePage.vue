@@ -73,5 +73,8 @@ export default {
     -moz-user-select: none; /* Firefox 浏览器 */
     -ms-user-select: none; /* Internet Explorer/Edge 浏览器 */
   }
-  
+  .white-text {
+    color: white !important;
+  }
+
 </style>

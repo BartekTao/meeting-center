@@ -1,6 +1,16 @@
 <!-- ReserveList.vue -->
 <template>
-    <div id="detailInfo" :style="showDivStyle">{{ content }}</div>
+    <!-- <div id="detailInfo" :style="showDivStyle">{{ reservator }}</div> -->
+
+    <div class="card text-bg-info mb-3 white-text"  :style="showDivStyle">
+      <div class="card-header">詳細資訊</div>
+      <div class="card-body">
+        <h5 class="card-title">預約人：{{ reservator }}</h5>
+        <h5 class="card-title">開始時間：{{ start_time }}</h5>
+        <h5 class="card-title">結束時間：{{ end_time }}</h5>
+      </div>
+    </div>
+
     <div class="recent-listing" id="items">
       <div class="container">
         <div class="row">
@@ -24,7 +34,7 @@
 </template>
   
   <script>
-  import { ref, reactive } from 'vue';
+  import { ref, reactive, getCurrentInstance } from 'vue';
   import ReserveBlock from './ReserveBlock.vue';
   
   export default {
@@ -64,22 +74,30 @@
     },
     props: ['openForm', 'bookingAction', 'editAction', 'deleteAction'],
     setup() {
+      const instance = getCurrentInstance();
+      const time_period = ref([]);
+      const reservator = ref('');
+      const start_time = ref('');
+      const end_time = ref('');
+
+      if (instance && instance.appContext.config.globalProperties.$names) {
+        time_period.value = instance.appContext.config.globalProperties.$names;
+      }
+
       const showDivStyle = reactive({
-        width: '100px',
-        height: '100px',
-        backgroundColor: 'red',
         display: 'none',
         position: 'absolute',
+        maxWidth: '18rem',
         zIndex: 1000,
       });
-      const content = ref('');
 
       function showDiv(data) {
         showDivStyle.display = 'block';
         showDivStyle.left = data.event.pageX + 'px';
         showDivStyle.top = data.event.pageY + 'px';
-        content.value = data.unit;
-        console.log(data.index);
+        reservator.value = data.unit;
+        start_time.value = time_period.value[data.index];
+        end_time.value = time_period.value[data.index+1];
       }
 
       function hideDiv() {
@@ -88,9 +106,12 @@
 
       return {
         showDivStyle,
+        time_period,
+        start_time, 
+        end_time,
+        reservator,
         showDiv,
-        hideDiv,
-        content
+        hideDiv
       };
     }
   }
