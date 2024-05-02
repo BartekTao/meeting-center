@@ -29,23 +29,16 @@
         return 100 / this.reservatorList.length;
       }
     },
-    setup(props, { emit }) {
-
-      function updateSharedData(unit, index, event) {
-        if (props.periodName === "下午：") {
+    methods: {
+      updateSharedData(unit, index, event) {
+        if (this.periodName === "下午：") {
           index += 6;
         }
-        emit('showDiv', { unit, index, event });
+        this.$emit('showDiv', { unit, index, event });
+      },
+      hideDiv() {
+        this.$emit('hideDiv');
       }
-
-      function hideDiv() {
-        emit('hideDiv');
-      }
-
-      return {
-        updateSharedData,
-        hideDiv
-      };
     }
   }
   </script>

@@ -1,20 +1,23 @@
 <template>
   <ReserveBar/>
-  <ReserveList :openForm="openForm" :bookingAction="bookingAction" :editAction="editAction" :deleteAction="deleteAction"/>
+  <ReserveList  @showDiv="showDiv" @hideDiv="hideDiv" :openForm="openForm" :bookingAction="bookingAction" :editAction="editAction" :deleteAction="deleteAction"/>
   <ReserveForm :formDisplay="formDisplay" :roomInfo="roomInfo" :userName="userName" @close-form="closeForm"/>
+  <EventInfo ref="eventInfo"/>
 </template>
 
 <script>
 import ReserveBar from '@/components/ReserveBar.vue'
 import ReserveList from '@/components/ReserveList.vue';
 import ReserveForm from '@/components/ReserveForm.vue';
+import EventInfo from '@/components/EventInfo.vue';
 
 export default {
   name: 'ReservePage',
   components: {
     ReserveBar,
     ReserveList,
-    ReserveForm
+    ReserveForm,
+    EventInfo
   },
   data() {
     return {
@@ -27,6 +30,16 @@ export default {
           roomName: '',
       },
       userName: "Ray",
+      showDivStyle: {
+        display: 'none',
+        position: 'absolute',
+        maxWidth: '18rem',
+        zIndex: 1000,
+      },
+      time_period: [],
+      reservator: '',
+      start_time: '',
+      end_time: ''
     };
   },
   methods: {
@@ -39,6 +52,15 @@ export default {
     closeForm() {
       this.formDisplay = false;
     },
+    showDiv(data) {
+      this.$refs.eventInfo.showDiv(data);
+    },
+    hideDiv() {
+      this.$refs.eventInfo.hideDiv();
+    }
+  },
+  mounted() {
+    this.time_period = this.$names;
   }
 }
 </script>
