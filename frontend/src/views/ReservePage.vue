@@ -43,7 +43,7 @@ export default {
 }
 </script>
 
-<!-- 
+
 <style>
 
 .info {
@@ -63,4 +63,8 @@ export default {
   background-color: white; /* 淺藍色背景 */
 }
 
-</style> -->
+.bordered {
+  border: 1px solid white;
+}
+
+</style>

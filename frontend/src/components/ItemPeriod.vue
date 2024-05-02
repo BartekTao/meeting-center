@@ -3,7 +3,7 @@
         <div class="period-name">{{ periodName }}</div>
         <div class="progress-stacked" :style="{ width: infoProgressWidth + 'px', 'margin-left': marginLeft + 'px' }">
         <div v-for="(unit, index) in reservatorList" :key="index" 
-            class="progress" 
+            class="progress bordered" 
             :style="{ width: unitWidth + '%' }"
             @mouseover="showText(unit)"
             @mouseleave="clearText">
