@@ -1,5 +1,6 @@
 <!-- ReserveList.vue -->
 <template>
+    <div id="detailInfo" :style="showDivStyle">{{ content }}</div>
     <div class="recent-listing" id="items">
       <div class="container">
         <div class="row">
@@ -12,7 +13,7 @@
             <div class="">
               <div class="item">
                 <div class="row">
-                  <ReserveBlock v-for="item in room_list" :key="item.name" :item="item" @openForm="openForm" :bookingAction="bookingAction" :editAction="editAction" :deleteAction="deleteAction"/>
+                  <ReserveBlock v-for="item in room_list" :key="item.name" :item="item" @showDiv="showDiv" @hideDiv="hideDiv" @openForm="openForm" :bookingAction="bookingAction" :editAction="editAction" :deleteAction="deleteAction"/>
                 </div>
               </div>
             </div>
@@ -20,9 +21,10 @@
         </div>
       </div>
     </div>
-  </template>
+</template>
   
   <script>
+  import { ref, reactive } from 'vue';
   import ReserveBlock from './ReserveBlock.vue';
   
   export default {
@@ -61,6 +63,36 @@
       ReserveBlock
     },
     props: ['openForm', 'bookingAction', 'editAction', 'deleteAction'],
+    setup() {
+      const showDivStyle = reactive({
+        width: '100px',
+        height: '100px',
+        backgroundColor: 'red',
+        display: 'none',
+        position: 'absolute',
+        zIndex: 1000,
+      });
+      const content = ref('');
+
+      function showDiv(data) {
+        showDivStyle.display = 'block';
+        showDivStyle.left = data.event.pageX + 'px';
+        showDivStyle.top = data.event.pageY + 'px';
+        content.value = data.unit;
+        console.log(data.index);
+      }
+
+      function hideDiv() {
+        showDivStyle.display = 'none';
+      }
+
+      return {
+        showDivStyle,
+        showDiv,
+        hideDiv,
+        content
+      };
+    }
   }
   </script>
   

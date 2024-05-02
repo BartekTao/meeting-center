@@ -67,4 +67,11 @@ export default {
   border: 1px solid white;
 }
 
+.unselectable {
+    user-select: none; /* 防止文本被选取 */
+    -webkit-user-select: none; /* Safari 浏览器 */
+    -moz-user-select: none; /* Firefox 浏览器 */
+    -ms-user-select: none; /* Internet Explorer/Edge 浏览器 */
+  }
+  
 </style>

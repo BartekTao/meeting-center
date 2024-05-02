@@ -67,7 +67,7 @@
     name: 'ReserveBar',
     data() {
       return {
-        time_period: ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'],
+        time_period: [],
         selectedNumberOfPeople: 5,
         currentDate: this.getCurrentDate(), 
         selectedStartPeriod: '9:00',
@@ -105,6 +105,10 @@
         const yyyy = today.getFullYear();
         return `${yyyy}-${mm}-${dd}`;
       }
+    },
+    mounted() {
+      // console.log(this.$names);
+      this.time_period = this.$names;
     },
   };
   </script>

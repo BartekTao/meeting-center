@@ -5,9 +5,9 @@
         <div v-for="(unit, index) in reservatorList" :key="index" 
             class="progress bordered" 
             :style="{ width: unitWidth + '%' }"
-            @mouseover="showText(unit)"
-            @mouseleave="clearText">
-            <div :class="['progress-bar', unit ? 'bg-info' : '']">
+            @mouseover="updateSharedData(unit, index, $event)"
+            @mouseleave="hideDiv()">
+            <div :class="['unselectable', 'progress-bar', unit ? 'bg-info' : '']">
             {{ unit }}
             </div>
         </div>
@@ -16,6 +16,7 @@
 </template>
   
   <script>
+  // import { inject } from 'vue';
   export default {
     props: {
       periodName: String,
@@ -28,13 +29,23 @@
         return 100 / this.reservatorList.length;
       }
     },
-    methods: {
-        showText(unit) {
-        this.$emit('update-show-reservator', unit);
-        },
-        clearText() {
-        this.$emit('update-show-reservator', '');
+    setup(props, { emit }) {
+
+      function updateSharedData(unit, index, event) {
+        if (props.periodName === "下午：") {
+          index += 6;
         }
+        emit('showDiv', { unit, index, event });
+      }
+
+      function hideDiv() {
+        emit('hideDiv');
+      }
+
+      return {
+        updateSharedData,
+        hideDiv
+      };
     }
   }
   </script>

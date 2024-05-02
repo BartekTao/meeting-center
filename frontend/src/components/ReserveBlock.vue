@@ -14,6 +14,8 @@
             :info-progress-width="250"
             :margin-left='0'
             @update-show-reservator="updateShowReservator"
+            @showDiv="$emit('showDiv', $event)"
+            @hideDiv="$emit('hideDiv')"
           />
           <ItemPeriod 
             period-name="下午："
@@ -21,6 +23,8 @@
             :info-progress-width="500"
             :margin-left='0'
             @update-show-reservator="updateShowReservator"
+            @showDiv="$emit('showDiv', $event)"
+            @hideDiv="$emit('hideDiv')"
           />
           <div style="height: 20px;"></div>
           <ul class="info" style="padding-left: 0rem;">
