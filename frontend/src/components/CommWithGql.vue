@@ -27,7 +27,7 @@
           return {
             headers: {
               ...headers,
-              authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNDQ4NTY1N30.dQPhfSMyQ5XVLgoi-aX18cdrm0LlcvYQuZF96ut47FA",
+              authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNDczOTkyN30.1a3KGC7tJuLQHvmDoC6-6ErGD1_Vz35gPbAoZqU1P0A",
             }
           }
         });
