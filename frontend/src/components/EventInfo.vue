@@ -21,7 +21,7 @@
           left: '0px',
           top: '0px'
         },
-        time_period: [],  // 这个数组需要从父组件传入或其他方式获取
+        time_period: [],
         reservator: '',
         start_time: '',
         end_time: ''
@@ -39,6 +39,9 @@
       hideDiv() {
         this.showDivStyle.display = 'none';
       }
+    },
+    mounted() {
+      this.time_period = this.$names;
     }
   }
   </script>

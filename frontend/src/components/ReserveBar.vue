@@ -107,7 +107,6 @@
       }
     },
     mounted() {
-      // console.log(this.$names);
       this.time_period = this.$names;
     },
   };
