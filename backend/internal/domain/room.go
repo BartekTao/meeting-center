@@ -23,5 +23,6 @@ func (r *Room) DeleteRoom() {
 type RoomRepository interface {
 	UpsertRoom(ctx context.Context, room Room) (*Room, error)
 	DeleteRoom(ctx context.Context, id string) (*Room, error)
+	GetRoomByID(ctx context.Context, id string) (*Room, error)
 	QueryPaginatedRoom(ctx context.Context, skip int, limit int) ([]Room, error)
 }

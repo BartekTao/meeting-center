@@ -22,7 +22,7 @@ func (r *mutationResolver) UpsertRoom(ctx context.Context, room model.UpsertRoom
 		Equipment: room.Equipment,
 		Rules:     room.Rules,
 	}
-	res, err := r.roomHandler.Handle(ctx, upsertRoom)
+	res, err := r.roomHandler.UpsertRoom(ctx, upsertRoom)
 	if err != nil {
 		return nil, err
 	}
@@ -38,12 +38,12 @@ func (r *mutationResolver) UpsertRoom(ctx context.Context, room model.UpsertRoom
 
 // DeleteRoom is the resolver for the deleteRoom field.
 func (r *mutationResolver) DeleteRoom(ctx context.Context, id *string) (*model.Room, error) {
-	room, err := r.meetingManager.DeleteRoom(ctx, *id)
+	room, err := r.roomHandler.DeleteRoom(ctx, *id)
 	if err != nil {
 		return nil, err
 	}
 	return &model.Room{
-		ID:        room.ID.Hex(),
+		ID:        *room.ID,
 		RoomID:    room.RoomID,
 		Capacity:  room.Capacity,
 		Equipment: room.Equipment,

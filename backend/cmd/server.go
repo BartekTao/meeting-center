@@ -118,7 +118,7 @@ func newHTTPHandler(mongoClient *mongo.Client) http.Handler {
 	graphqlServer := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: resolvers.NewResolver(
 			meetingManager,
-			commands.NewUpsertRoomRequestHandler(roomRepo),
+			commands.NewRoomHandler(roomRepo),
 		),
 	}))
 	graphqlServer.AroundFields(tracer())

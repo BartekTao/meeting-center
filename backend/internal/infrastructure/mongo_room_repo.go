@@ -56,10 +56,9 @@ func (m *MongoRoomRepository) UpsertRoom(ctx context.Context, room domain.Room) 
 			log.Printf("Failed to insert new room: %v", err)
 			return nil, err
 		}
-		newRoom.ID = result.InsertedID.(primitive.ObjectID)
 
 		newDomainRoom := domain.Room{
-			ID:        ptr(newRoom.ID.Hex()),
+			ID:        ptr(result.InsertedID.(primitive.ObjectID).Hex()),
 			RoomID:    newRoom.RoomID,
 			Capacity:  newRoom.Capacity,
 			Equipment: newRoom.Equipment,
@@ -169,6 +168,23 @@ func (m *MongoRoomRepository) QueryPaginatedRoom(ctx context.Context, skip int, 
 		return nil, err
 	}
 	return results, nil
+}
+
+func (m *MongoRoomRepository) GetRoomByID(ctx context.Context, id string) (*domain.Room, error) {
+	_id, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Println(err)
+	}
+	filter := bson.M{
+		"_id": _id,
+	}
+	var room domain.Room
+	err = m.roomCollection.FindOne(ctx, filter).Decode(&room)
+	if err != nil {
+		log.Fatalf("Failed to decode updated room document: %v", err)
+		return nil, err
+	}
+	return &room, nil
 }
 
 func ptr(s string) *string { return &s }

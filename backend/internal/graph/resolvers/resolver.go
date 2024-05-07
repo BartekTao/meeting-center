@@ -11,10 +11,10 @@ import (
 
 type Resolver struct {
 	meetingManager meeting.MeetingManager
-	roomHandler    commands.UpsertRoomRequestHandler
+	roomHandler    commands.RoomHandler
 }
 
-func NewResolver(meetingManager meeting.MeetingManager, roomHandler commands.UpsertRoomRequestHandler) *Resolver {
+func NewResolver(meetingManager meeting.MeetingManager, roomHandler commands.RoomHandler) *Resolver {
 	return &Resolver{
 		meetingManager: meetingManager,
 		roomHandler:    roomHandler,
