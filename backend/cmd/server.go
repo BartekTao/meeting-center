@@ -14,6 +14,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/BartekTao/nycu-meeting-room-api/internal/app/commands"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/resolvers"
 	infra "github.com/BartekTao/nycu-meeting-room-api/internal/infrastructure"
@@ -113,7 +114,13 @@ func newHTTPHandler(mongoClient *mongo.Client) http.Handler {
 	mux.HandleFunc("/auth/google/callback", authHandler.Callback)
 
 	// Setup GraphQL server
-	graphqlServer := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolvers.NewResolver(meetingManager)}))
+	roomRepo := infra.NewRoomRepository(mongoClient)
+	graphqlServer := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
+		Resolvers: resolvers.NewResolver(
+			meetingManager,
+			commands.NewUpsertRoomRequestHandler(roomRepo),
+		),
+	}))
 	graphqlServer.AroundFields(tracer())
 	graphqlServer.SetErrorPresenter(func(ctx context.Context, e error) *gqlerror.Error {
 		gqlErr := graphql.DefaultErrorPresenter(ctx, e)

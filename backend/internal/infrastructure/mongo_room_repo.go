@@ -13,12 +13,24 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type Room struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty"`
+	RoomID    string             `bson:"roomID"`
+	Capacity  int                `bson:"capacity"`
+	Equipment []string           `bson:"equipment"`
+	Rules     []string           `bson:"rules"`
+	IsDelete  bool               `bson:"isDelete"`
+	CreatedAt int64              `bson:"createdAt"`
+	UpdatedAt int64              `bson:"updatedAt"`
+	UpdaterId string             `bson:"updaterId"`
+}
+
 type MongoRoomRepository struct {
 	client         *mongo.Client
 	roomCollection mongo.Collection
 }
 
-func NewRoomRepository(client *mongo.Client) *MongoRoomRepository {
+func NewRoomRepository(client *mongo.Client) domain.RoomRepository {
 	return &MongoRoomRepository{
 		client:         client,
 		roomCollection: *client.Database("meetingCenter").Collection("rooms"),
@@ -30,7 +42,7 @@ func (m *MongoRoomRepository) UpsertRoom(ctx context.Context, room domain.Room) 
 
 	if room.ID == nil { // Insert new room
 		currentTime := time.Now().Unix()
-		newRoom := domain.Room{
+		newRoom := Room{
 			RoomID:    room.RoomID,
 			Capacity:  room.Capacity,
 			Equipment: room.Equipment,
@@ -44,9 +56,20 @@ func (m *MongoRoomRepository) UpsertRoom(ctx context.Context, room domain.Room) 
 			log.Printf("Failed to insert new room: %v", err)
 			return nil, err
 		}
-		*newRoom.ID = result.InsertedID.(primitive.ObjectID).Hex()
+		newRoom.ID = result.InsertedID.(primitive.ObjectID)
 
-		return &newRoom, nil
+		newDomainRoom := domain.Room{
+			ID:        ptr(newRoom.ID.Hex()),
+			RoomID:    newRoom.RoomID,
+			Capacity:  newRoom.Capacity,
+			Equipment: newRoom.Equipment,
+			Rules:     newRoom.Rules,
+			IsDelete:  false,
+			CreatedAt: newRoom.CreatedAt,
+			UpdatedAt: newRoom.UpdatedAt,
+		}
+
+		return &newDomainRoom, nil
 	} else { // Update existing room
 		id, err := primitive.ObjectIDFromHex(*room.ID)
 		if err != nil {
@@ -147,3 +170,5 @@ func (m *MongoRoomRepository) QueryPaginatedRoom(ctx context.Context, skip int, 
 	}
 	return results, nil
 }
+
+func ptr(s string) *string { return &s }

@@ -16,6 +16,10 @@ type Room struct {
 	UpdaterId string   `json:"updaterId"`
 }
 
+func (r *Room) DeleteRoom() {
+	r.IsDelete = true
+}
+
 type RoomRepository interface {
 	UpsertRoom(ctx context.Context, room Room) (*Room, error)
 	DeleteRoom(ctx context.Context, id string) (*Room, error)

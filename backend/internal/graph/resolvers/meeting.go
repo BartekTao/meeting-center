@@ -8,18 +8,26 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/BartekTao/nycu-meeting-room-api/internal/app/commands"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
 )
 
 // UpsertRoom is the resolver for the upsertRoom field.
 func (r *mutationResolver) UpsertRoom(ctx context.Context, room model.UpsertRoomInput) (*model.Room, error) {
-	res, err := r.meetingManager.UpsertRoom(ctx, room)
+	upsertRoom := commands.UpsertRoomRequest{
+		ID:        room.ID,
+		RoomID:    room.RoomID,
+		Capacity:  room.Capacity,
+		Equipment: room.Equipment,
+		Rules:     room.Rules,
+	}
+	res, err := r.roomHandler.Handle(ctx, upsertRoom)
 	if err != nil {
 		return nil, err
 	}
 	return &model.Room{
-		ID:        res.ID.Hex(),
+		ID:        *res.ID,
 		RoomID:    res.RoomID,
 		Capacity:  res.Capacity,
 		Equipment: res.Equipment,
@@ -71,7 +79,7 @@ func (r *mutationResolver) UpsertEvent(ctx context.Context, input model.UpsertEv
 		StartAt:     event.StartAt,
 		EndAt:       event.EndAt,
 		Room:        room,
-		//Participants: ,
+		// Participants: ,
 		Notes:    event.Notes,
 		RemindAt: event.RemindAt,
 	}, nil
@@ -121,5 +129,7 @@ func (r *Resolver) Mutation() graph.MutationResolver { return &mutationResolver{
 // Query returns graph.QueryResolver implementation.
 func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)

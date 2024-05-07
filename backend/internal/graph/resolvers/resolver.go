@@ -1,6 +1,9 @@
 package resolvers
 
-import "github.com/BartekTao/nycu-meeting-room-api/internal/meeting"
+import (
+	"github.com/BartekTao/nycu-meeting-room-api/internal/app/commands"
+	"github.com/BartekTao/nycu-meeting-room-api/internal/meeting"
+)
 
 // This file will not be regenerated automatically.
 //
@@ -8,10 +11,12 @@ import "github.com/BartekTao/nycu-meeting-room-api/internal/meeting"
 
 type Resolver struct {
 	meetingManager meeting.MeetingManager
+	roomHandler    commands.UpsertRoomRequestHandler
 }
 
-func NewResolver(meetingManager meeting.MeetingManager) *Resolver {
+func NewResolver(meetingManager meeting.MeetingManager, roomHandler commands.UpsertRoomRequestHandler) *Resolver {
 	return &Resolver{
 		meetingManager: meetingManager,
+		roomHandler:    roomHandler,
 	}
 }
