@@ -45,6 +45,9 @@
             <div class="main-white-button">
               <a class="openFormBtn" v-if="deleteAction" ><img :src="deleteImage" alt="Delete">刪除</a>
             </div>
+            <div class="main-white-button">
+              <a class="openFormBtn" v-if="editCommentAction"  @click="$emit('openCommentForm', item)"><img :src="docImage" alt="Edit">編輯會議結論</a>
+            </div>
           </div>
 
         </div>
@@ -57,8 +60,8 @@
 
   export default {
     name: 'ReserveBlock',
-    emits: ['showDiv', 'hideDiv', 'openForm'],
-    props: ['item', 'bookingAction', 'editAction', 'deleteAction'],
+    emits: ['showDiv', 'hideDiv', 'openForm', 'openCommentForm'],
+    props: ['item', 'bookingAction', 'editAction', 'deleteAction', 'editCommentAction'],
     methods: {
       updateShowReservator(value) {
         this.showReservator = value;

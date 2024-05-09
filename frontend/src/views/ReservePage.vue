@@ -1,6 +1,6 @@
 <template>
   <ReserveBar/>
-  <ReserveList  @showDiv="showDiv" @hideDiv="hideDiv" :openForm="openForm" :bookingAction="bookingAction" :editAction="editAction" :deleteAction="deleteAction"/>
+  <ReserveList  @showDiv="showDiv" @hideDiv="hideDiv" :openForm="openForm" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction"/>
   <ReserveForm  @showDiv="showDiv" @hideDiv="hideDiv" :formDisplay="formDisplay" :roomInfo="roomInfo" :userName="userName" @close-form="closeForm"/>
   <EventInfo ref="eventInfo"/>
 </template>
@@ -23,6 +23,7 @@ export default {
     return {
       bookingAction: true,
       editAction: false,
+      editCommentAction: false,
       deleteAction: false,
       formDisplay: false,
       roomInfo: {

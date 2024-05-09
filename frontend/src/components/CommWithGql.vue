@@ -27,7 +27,7 @@
           return {
             headers: {
               ...headers,
-              authorization: "Bearer ",
+              authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNDkyNzM2Nn0.lrgfdTORvjYPOqDQErfs37kuQp2QCLQbwwfsgpgnM70",
             }
           }
         });
