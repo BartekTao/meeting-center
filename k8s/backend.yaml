@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meeting-center-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: meeting-center-api
+  template:
+    metadata:
+      labels:
+        app: meeting-center-api
+    spec:
+      containers:
+        - name: meeting-center-api
+          image: ghcr.io/jammy0611/meeting-center-backend:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: my-secret
+                  key: MONGO_URI
+            - name: GOOGLE_OAUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: my-secret
+                  key: GOOGLE_OAUTH_CLIENT_ID
+            - name: GOOGLE_OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: my-secret
+                  key: GOOGLE_OAUTH_CLIENT_SECRET
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: my-secret
+                  key: JWT_KEY
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: my-secret
+                  key: OTEL_EXPORTER_OTLP_ENDPOINT
+            - name: OTEL_EXPORTER_OTLP_INSECURE
+              valueFrom:
+                secretKeyRef:
+                  name: my-secret
+                  key: OTEL_EXPORTER_OTLP_INSECURE
+            - name: OTEL_SERVICE_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: my-secret
+                  key: OTEL_SERVICE_NAME
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meeting-center-api
+spec:
+  type: ClusterIP
+  selector:
+    app: meeting-center-api
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
