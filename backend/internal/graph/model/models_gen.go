@@ -36,6 +36,7 @@ type Event struct {
 	Notes        *string `json:"notes,omitempty"`
 	RemindAt     int     `json:"remindAt"`
 	Creator      *User   `json:"creator"`
+	IsDelete     *bool   `json:"isDelete,omitempty"`
 }
 
 type Mutation struct {

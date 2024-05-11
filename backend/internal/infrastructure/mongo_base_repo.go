@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -11,6 +12,48 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+type MongoDBConfig struct {
+	URI string
+}
+
+func SetUpMongoDB() *mongo.Client {
+	mongoURI := os.Getenv("MONGO_URI")
+	if mongoURI == "" {
+		log.Fatal("You must set the MONGO_URI environment variable")
+	}
+	ctx := context.Background()
+
+	mongoClient, err := NewMongoDBClient(ctx, MongoDBConfig{URI: mongoURI})
+	if err != nil {
+		log.Panic(err)
+	}
+
+	err = mongoClient.Ping(ctx, nil)
+	if err != nil {
+		log.Panic("Failed to ping MongoDB:", err)
+	}
+
+	log.Println("Successfully connected and pinged MongoDB.")
+	return mongoClient
+}
+
+func ShutdownMongoDB(mongoClient *mongo.Client) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := mongoClient.Disconnect(ctx); err != nil {
+		log.Panic("Failed to disconnect MongoDB:", err)
+	}
+	log.Println("MongoDB client disconnected successfully.")
+}
+
+func NewMongoDBClient(ctx context.Context, cfg MongoDBConfig) (*mongo.Client, error) {
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.URI))
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
+}
 
 type BaseRepository[T any] struct{}
 

@@ -82,6 +82,7 @@ func (r *mutationResolver) UpsertEvent(ctx context.Context, input model.UpsertEv
 			// Participants: ,
 			Notes:    event.Notes,
 			RemindAt: event.RemindAt,
+			IsDelete: &event.IsDelete,
 		}, nil
 	}
 
@@ -108,6 +109,7 @@ func (r *mutationResolver) UpsertEvent(ctx context.Context, input model.UpsertEv
 		// Participants: ,
 		Notes:    event.Notes,
 		RemindAt: event.RemindAt,
+		IsDelete: &event.IsDelete,
 	}, nil
 }
 
@@ -141,6 +143,7 @@ func (r *mutationResolver) DeleteEvent(ctx context.Context, id string) (*model.E
 			// Participants: ,
 			Notes:    event.Notes,
 			RemindAt: event.RemindAt,
+			IsDelete: &event.IsDelete,
 		}, nil
 	}
 
@@ -167,6 +170,7 @@ func (r *mutationResolver) DeleteEvent(ctx context.Context, id string) (*model.E
 		// Participants: ,
 		Notes:    event.Notes,
 		RemindAt: event.RemindAt,
+		IsDelete: &event.IsDelete,
 	}, nil
 }
 
@@ -246,6 +250,7 @@ func (r *queryResolver) Event(ctx context.Context, id string) (*model.Event, err
 			// Participants: ,
 			Notes:    event.Notes,
 			RemindAt: event.RemindAt,
+			IsDelete: &event.IsDelete,
 		}, nil
 	}
 
@@ -272,6 +277,7 @@ func (r *queryResolver) Event(ctx context.Context, id string) (*model.Event, err
 		// Participants: ,
 		Notes:    event.Notes,
 		RemindAt: event.RemindAt,
+		IsDelete: &event.IsDelete,
 	}, nil
 }
 

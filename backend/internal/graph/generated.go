@@ -58,6 +58,7 @@ type ComplexityRoot struct {
 		Description  func(childComplexity int) int
 		EndAt        func(childComplexity int) int
 		ID           func(childComplexity int) int
+		IsDelete     func(childComplexity int) int
 		Notes        func(childComplexity int) int
 		Participants func(childComplexity int) int
 		RemindAt     func(childComplexity int) int
@@ -194,6 +195,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Event.ID(childComplexity), true
+
+	case "Event.isDelete":
+		if e.complexity.Event.IsDelete == nil {
+			break
+		}
+
+		return e.complexity.Event.IsDelete(childComplexity), true
 
 	case "Event.notes":
 		if e.complexity.Event.Notes == nil {
@@ -1407,6 +1415,47 @@ func (ec *executionContext) fieldContext_Event_creator(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Event_isDelete(ctx context.Context, field graphql.CollectedField, obj *model.Event) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Event_isDelete(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsDelete, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Event_isDelete(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Event",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_upsertRoom(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_upsertRoom(ctx, field)
 	if err != nil {
@@ -1608,6 +1657,8 @@ func (ec *executionContext) fieldContext_Mutation_upsertEvent(ctx context.Contex
 				return ec.fieldContext_Event_remindAt(ctx, field)
 			case "creator":
 				return ec.fieldContext_Event_creator(ctx, field)
+			case "isDelete":
+				return ec.fieldContext_Event_isDelete(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -1685,6 +1736,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteEvent(ctx context.Contex
 				return ec.fieldContext_Event_remindAt(ctx, field)
 			case "creator":
 				return ec.fieldContext_Event_creator(ctx, field)
+			case "isDelete":
+				return ec.fieldContext_Event_isDelete(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -1973,6 +2026,8 @@ func (ec *executionContext) fieldContext_Query_userEvents(ctx context.Context, f
 				return ec.fieldContext_Event_remindAt(ctx, field)
 			case "creator":
 				return ec.fieldContext_Event_creator(ctx, field)
+			case "isDelete":
+				return ec.fieldContext_Event_isDelete(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -2047,6 +2102,8 @@ func (ec *executionContext) fieldContext_Query_event(ctx context.Context, field 
 				return ec.fieldContext_Event_remindAt(ctx, field)
 			case "creator":
 				return ec.fieldContext_Event_creator(ctx, field)
+			case "isDelete":
+				return ec.fieldContext_Event_isDelete(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -4954,6 +5011,8 @@ func (ec *executionContext) _Event(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "isDelete":
+			out.Values[i] = ec._Event_isDelete(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

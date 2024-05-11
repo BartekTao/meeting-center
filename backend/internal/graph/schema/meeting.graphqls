@@ -79,6 +79,7 @@ type Event {
   notes: String
   remindAt: Int!
   creator: User!
+  isDelete: Boolean
 }
 
 type User {
