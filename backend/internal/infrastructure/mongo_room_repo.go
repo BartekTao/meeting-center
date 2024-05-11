@@ -56,19 +56,9 @@ func (m *MongoRoomRepository) UpsertRoom(ctx context.Context, room domain.Room) 
 			log.Printf("Failed to insert new room: %v", err)
 			return nil, err
 		}
+		newRoom.ID = result.InsertedID.(primitive.ObjectID)
 
-		newDomainRoom := domain.Room{
-			ID:        ptr(result.InsertedID.(primitive.ObjectID).Hex()),
-			RoomID:    newRoom.RoomID,
-			Capacity:  newRoom.Capacity,
-			Equipment: newRoom.Equipment,
-			Rules:     newRoom.Rules,
-			IsDelete:  false,
-			CreatedAt: newRoom.CreatedAt,
-			UpdatedAt: newRoom.UpdatedAt,
-		}
-
-		return &newDomainRoom, nil
+		return ToDomainRoom(&newRoom), nil
 	} else { // Update existing room
 		id, err := primitive.ObjectIDFromHex(*room.ID)
 		if err != nil {
@@ -89,7 +79,7 @@ func (m *MongoRoomRepository) UpsertRoom(ctx context.Context, room domain.Room) 
 			},
 		}
 
-		var updatedRoom domain.Room
+		var updatedRoom Room
 		err = collection.FindOneAndUpdate(ctx, filter, update).Decode(&updatedRoom)
 		if err != nil {
 			// ErrNoDocuments means that the filter did not match any documents in the collection.
@@ -102,7 +92,7 @@ func (m *MongoRoomRepository) UpsertRoom(ctx context.Context, room domain.Room) 
 			}
 		}
 
-		return &updatedRoom, nil
+		return ToDomainRoom(&updatedRoom), nil
 	}
 }
 
@@ -123,7 +113,7 @@ func (m *MongoRoomRepository) DeleteRoom(ctx context.Context, id string) (*domai
 		"UpdatedAt": time.Now().Unix(),
 	}}
 
-	var updatedRoom domain.Room
+	var updatedRoom Room
 	err = collection.FindOneAndUpdate(ctx, filter, update).Decode(&updatedRoom)
 	if err != nil {
 		// ErrNoDocuments means that the filter did not match any documents in the collection.
@@ -136,9 +126,7 @@ func (m *MongoRoomRepository) DeleteRoom(ctx context.Context, id string) (*domai
 		}
 	}
 
-	// Should the ID be released once a room was soft deleted?
-
-	return &updatedRoom, nil
+	return ToDomainRoom(&updatedRoom), nil
 }
 
 func (m *MongoRoomRepository) QueryPaginatedRoom(ctx context.Context, skip int, limit int) ([]domain.Room, error) {
@@ -156,12 +144,12 @@ func (m *MongoRoomRepository) QueryPaginatedRoom(ctx context.Context, skip int, 
 
 	var results []domain.Room
 	for cur.Next(ctx) {
-		var result domain.Room
+		var result Room
 		err := cur.Decode(&result)
 		if err != nil {
 			return nil, err
 		}
-		results = append(results, result)
+		results = append(results, *ToDomainRoom(&result))
 	}
 
 	if err := cur.Err(); err != nil {
@@ -185,6 +173,20 @@ func (m *MongoRoomRepository) GetRoomByID(ctx context.Context, id string) (*doma
 		return nil, err
 	}
 	return &room, nil
+}
+
+func ToDomainRoom(room *Room) *domain.Room {
+	domainRoom := domain.Room{
+		ID:        ptr(room.ID.Hex()),
+		RoomID:    room.RoomID,
+		Capacity:  room.Capacity,
+		Equipment: room.Equipment,
+		Rules:     room.Rules,
+		IsDelete:  room.IsDelete,
+		CreatedAt: room.CreatedAt,
+		UpdatedAt: room.UpdatedAt,
+	}
+	return &domainRoom
 }
 
 func ptr(s string) *string { return &s }

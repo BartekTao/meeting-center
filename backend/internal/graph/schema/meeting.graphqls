@@ -1,5 +1,5 @@
 type Query {
-  paginatedRooms(first: Int = 20, last: Int, before: String, after: String): RoomConnection!
+  paginatedRooms(first: Int = 20, after: String): RoomConnection!
   room(id: ID!): Room!
 
   userEvents(userID: ID!): [Event!]
@@ -56,8 +56,6 @@ type RoomEdge implements Edge {
 }
 
 type PageInfo {
-  hasNextPage: Boolean!
-  hasPreviousPage: Boolean!
   startCursor: String
   endCursor: String
 }

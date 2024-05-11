@@ -8,21 +8,22 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/BartekTao/nycu-meeting-room-api/internal/app/commands"
+	"github.com/BartekTao/nycu-meeting-room-api/internal/app"
+	"github.com/BartekTao/nycu-meeting-room-api/internal/common"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
 )
 
 // UpsertRoom is the resolver for the upsertRoom field.
 func (r *mutationResolver) UpsertRoom(ctx context.Context, room model.UpsertRoomInput) (*model.Room, error) {
-	upsertRoom := commands.UpsertRoomRequest{
+	upsertRoom := app.UpsertRoomRequest{
 		ID:        room.ID,
 		RoomID:    room.RoomID,
 		Capacity:  room.Capacity,
 		Equipment: room.Equipment,
 		Rules:     room.Rules,
 	}
-	res, err := r.roomHandler.UpsertRoom(ctx, upsertRoom)
+	res, err := r.roomService.UpsertRoom(ctx, upsertRoom)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +39,7 @@ func (r *mutationResolver) UpsertRoom(ctx context.Context, room model.UpsertRoom
 
 // DeleteRoom is the resolver for the deleteRoom field.
 func (r *mutationResolver) DeleteRoom(ctx context.Context, id *string) (*model.Room, error) {
-	room, err := r.roomHandler.DeleteRoom(ctx, *id)
+	room, err := r.roomService.DeleteRoom(ctx, *id)
 	if err != nil {
 		return nil, err
 	}
@@ -91,15 +92,41 @@ func (r *mutationResolver) DeleteEvent(ctx context.Context, id string) (*model.E
 }
 
 // PaginatedRooms is the resolver for the paginatedRooms field.
-func (r *queryResolver) PaginatedRooms(ctx context.Context, first *int, last *int, before *string, after *string) (*model.RoomConnection, error) {
-	RoomConnection, err := r.meetingManager.QueryPaginatedRoom(ctx, *first, *last, *before, *after)
+func (r *queryResolver) PaginatedRooms(ctx context.Context, first *int, after *string) (*model.RoomConnection, error) {
+	skip, err := common.DecodeCursor(after)
 	if err != nil {
 		return nil, err
 	}
 
+	rooms, err := r.roomService.QueryPaginated(ctx, *skip, *first)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(rooms) == 0 {
+		return &model.RoomConnection{}, nil
+	}
+
+	edges := make([]*model.RoomEdge, len(rooms))
+	for idx, room := range rooms {
+		edges[idx] = &model.RoomEdge{
+			Node: &model.Room{
+				ID:        *room.ID,
+				RoomID:    room.RoomID,
+				Capacity:  room.Capacity,
+				Equipment: room.Equipment,
+				Rules:     room.Rules,
+			},
+			Cursor: common.EncodeCursor(idx + 1 + *skip),
+		}
+	}
+
 	return &model.RoomConnection{
-		Edges:    RoomConnection.Edges,
-		PageInfo: RoomConnection.PageInfo,
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			StartCursor: &edges[0].Cursor,
+			EndCursor:   &edges[len(edges)-1].Cursor,
+		},
 	}, nil
 }
 

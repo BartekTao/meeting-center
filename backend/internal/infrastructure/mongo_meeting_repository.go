@@ -243,23 +243,7 @@ func (m *MongoMeetingRepository) QueryPaginatedRoom(ctx context.Context, first i
 		}
 	}
 
-	var hasNextPage, hasPreviousPage bool
-	if first != 0 && after != "" {
-		hasPreviousPage = true
-		hasNextPage = actualCount > first
-	} else if first != 0 && after == "" {
-		hasNextPage = actualCount > first
-	} else if last != 0 && before != "" {
-		hasPreviousPage = actualCount > last
-		hasNextPage = true
-	} else if last != 0 && before == "" {
-		hasPreviousPage = actualCount > last
-	}
-
-	pageInfo := &model.PageInfo{
-		HasNextPage:     hasNextPage,
-		HasPreviousPage: hasPreviousPage,
-	}
+	pageInfo := &model.PageInfo{}
 
 	edges := make([]*model.RoomEdge, len(rooms))
 	for i, room := range rooms {

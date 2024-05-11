@@ -1,4 +1,4 @@
-package commands
+package app
 
 import (
 	"context"
@@ -17,20 +17,22 @@ type UpsertRoomRequest struct {
 	UpdaterId string   `json:"updaterId"`
 }
 
-type RoomHandler interface {
+type RoomService interface {
 	UpsertRoom(ctx context.Context, req UpsertRoomRequest) (*domain.Room, error)
 	DeleteRoom(ctx context.Context, id string) (*domain.Room, error)
+	GetByID(ctx context.Context, id string) (*domain.Room, error)
+	QueryPaginated(ctx context.Context, skip int, limit int) ([]domain.Room, error)
 }
 
-type roomHandler struct {
+type roomService struct {
 	roomRepository domain.RoomRepository
 }
 
-func NewRoomHandler(roomRepository domain.RoomRepository) RoomHandler {
-	return roomHandler{roomRepository: roomRepository}
+func NewRoomService(roomRepository domain.RoomRepository) RoomService {
+	return roomService{roomRepository: roomRepository}
 }
 
-func (h roomHandler) UpsertRoom(ctx context.Context, req UpsertRoomRequest) (*domain.Room, error) {
+func (h roomService) UpsertRoom(ctx context.Context, req UpsertRoomRequest) (*domain.Room, error) {
 	room := domain.Room{
 		ID:        req.ID,
 		RoomID:    req.RoomID,
@@ -48,7 +50,7 @@ func (h roomHandler) UpsertRoom(ctx context.Context, req UpsertRoomRequest) (*do
 	}
 }
 
-func (h roomHandler) DeleteRoom(ctx context.Context, id string) (*domain.Room, error) {
+func (h roomService) DeleteRoom(ctx context.Context, id string) (*domain.Room, error) {
 	room, err := h.roomRepository.GetRoomByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -65,4 +67,17 @@ func (h roomHandler) DeleteRoom(ctx context.Context, id string) (*domain.Room, e
 	} else {
 		return res, nil
 	}
+}
+
+func (h roomService) GetByID(ctx context.Context, id string) (*domain.Room, error) {
+	room, err := h.roomRepository.GetRoomByID(ctx, id)
+	return room, err
+}
+
+func (h roomService) QueryPaginated(ctx context.Context, skip int, limit int) ([]domain.Room, error) {
+	rooms, err := h.roomRepository.QueryPaginatedRoom(ctx, skip, limit)
+	if err != nil {
+		return nil, err
+	}
+	return rooms, nil
 }

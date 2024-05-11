@@ -1,7 +1,7 @@
 package resolvers
 
 import (
-	"github.com/BartekTao/nycu-meeting-room-api/internal/app/commands"
+	"github.com/BartekTao/nycu-meeting-room-api/internal/app"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/meeting"
 )
 
@@ -11,12 +11,12 @@ import (
 
 type Resolver struct {
 	meetingManager meeting.MeetingManager
-	roomHandler    commands.RoomHandler
+	roomService    app.RoomService
 }
 
-func NewResolver(meetingManager meeting.MeetingManager, roomHandler commands.RoomHandler) *Resolver {
+func NewResolver(meetingManager meeting.MeetingManager, roomService app.RoomService) *Resolver {
 	return &Resolver{
 		meetingManager: meetingManager,
-		roomHandler:    roomHandler,
+		roomService:    roomService,
 	}
 }

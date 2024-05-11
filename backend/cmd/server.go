@@ -14,7 +14,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/BartekTao/nycu-meeting-room-api/internal/app/commands"
+	"github.com/BartekTao/nycu-meeting-room-api/internal/app"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/resolvers"
 	infra "github.com/BartekTao/nycu-meeting-room-api/internal/infrastructure"
@@ -118,7 +118,7 @@ func newHTTPHandler(mongoClient *mongo.Client) http.Handler {
 	graphqlServer := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: resolvers.NewResolver(
 			meetingManager,
-			commands.NewRoomHandler(roomRepo),
+			app.NewRoomService(roomRepo),
 		),
 	}))
 	graphqlServer.AroundFields(tracer())
