@@ -68,7 +68,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		DeleteEvent func(childComplexity int, id string) int
-		DeleteRoom  func(childComplexity int, id *string) int
+		DeleteRoom  func(childComplexity int, id string) int
 		UpsertEvent func(childComplexity int, input model.UpsertEventInput) int
 		UpsertRoom  func(childComplexity int, room model.UpsertRoomInput) int
 	}
@@ -115,7 +115,7 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	UpsertRoom(ctx context.Context, room model.UpsertRoomInput) (*model.Room, error)
-	DeleteRoom(ctx context.Context, id *string) (*model.Room, error)
+	DeleteRoom(ctx context.Context, id string) (*model.Room, error)
 	UpsertEvent(ctx context.Context, input model.UpsertEventInput) (*model.Event, error)
 	DeleteEvent(ctx context.Context, id string) (*model.Event, error)
 }
@@ -259,7 +259,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteRoom(childComplexity, args["id"].(*string)), true
+		return e.complexity.Mutation.DeleteRoom(childComplexity, args["id"].(string)), true
 
 	case "Mutation.upsertEvent":
 		if e.complexity.Mutation.UpsertEvent == nil {
@@ -601,10 +601,10 @@ func (ec *executionContext) field_Mutation_deleteEvent_args(ctx context.Context,
 func (ec *executionContext) field_Mutation_deleteRoom_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
+	var arg0 string
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1492,7 +1492,7 @@ func (ec *executionContext) _Mutation_deleteRoom(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteRoom(rctx, fc.Args["id"].(*string))
+		return ec.resolvers.Mutation().DeleteRoom(rctx, fc.Args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

@@ -23,4 +23,5 @@ type Event struct {
 type EventRepository interface {
 	Upsert(ctx context.Context, event Event) (*Event, error)
 	Delete(ctx context.Context, id string) (*Event, error)
+	GetByID(ctx context.Context, id string) (*Event, error)
 }

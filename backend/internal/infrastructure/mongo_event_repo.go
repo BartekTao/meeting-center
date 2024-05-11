@@ -119,7 +119,7 @@ func (m *mongoEventRepository) Delete(ctx context.Context, id string) (*domain.E
 	return ToDomainEvent(updatedEvent), nil
 }
 
-func (m *mongoEventRepository) GetEventByID(ctx context.Context, id string) (*domain.Event, error) {
+func (m *mongoEventRepository) GetByID(ctx context.Context, id string) (*domain.Event, error) {
 	event, err := m.getByID(ctx, m.eventCollection, id)
 	if err != nil {
 		log.Println(err)

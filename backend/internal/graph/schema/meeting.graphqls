@@ -9,7 +9,7 @@ type Query {
 
 type Mutation {
   upsertRoom(room: UpsertRoomInput!): Room!
-  deleteRoom(id: ID): Room!
+  deleteRoom(id: ID!): Room!
 
   upsertEvent(input: UpsertEventInput!): Event!
   deleteEvent(id: ID!): Event!

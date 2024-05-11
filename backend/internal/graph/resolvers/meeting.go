@@ -38,8 +38,8 @@ func (r *mutationResolver) UpsertRoom(ctx context.Context, room model.UpsertRoom
 }
 
 // DeleteRoom is the resolver for the deleteRoom field.
-func (r *mutationResolver) DeleteRoom(ctx context.Context, id *string) (*model.Room, error) {
-	room, err := r.roomService.Delete(ctx, *id)
+func (r *mutationResolver) DeleteRoom(ctx context.Context, id string) (*model.Room, error) {
+	room, err := r.roomService.Delete(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -55,17 +55,42 @@ func (r *mutationResolver) DeleteRoom(ctx context.Context, id *string) (*model.R
 
 // UpsertEvent is the resolver for the upsertEvent field.
 func (r *mutationResolver) UpsertEvent(ctx context.Context, input model.UpsertEventInput) (*model.Event, error) {
-	event, upsert_err := r.meetingManager.UpsertEvent(ctx, input)
+	upsertEvent := app.UpsertEventRequest{
+		ID:              input.ID,
+		Title:           input.Title,
+		Description:     input.Description,
+		StartAt:         input.StartAt,
+		EndAt:           input.EndAt,
+		RoomID:          input.RoomID,
+		ParticipantsIDs: input.ParticipantsIDs,
+		Notes:           input.Notes,
+		RemindAt:        input.RemindAt,
+	}
+
+	event, upsert_err := r.eventService.Upsert(ctx, upsertEvent)
 	if upsert_err != nil {
 		return nil, upsert_err
 	}
 
-	temp_room, query_err := r.meetingManager.QueryRoom(ctx, *event.RoomID)
+	if event.RoomID == nil {
+		return &model.Event{
+			ID:          *event.ID,
+			Title:       event.Title,
+			Description: event.Description,
+			StartAt:     event.StartAt,
+			EndAt:       event.EndAt,
+			// Participants: ,
+			Notes:    event.Notes,
+			RemindAt: event.RemindAt,
+		}, nil
+	}
+
+	temp_room, query_err := r.roomService.GetByID(ctx, *event.RoomID)
 	if query_err != nil {
 		return nil, query_err
 	}
 	room := &model.Room{
-		ID:        temp_room.ID.Hex(),
+		ID:        *temp_room.ID,
 		RoomID:    temp_room.RoomID,
 		Capacity:  temp_room.Capacity,
 		Equipment: temp_room.Equipment,
@@ -74,7 +99,7 @@ func (r *mutationResolver) UpsertEvent(ctx context.Context, input model.UpsertEv
 	}
 
 	return &model.Event{
-		ID:          event.ID.Hex(),
+		ID:          *event.ID,
 		Title:       event.Title,
 		Description: event.Description,
 		StartAt:     event.StartAt,
@@ -88,7 +113,61 @@ func (r *mutationResolver) UpsertEvent(ctx context.Context, input model.UpsertEv
 
 // DeleteEvent is the resolver for the deleteEvent field.
 func (r *mutationResolver) DeleteEvent(ctx context.Context, id string) (*model.Event, error) {
-	panic(fmt.Errorf("not implemented: DeleteEvent - deleteEvent"))
+	event, err := r.eventService.Delete(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if event.RoomID == nil {
+		return &model.Event{
+			ID:          *event.ID,
+			Title:       event.Title,
+			Description: event.Description,
+			StartAt:     event.StartAt,
+			EndAt:       event.EndAt,
+			// Participants: ,
+			Notes:    event.Notes,
+			RemindAt: event.RemindAt,
+		}, nil
+	}
+
+	if event.RoomID == nil {
+		return &model.Event{
+			ID:          *event.ID,
+			Title:       event.Title,
+			Description: event.Description,
+			StartAt:     event.StartAt,
+			EndAt:       event.EndAt,
+			// Participants: ,
+			Notes:    event.Notes,
+			RemindAt: event.RemindAt,
+		}, nil
+	}
+
+	temp_room, query_err := r.roomService.GetByID(ctx, *event.RoomID)
+	if query_err != nil {
+		return nil, query_err
+	}
+	room := &model.Room{
+		ID:        *temp_room.ID,
+		RoomID:    temp_room.RoomID,
+		Capacity:  temp_room.Capacity,
+		Equipment: temp_room.Equipment,
+		Rules:     temp_room.Rules,
+		IsDelete:  &temp_room.IsDelete,
+	}
+
+	return &model.Event{
+		ID:          *event.ID,
+		Title:       event.Title,
+		Description: event.Description,
+		StartAt:     event.StartAt,
+		EndAt:       event.EndAt,
+		Room:        room,
+		// Participants: ,
+		Notes:    event.Notes,
+		RemindAt: event.RemindAt,
+	}, nil
 }
 
 // PaginatedRooms is the resolver for the paginatedRooms field.
@@ -153,7 +232,47 @@ func (r *queryResolver) UserEvents(ctx context.Context, userID string) ([]*model
 
 // Event is the resolver for the event field.
 func (r *queryResolver) Event(ctx context.Context, id string) (*model.Event, error) {
-	panic(fmt.Errorf("not implemented: Event - event"))
+	event, err := r.eventService.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if event.RoomID == nil {
+		return &model.Event{
+			ID:          *event.ID,
+			Title:       event.Title,
+			Description: event.Description,
+			StartAt:     event.StartAt,
+			EndAt:       event.EndAt,
+			// Participants: ,
+			Notes:    event.Notes,
+			RemindAt: event.RemindAt,
+		}, nil
+	}
+
+	temp_room, query_err := r.roomService.GetByID(ctx, *event.RoomID)
+	if query_err != nil {
+		return nil, query_err
+	}
+	room := &model.Room{
+		ID:        *temp_room.ID,
+		RoomID:    temp_room.RoomID,
+		Capacity:  temp_room.Capacity,
+		Equipment: temp_room.Equipment,
+		Rules:     temp_room.Rules,
+		IsDelete:  &temp_room.IsDelete,
+	}
+
+	return &model.Event{
+		ID:          *event.ID,
+		Title:       event.Title,
+		Description: event.Description,
+		StartAt:     event.StartAt,
+		EndAt:       event.EndAt,
+		Room:        room,
+		// Participants: ,
+		Notes:    event.Notes,
+		RemindAt: event.RemindAt,
+	}, nil
 }
 
 // PaginatedAvailableRooms is the resolver for the paginatedAvailableRooms field.

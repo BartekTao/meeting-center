@@ -32,7 +32,7 @@ type mongoRoomRepository struct {
 	roomCollection *mongo.Collection
 }
 
-func NewRoomRepository(client *mongo.Client) domain.RoomRepository {
+func NewMongoRoomRepository(client *mongo.Client) domain.RoomRepository {
 	return &mongoRoomRepository{
 		client:         client,
 		roomCollection: client.Database("meetingCenter").Collection("rooms"),

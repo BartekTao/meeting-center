@@ -114,11 +114,13 @@ func newHTTPHandler(mongoClient *mongo.Client) http.Handler {
 	mux.HandleFunc("/auth/google/callback", authHandler.Callback)
 
 	// Setup GraphQL server
-	roomRepo := infra.NewRoomRepository(mongoClient)
+	roomRepo := infra.NewMongoRoomRepository(mongoClient)
+	eventRepo := infra.NewMongoEventRepository(mongoClient)
 	graphqlServer := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: resolvers.NewResolver(
 			meetingManager,
 			app.NewRoomService(roomRepo),
+			app.NewEventService(eventRepo),
 		),
 	}))
 	graphqlServer.AroundFields(tracer())

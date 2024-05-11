@@ -12,7 +12,6 @@ type UpsertRoomRequest struct {
 	Capacity  int      `json:"capacity"`
 	Equipment []string `json:"equipment"`
 	Rules     []string `json:"rules"`
-	IsDelete  bool     `json:"isDelete"`
 	UpdaterId string   `json:"updaterId"`
 }
 
@@ -38,7 +37,6 @@ func (h roomService) Upsert(ctx context.Context, req UpsertRoomRequest) (*domain
 		Capacity:  req.Capacity,
 		Equipment: req.Equipment,
 		Rules:     req.Rules,
-		IsDelete:  req.IsDelete,
 		UpdaterId: req.UpdaterId,
 	}
 	res, err := h.roomRepository.Upsert(ctx, room)

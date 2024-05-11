@@ -10,13 +10,13 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	meetingManager meeting.MeetingManager
-	roomService    app.RoomService
+	roomService  app.RoomService
+	eventService app.EventService
 }
 
-func NewResolver(meetingManager meeting.MeetingManager, roomService app.RoomService) *Resolver {
+func NewResolver(meetingManager meeting.MeetingManager, roomService app.RoomService, eventService app.EventService) *Resolver {
 	return &Resolver{
-		meetingManager: meetingManager,
-		roomService:    roomService,
+		roomService:  roomService,
+		eventService: eventService,
 	}
 }
