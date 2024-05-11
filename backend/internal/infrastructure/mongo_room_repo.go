@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/BartekTao/nycu-meeting-room-api/internal/common"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -25,19 +26,20 @@ type Room struct {
 	UpdaterId string             `bson:"updaterId"`
 }
 
-type MongoRoomRepository struct {
+type mongoRoomRepository struct {
+	BaseRepository[Room]
 	client         *mongo.Client
-	roomCollection mongo.Collection
+	roomCollection *mongo.Collection
 }
 
 func NewRoomRepository(client *mongo.Client) domain.RoomRepository {
-	return &MongoRoomRepository{
+	return &mongoRoomRepository{
 		client:         client,
-		roomCollection: *client.Database("meetingCenter").Collection("rooms"),
+		roomCollection: client.Database("meetingCenter").Collection("rooms"),
 	}
 }
 
-func (m *MongoRoomRepository) UpsertRoom(ctx context.Context, room domain.Room) (*domain.Room, error) {
+func (m *mongoRoomRepository) Upsert(ctx context.Context, room domain.Room) (*domain.Room, error) {
 	collection := m.roomCollection
 
 	if room.ID == nil { // Insert new room
@@ -96,40 +98,17 @@ func (m *MongoRoomRepository) UpsertRoom(ctx context.Context, room domain.Room) 
 	}
 }
 
-func (m *MongoRoomRepository) DeleteRoom(ctx context.Context, id string) (*domain.Room, error) {
-	collection := m.roomCollection
-
-	deleteRoomID, err := primitive.ObjectIDFromHex(id)
+func (m *mongoRoomRepository) Delete(ctx context.Context, id string) (*domain.Room, error) {
+	updatedRoom, err := m.softDelete(ctx, m.roomCollection, id)
 	if err != nil {
 		log.Println(err)
+		return nil, err
 	}
 
-	filter := bson.M{
-		"_id":      deleteRoomID,
-		"isDelete": false,
-	}
-	update := bson.M{"$set": bson.M{
-		"isDelete":  true,
-		"UpdatedAt": time.Now().Unix(),
-	}}
-
-	var updatedRoom Room
-	err = collection.FindOneAndUpdate(ctx, filter, update).Decode(&updatedRoom)
-	if err != nil {
-		// ErrNoDocuments means that the filter did not match any documents in the collection.
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			log.Printf("Document with the given ID not found or has been deleted: %v", err)
-			return nil, err
-		} else {
-			log.Printf("Failed to soft delete room: %v", err)
-			return nil, err
-		}
-	}
-
-	return ToDomainRoom(&updatedRoom), nil
+	return ToDomainRoom(updatedRoom), nil
 }
 
-func (m *MongoRoomRepository) QueryPaginatedRoom(ctx context.Context, skip int, limit int) ([]domain.Room, error) {
+func (m *mongoRoomRepository) QueryPaginated(ctx context.Context, skip int, limit int) ([]domain.Room, error) {
 	collection := m.roomCollection
 	findOptions := options.Find()
 	findOptions.SetSort(bson.D{{Key: "CreatedAt", Value: 1}})
@@ -158,26 +137,18 @@ func (m *MongoRoomRepository) QueryPaginatedRoom(ctx context.Context, skip int, 
 	return results, nil
 }
 
-func (m *MongoRoomRepository) GetRoomByID(ctx context.Context, id string) (*domain.Room, error) {
-	_id, err := primitive.ObjectIDFromHex(id)
+func (m *mongoRoomRepository) GetByID(ctx context.Context, id string) (*domain.Room, error) {
+	room, err := m.getByID(ctx, m.roomCollection, id)
 	if err != nil {
 		log.Println(err)
-	}
-	filter := bson.M{
-		"_id": _id,
-	}
-	var room domain.Room
-	err = m.roomCollection.FindOne(ctx, filter).Decode(&room)
-	if err != nil {
-		log.Fatalf("Failed to decode updated room document: %v", err)
 		return nil, err
 	}
-	return &room, nil
+	return ToDomainRoom(room), nil
 }
 
 func ToDomainRoom(room *Room) *domain.Room {
 	domainRoom := domain.Room{
-		ID:        ptr(room.ID.Hex()),
+		ID:        common.ToPtr(room.ID.Hex()),
 		RoomID:    room.RoomID,
 		Capacity:  room.Capacity,
 		Equipment: room.Equipment,
@@ -188,5 +159,3 @@ func ToDomainRoom(room *Room) *domain.Room {
 	}
 	return &domainRoom
 }
-
-func ptr(s string) *string { return &s }

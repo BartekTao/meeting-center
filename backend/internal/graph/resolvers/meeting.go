@@ -23,7 +23,7 @@ func (r *mutationResolver) UpsertRoom(ctx context.Context, room model.UpsertRoom
 		Equipment: room.Equipment,
 		Rules:     room.Rules,
 	}
-	res, err := r.roomService.UpsertRoom(ctx, upsertRoom)
+	res, err := r.roomService.Upsert(ctx, upsertRoom)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (r *mutationResolver) UpsertRoom(ctx context.Context, room model.UpsertRoom
 
 // DeleteRoom is the resolver for the deleteRoom field.
 func (r *mutationResolver) DeleteRoom(ctx context.Context, id *string) (*model.Room, error) {
-	room, err := r.roomService.DeleteRoom(ctx, *id)
+	room, err := r.roomService.Delete(ctx, *id)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +132,18 @@ func (r *queryResolver) PaginatedRooms(ctx context.Context, first *int, after *s
 
 // Room is the resolver for the room field.
 func (r *queryResolver) Room(ctx context.Context, id string) (*model.Room, error) {
-	panic(fmt.Errorf("not implemented: Room - room"))
+	room, err := r.roomService.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Room{
+		ID:        *room.ID,
+		RoomID:    room.RoomID,
+		Capacity:  room.Capacity,
+		Equipment: room.Equipment,
+		Rules:     room.Rules,
+		IsDelete:  &room.IsDelete,
+	}, nil
 }
 
 // UserEvents is the resolver for the userEvents field.

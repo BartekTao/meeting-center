@@ -5,7 +5,7 @@ import (
 )
 
 type Event struct {
-	ID              string   `json:"_id,omitempty"`
+	ID              *string  `json:"_id,omitempty"`
 	Title           string   `json:"title"`
 	Description     *string  `json:"description"`
 	StartAt         int      `json:"startAt"`
@@ -21,6 +21,6 @@ type Event struct {
 }
 
 type EventRepository interface {
-	UpsertEvent(ctx context.Context, event Event) (*Event, error)
-	DeleteEvent(ctx context.Context, id string) (*Event, error)
+	Upsert(ctx context.Context, event Event) (*Event, error)
+	Delete(ctx context.Context, id string) (*Event, error)
 }

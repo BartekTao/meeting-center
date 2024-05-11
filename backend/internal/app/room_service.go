@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"errors"
 
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 )
@@ -18,8 +17,8 @@ type UpsertRoomRequest struct {
 }
 
 type RoomService interface {
-	UpsertRoom(ctx context.Context, req UpsertRoomRequest) (*domain.Room, error)
-	DeleteRoom(ctx context.Context, id string) (*domain.Room, error)
+	Upsert(ctx context.Context, req UpsertRoomRequest) (*domain.Room, error)
+	Delete(ctx context.Context, id string) (*domain.Room, error)
 	GetByID(ctx context.Context, id string) (*domain.Room, error)
 	QueryPaginated(ctx context.Context, skip int, limit int) ([]domain.Room, error)
 }
@@ -32,7 +31,7 @@ func NewRoomService(roomRepository domain.RoomRepository) RoomService {
 	return roomService{roomRepository: roomRepository}
 }
 
-func (h roomService) UpsertRoom(ctx context.Context, req UpsertRoomRequest) (*domain.Room, error) {
+func (h roomService) Upsert(ctx context.Context, req UpsertRoomRequest) (*domain.Room, error) {
 	room := domain.Room{
 		ID:        req.ID,
 		RoomID:    req.RoomID,
@@ -42,7 +41,7 @@ func (h roomService) UpsertRoom(ctx context.Context, req UpsertRoomRequest) (*do
 		IsDelete:  req.IsDelete,
 		UpdaterId: req.UpdaterId,
 	}
-	res, err := h.roomRepository.UpsertRoom(ctx, room)
+	res, err := h.roomRepository.Upsert(ctx, room)
 	if err != nil {
 		return nil, err
 	} else {
@@ -50,18 +49,8 @@ func (h roomService) UpsertRoom(ctx context.Context, req UpsertRoomRequest) (*do
 	}
 }
 
-func (h roomService) DeleteRoom(ctx context.Context, id string) (*domain.Room, error) {
-	room, err := h.roomRepository.GetRoomByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	if room == nil {
-		return nil, errors.New("room not found")
-	}
-
-	room.DeleteRoom()
-	res, err := h.roomRepository.UpsertRoom(ctx, *room)
+func (h roomService) Delete(ctx context.Context, id string) (*domain.Room, error) {
+	res, err := h.roomRepository.Delete(ctx, id)
 	if err != nil {
 		return nil, err
 	} else {
@@ -70,12 +59,12 @@ func (h roomService) DeleteRoom(ctx context.Context, id string) (*domain.Room, e
 }
 
 func (h roomService) GetByID(ctx context.Context, id string) (*domain.Room, error) {
-	room, err := h.roomRepository.GetRoomByID(ctx, id)
+	room, err := h.roomRepository.GetByID(ctx, id)
 	return room, err
 }
 
 func (h roomService) QueryPaginated(ctx context.Context, skip int, limit int) ([]domain.Room, error) {
-	rooms, err := h.roomRepository.QueryPaginatedRoom(ctx, skip, limit)
+	rooms, err := h.roomRepository.QueryPaginated(ctx, skip, limit)
 	if err != nil {
 		return nil, err
 	}
