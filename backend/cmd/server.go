@@ -18,7 +18,6 @@ import (
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/resolvers"
 	infra "github.com/BartekTao/nycu-meeting-room-api/internal/infrastructure"
-	"github.com/BartekTao/nycu-meeting-room-api/internal/meeting"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/auth"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/middleware"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/otelwrapper"
@@ -99,9 +98,6 @@ func newHTTPHandler(mongoClient *mongo.Client) http.Handler {
 		MaxAge:           86400,
 	})
 
-	mongoMeetingRepo := infra.NewMongoMeetingRepository(mongoClient)
-	meetingManager := meeting.NewBasicMeetingManager(mongoMeetingRepo)
-
 	jwtSecret := os.Getenv("JWT_KEY")
 	if jwtSecret == "" {
 		log.Fatal("You must set the JWT_KEY environment variable")
@@ -118,7 +114,6 @@ func newHTTPHandler(mongoClient *mongo.Client) http.Handler {
 	eventRepo := infra.NewMongoEventRepository(mongoClient)
 	graphqlServer := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: resolvers.NewResolver(
-			meetingManager,
 			app.NewRoomService(roomRepo),
 			app.NewEventService(eventRepo),
 		),
