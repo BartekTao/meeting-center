@@ -9,8 +9,19 @@ import (
 	"fmt"
 
 	"github.com/BartekTao/nycu-meeting-room-api/internal/app"
+	"github.com/BartekTao/nycu-meeting-room-api/internal/graph"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
 )
+
+// Room is the resolver for the room field.
+func (r *eventResolver) Room(ctx context.Context, obj *model.Event) (*model.Room, error) {
+	panic(fmt.Errorf("not implemented: Room - room"))
+}
+
+// Participants is the resolver for the participants field.
+func (r *eventResolver) Participants(ctx context.Context, obj *model.Event) ([]model.User, error) {
+	panic(fmt.Errorf("not implemented: Participants - participants"))
+}
 
 // UpsertEvent is the resolver for the upsertEvent field.
 func (r *mutationResolver) UpsertEvent(ctx context.Context, input model.UpsertEventInput) (*model.Event, error) {
@@ -189,3 +200,8 @@ func (r *queryResolver) Event(ctx context.Context, id string) (*model.Event, err
 func (r *queryResolver) PaginatedAvailableRooms(ctx context.Context, startAt int64, endAt int64, first *int, after *string) (*model.RoomConnection, error) {
 	panic(fmt.Errorf("not implemented: PaginatedAvailableRooms - paginatedAvailableRooms"))
 }
+
+// Event returns graph.EventResolver implementation.
+func (r *Resolver) Event() graph.EventResolver { return &eventResolver{r} }
+
+type eventResolver struct{ *Resolver }

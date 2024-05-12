@@ -15,8 +15,8 @@ type Event {
   description: String
   startAt: Int64!
   endAt: Int64!
-  room: Room
-  participants: [User!]
+  room: Room @goField(forceResolver: true)
+  participants: [User!] @goField(forceResolver: true)
   notes: String
   remindAt: Int64!
   creator: User!

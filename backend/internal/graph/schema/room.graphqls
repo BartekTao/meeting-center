@@ -27,13 +27,13 @@ type Room implements Node {
   equipment: [String!]
   rules: [String!]
   isDelete: Boolean
-  bookings: [Booking!]
+  bookings: [Booking!] @goField(forceResolver: true)
 }
 
 type Booking {
   startAt: Int!
   endAt: Int!
-  bookedBy: User!
+  bookedBy: User! @goField(forceResolver: true)
 }
 
 interface Connection {

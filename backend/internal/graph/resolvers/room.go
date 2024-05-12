@@ -6,12 +6,18 @@ package resolvers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/BartekTao/nycu-meeting-room-api/internal/app"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/common"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
 )
+
+// BookedBy is the resolver for the bookedBy field.
+func (r *bookingResolver) BookedBy(ctx context.Context, obj *model.Booking) (*model.User, error) {
+	panic(fmt.Errorf("not implemented: BookedBy - bookedBy"))
+}
 
 // UpsertRoom is the resolver for the upsertRoom field.
 func (r *mutationResolver) UpsertRoom(ctx context.Context, room model.UpsertRoomInput) (*model.Room, error) {
@@ -107,11 +113,24 @@ func (r *queryResolver) Room(ctx context.Context, id string) (*model.Room, error
 	}, nil
 }
 
+// Bookings is the resolver for the bookings field.
+func (r *roomResolver) Bookings(ctx context.Context, obj *model.Room) ([]model.Booking, error) {
+	panic(fmt.Errorf("not implemented: Bookings - bookings"))
+}
+
+// Booking returns graph.BookingResolver implementation.
+func (r *Resolver) Booking() graph.BookingResolver { return &bookingResolver{r} }
+
 // Mutation returns graph.MutationResolver implementation.
 func (r *Resolver) Mutation() graph.MutationResolver { return &mutationResolver{r} }
 
 // Query returns graph.QueryResolver implementation.
 func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
 
+// Room returns graph.RoomResolver implementation.
+func (r *Resolver) Room() graph.RoomResolver { return &roomResolver{r} }
+
+type bookingResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type roomResolver struct{ *Resolver }
