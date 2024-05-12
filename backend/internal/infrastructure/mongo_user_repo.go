@@ -29,19 +29,28 @@ type User struct {
 type mongoUserRepo struct {
 	BaseRepository[User]
 	client         *mongo.Client
-	roomCollection *mongo.Collection
+	userCollection *mongo.Collection
 }
 
 func NewMongoUserRepo(client *mongo.Client) domain.UserRepo {
 	return &mongoUserRepo{
 		client:         client,
-		roomCollection: client.Database("meetingCenter").Collection("users"),
+		userCollection: client.Database("meetingCenter").Collection("users"),
 	}
 }
 
-func (r *mongoUserRepo) GetUser(ctx context.Context, sub string) (*domain.User, error) {
+func (r *mongoUserRepo) GetByID(ctx context.Context, id string) (*domain.User, error) {
+	user, err := r.getByID(ctx, r.userCollection, id)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	return ToDomainUser(user), nil
+}
+
+func (r *mongoUserRepo) GetUserBySub(ctx context.Context, sub string) (*domain.User, error) {
 	filter := bson.M{"sub": sub}
-	user, err := r.findOneByFilter(ctx, r.roomCollection, filter)
+	user, err := r.findOneByFilter(ctx, r.userCollection, filter)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -63,7 +72,7 @@ func (r *mongoUserRepo) SignUp(ctx context.Context, user domain.User) (*string, 
 		CreatedAt:     currentTime,
 		UpdatedAt:     currentTime,
 	}
-	result, err := r.roomCollection.InsertOne(ctx, newUser)
+	result, err := r.userCollection.InsertOne(ctx, newUser)
 	if err != nil {
 		log.Printf("Failed to insert new user: %v", err)
 		return nil, err
@@ -71,6 +80,25 @@ func (r *mongoUserRepo) SignUp(ctx context.Context, user domain.User) (*string, 
 	newUser.ID = result.InsertedID.(primitive.ObjectID)
 
 	return common.ToPtr(newUser.ID.Hex()), nil
+}
+
+func (r *mongoUserRepo) QueryPaginated(ctx context.Context, skip int, limit int) ([]domain.User, error) {
+	users, err := r.queryPaginated(
+		ctx,
+		r.userCollection,
+		skip, limit, bson.M{"isDelete": false},
+		bson.D{{Key: "CreatedAt", Value: 1}},
+	)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	var results []domain.User
+	for _, room := range users {
+		results = append(results, *ToDomainUser(room))
+	}
+
+	return results, nil
 }
 
 func ToDomainUser(user *User) *domain.User {

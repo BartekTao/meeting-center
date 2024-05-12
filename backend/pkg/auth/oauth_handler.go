@@ -145,7 +145,7 @@ func (g *googleOAuthHandler) getUserInfo(client *http.Client) (*domain.User, err
 	}
 
 	// check user sign up
-	userInDB, err := g.userRepo.GetUser(ctx, user.Sub)
+	userInDB, err := g.userRepo.GetUserBySub(ctx, user.Sub)
 	if err != nil {
 		log.Println("fail to get user")
 		return nil, err
