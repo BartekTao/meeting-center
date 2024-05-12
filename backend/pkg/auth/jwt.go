@@ -23,7 +23,7 @@ func NewJWTHandler() *jwtHandler {
 
 func (j *jwtHandler) GenerateJWT(userinfo *domain.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":   userinfo.ID,
+		"sub":   *userinfo.ID,
 		"name":  userinfo.Name,
 		"email": userinfo.Email,
 		"exp":   time.Now().Add(time.Hour * 24).Unix(),

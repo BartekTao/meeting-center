@@ -41,7 +41,7 @@ func (r *eventResolver) Creator(ctx context.Context, obj *domain.Event) (*domain
 
 // UpsertEvent is the resolver for the upsertEvent field.
 func (r *mutationResolver) UpsertEvent(ctx context.Context, input model.UpsertEventInput) (*domain.Event, error) {
-	claims, _ := ctx.Value(middleware.UserCtxKey).(middleware.MeetingCenterClaims)
+	claims, _ := ctx.Value(middleware.UserCtxKey).(*middleware.MeetingCenterClaims)
 
 	upsertEvent := app.UpsertEventRequest{
 		ID:              input.ID,
@@ -124,5 +124,7 @@ func (r *Resolver) Event() graph.EventResolver { return &eventResolver{r} }
 // UserEvent returns graph.UserEventResolver implementation.
 func (r *Resolver) UserEvent() graph.UserEventResolver { return &userEventResolver{r} }
 
-type eventResolver struct{ *Resolver }
-type userEventResolver struct{ *Resolver }
+type (
+	eventResolver     struct{ *Resolver }
+	userEventResolver struct{ *Resolver }
+)
