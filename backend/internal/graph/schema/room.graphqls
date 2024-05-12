@@ -1,0 +1,74 @@
+directive @goModel(model: String, models: [String!]) on OBJECT
+    | INPUT_OBJECT
+    | SCALAR
+    | ENUM
+    | INTERFACE
+    | UNION
+
+directive @goField(forceResolver: Boolean, name: String, omittable: Boolean) on INPUT_FIELD_DEFINITION
+    | FIELD_DEFINITION
+
+scalar Int64
+
+type Query {
+  paginatedRooms(first: Int = 20, after: String): RoomConnection!
+  room(id: ID!): Room!
+}
+
+type Mutation {
+  upsertRoom(room: UpsertRoomInput!): Room!
+  deleteRoom(id: ID!): Room!
+}
+
+type Room implements Node {
+  id: ID!
+  roomId: String!
+  capacity: Int!
+  equipment: [String!]
+  rules: [String!]
+  isDelete: Boolean
+  bookings: [Booking!]
+}
+
+type Booking {
+  startAt: Int!
+  endAt: Int!
+  bookedBy: User!
+}
+
+interface Connection {
+  edges: [Edge]
+  pageInfo: PageInfo!
+}
+
+interface Edge {
+  node: Node
+  cursor: String!
+}
+
+interface Node {
+  id: ID!
+}
+
+type RoomConnection implements Connection {
+  edges: [RoomEdge]
+  pageInfo: PageInfo!
+}
+
+type RoomEdge implements Edge {
+  node: Room
+  cursor: String!
+}
+
+type PageInfo {
+  startCursor: String
+  endCursor: String
+}
+
+input UpsertRoomInput {
+  id: ID
+  roomId: String!
+  capacity: Int!
+  equipment: [String!]
+  rules: [String!]
+}

@@ -27,10 +27,10 @@ type roomService struct {
 }
 
 func NewRoomService(roomRepository domain.RoomRepository) RoomService {
-	return roomService{roomRepository: roomRepository}
+	return &roomService{roomRepository: roomRepository}
 }
 
-func (h roomService) Upsert(ctx context.Context, req UpsertRoomRequest) (*domain.Room, error) {
+func (h *roomService) Upsert(ctx context.Context, req UpsertRoomRequest) (*domain.Room, error) {
 	room := domain.Room{
 		ID:        req.ID,
 		RoomID:    req.RoomID,

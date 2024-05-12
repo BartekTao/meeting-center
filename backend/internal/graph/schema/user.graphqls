@@ -1,0 +1,32 @@
+extend type Query {
+  user(id: ID!): User!
+  paginatedUsers(first: Int = 20, after: String): UserConnection
+  userEvents(userIDs: [ID!]!, startAt: Int64!, endAt: Int64!): [UserEvent]
+}
+
+
+type UserEvent {
+  user: User! @goField(forceResolver: true)
+  events: [Event!]
+}
+
+type User implements Node  {
+  id: ID!
+  sub: String
+  name: String      
+  givenName: String 
+  familyName: String
+  picture: String    
+  email: String  
+}
+
+type UserConnection implements Connection {
+  edges: [UserEdge]
+  pageInfo: PageInfo!
+}
+
+type UserEdge implements Edge {
+  node: User
+  cursor: String!
+}
+

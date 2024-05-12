@@ -1,0 +1,36 @@
+extend type Query {
+  userEvent(userID: ID!): [Event!]
+  event(id: ID!): Event
+  paginatedAvailableRooms(startAt: Int64!, endAt: Int64!, first: Int = 20, after: String): RoomConnection!
+}
+
+extend type Mutation {
+  upsertEvent(input: UpsertEventInput!): Event!
+  deleteEvent(id: ID!): Event!
+}
+
+type Event {
+  id: ID!
+  title: String!
+  description: String
+  startAt: Int64!
+  endAt: Int64!
+  room: Room
+  participants: [User!]
+  notes: String
+  remindAt: Int64!
+  creator: User!
+  isDelete: Boolean
+}
+
+input UpsertEventInput {
+  id: ID
+  title: String!
+  description: String
+  startAt: Int64!
+  endAt: Int64!
+  roomId: ID
+  participantsIDs: [ID!]
+  notes: String
+  remindAt: Int64!
+}
