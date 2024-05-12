@@ -145,7 +145,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	PaginatedRooms(ctx context.Context, first *int, after *string) (*model.RoomConnection, error)
 	Room(ctx context.Context, id string) (*model.Room, error)
-	UserEvent(ctx context.Context, userID string) ([]*model.Event, error)
+	UserEvent(ctx context.Context, userID string) ([]model.Event, error)
 	Event(ctx context.Context, id string) (*model.Event, error)
 	PaginatedAvailableRooms(ctx context.Context, startAt int64, endAt int64, first *int, after *string) (*model.RoomConnection, error)
 	User(ctx context.Context, id string) (*model.User, error)
@@ -1463,9 +1463,9 @@ func (ec *executionContext) _Event_participants(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.User)
+	res := resTmp.([]model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Event_participants(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2220,9 +2220,9 @@ func (ec *executionContext) _Query_userEvent(ctx context.Context, field graphql.
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Event)
+	res := resTmp.([]model.Event)
 	fc.Result = res
-	return ec.marshalOEvent2ᚕᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐEventᚄ(ctx, field.Selections, res)
+	return ec.marshalOEvent2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐEventᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_userEvent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2563,14 +2563,11 @@ func (ec *executionContext) _Query_userEvents(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.UserEvent)
 	fc.Result = res
-	return ec.marshalNUserEvent2ᚕᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUserEventᚄ(ctx, field.Selections, res)
+	return ec.marshalOUserEvent2ᚕᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUserEvent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_userEvents(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3010,9 +3007,9 @@ func (ec *executionContext) _Room_bookings(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Booking)
+	res := resTmp.([]model.Booking)
 	fc.Result = res
-	return ec.marshalOBooking2ᚕᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐBookingᚄ(ctx, field.Selections, res)
+	return ec.marshalOBooking2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐBookingᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Room_bookings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3805,9 +3802,9 @@ func (ec *executionContext) _UserEvent_events(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Event)
+	res := resTmp.([]model.Event)
 	fc.Result = res
-	return ec.marshalOEvent2ᚕᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐEventᚄ(ctx, field.Selections, res)
+	return ec.marshalOEvent2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐEventᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UserEvent_events(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6243,9 +6240,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_userEvents(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -6925,14 +6919,8 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNBooking2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐBooking(ctx context.Context, sel ast.SelectionSet, v *model.Booking) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Booking(ctx, sel, v)
+func (ec *executionContext) marshalNBooking2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐBooking(ctx context.Context, sel ast.SelectionSet, v model.Booking) graphql.Marshaler {
+	return ec._Booking(ctx, sel, &v)
 }
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
@@ -7130,60 +7118,6 @@ func (ec *executionContext) marshalNUserConnection2ᚖgithubᚗcomᚋBartekTao�
 		return graphql.Null
 	}
 	return ec._UserConnection(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNUserEvent2ᚕᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUserEventᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.UserEvent) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNUserEvent2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUserEvent(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNUserEvent2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUserEvent(ctx context.Context, sel ast.SelectionSet, v *model.UserEvent) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._UserEvent(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -7439,7 +7373,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) marshalOBooking2ᚕᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐBookingᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Booking) graphql.Marshaler {
+func (ec *executionContext) marshalOBooking2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐBookingᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Booking) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7466,7 +7400,7 @@ func (ec *executionContext) marshalOBooking2ᚕᚖgithubᚗcomᚋBartekTaoᚋnyc
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNBooking2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐBooking(ctx, sel, v[i])
+			ret[i] = ec.marshalNBooking2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐBooking(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7512,7 +7446,7 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOEvent2ᚕᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐEventᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Event) graphql.Marshaler {
+func (ec *executionContext) marshalOEvent2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐEventᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Event) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7539,7 +7473,7 @@ func (ec *executionContext) marshalOEvent2ᚕᚖgithubᚗcomᚋBartekTaoᚋnycu�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNEvent2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐEvent(ctx, sel, v[i])
+			ret[i] = ec.marshalNEvent2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐEvent(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7745,7 +7679,7 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOUser2ᚕᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []model.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7772,7 +7706,7 @@ func (ec *executionContext) marshalOUser2ᚕᚖgithubᚗcomᚋBartekTaoᚋnycu�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNUser2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7845,6 +7779,54 @@ func (ec *executionContext) marshalOUserEdge2ᚖgithubᚗcomᚋBartekTaoᚋnycu�
 		return graphql.Null
 	}
 	return ec._UserEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUserEvent2ᚕᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUserEvent(ctx context.Context, sel ast.SelectionSet, v []*model.UserEvent) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOUserEvent2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUserEvent(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOUserEvent2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUserEvent(ctx context.Context, sel ast.SelectionSet, v *model.UserEvent) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UserEvent(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

@@ -230,7 +230,7 @@ func (r *queryResolver) Room(ctx context.Context, id string) (*model.Room, error
 }
 
 // UserEvent is the resolver for the userEvent field.
-func (r *queryResolver) UserEvent(ctx context.Context, userID string) ([]*model.Event, error) {
+func (r *queryResolver) UserEvent(ctx context.Context, userID string) ([]model.Event, error) {
 	panic(fmt.Errorf("not implemented: UserEvent - userEvent"))
 }
 
@@ -346,8 +346,35 @@ func (r *queryResolver) PaginatedUsers(ctx context.Context, first *int, after *s
 
 // UserEvents is the resolver for the userEvents field.
 func (r *queryResolver) UserEvents(ctx context.Context, userIDs []string, startAt int64, endAt int64) ([]*model.UserEvent, error) {
-	// r.eventService.GetUserEvents(ctx, userIDs, startA)
-	panic(fmt.Errorf("not implemented: UserEvents - userEvents"))
+	userEvents, err := r.eventService.GetUserEvents(ctx, userIDs, startAt, endAt)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*model.UserEvent, len(userEvents))
+	for userID, userEvent := range userEvents {
+		eventOutput := make([]model.Event, len(userEvent))
+		for i, event := range userEvent {
+			eventOutput[i] = model.Event{
+				ID:          *event.ID,
+				Title:       event.Title,
+				Description: event.Description,
+				StartAt:     event.StartAt,
+				EndAt:       event.EndAt,
+				// Participants: ,
+				Notes:    event.Notes,
+				RemindAt: event.RemindAt,
+				IsDelete: &event.IsDelete,
+			}
+		}
+		res = append(res, &model.UserEvent{
+			User: &model.User{
+				ID: userID,
+			},
+			Events: eventOutput,
+		})
+	}
+	return res, nil
 }
 
 // Mutation returns graph.MutationResolver implementation.

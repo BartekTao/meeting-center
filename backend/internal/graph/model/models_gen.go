@@ -32,7 +32,7 @@ type Event struct {
 	StartAt      int64   `json:"startAt"`
 	EndAt        int64   `json:"endAt"`
 	Room         *Room   `json:"room,omitempty"`
-	Participants []*User `json:"participants,omitempty"`
+	Participants []User  `json:"participants,omitempty"`
 	Notes        *string `json:"notes,omitempty"`
 	RemindAt     int64   `json:"remindAt"`
 	Creator      *User   `json:"creator"`
@@ -51,13 +51,13 @@ type Query struct {
 }
 
 type Room struct {
-	ID        string     `json:"id"`
-	RoomID    string     `json:"roomId"`
-	Capacity  int        `json:"capacity"`
-	Equipment []string   `json:"equipment,omitempty"`
-	Rules     []string   `json:"rules,omitempty"`
-	IsDelete  *bool      `json:"isDelete,omitempty"`
-	Bookings  []*Booking `json:"bookings,omitempty"`
+	ID        string    `json:"id"`
+	RoomID    string    `json:"roomId"`
+	Capacity  int       `json:"capacity"`
+	Equipment []string  `json:"equipment,omitempty"`
+	Rules     []string  `json:"rules,omitempty"`
+	IsDelete  *bool     `json:"isDelete,omitempty"`
+	Bookings  []Booking `json:"bookings,omitempty"`
 }
 
 func (Room) IsNode()            {}
@@ -151,6 +151,6 @@ func (this UserEdge) GetNode() Node     { return *this.Node }
 func (this UserEdge) GetCursor() string { return this.Cursor }
 
 type UserEvent struct {
-	User   *User    `json:"user"`
-	Events []*Event `json:"events,omitempty"`
+	User   *User   `json:"user"`
+	Events []Event `json:"events,omitempty"`
 }

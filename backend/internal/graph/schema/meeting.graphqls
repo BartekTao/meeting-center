@@ -10,7 +10,7 @@ type Query {
 
   user(id: ID!): User!
   paginatedUsers(first: Int = 20, after: String): UserConnection!
-  userEvents(userIDs: [ID!]!, startAt: Int64!, endAt: Int64!): [UserEvent!]!
+  userEvents(userIDs: [ID!]!, startAt: Int64!, endAt: Int64!): [UserEvent]
 }
 
 type Mutation {
