@@ -377,11 +377,20 @@ func (r *queryResolver) UserEvents(ctx context.Context, userIDs []string, startA
 	return res, nil
 }
 
+// User is the resolver for the user field.
+func (r *userEventResolver) User(ctx context.Context, obj *model.UserEvent) (*model.User, error) {
+	panic(fmt.Errorf("not implemented: User - user"))
+}
+
 // Mutation returns graph.MutationResolver implementation.
 func (r *Resolver) Mutation() graph.MutationResolver { return &mutationResolver{r} }
 
 // Query returns graph.QueryResolver implementation.
 func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
 
+// UserEvent returns graph.UserEventResolver implementation.
+func (r *Resolver) UserEvent() graph.UserEventResolver { return &userEventResolver{r} }
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type userEventResolver struct{ *Resolver }
