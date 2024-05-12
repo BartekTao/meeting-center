@@ -111,7 +111,41 @@ type UpsertRoomInput struct {
 }
 
 type User struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	ID         string  `json:"id"`
+	Sub        *string `json:"sub,omitempty"`
+	Name       *string `json:"name,omitempty"`
+	GivenName  *string `json:"givenName,omitempty"`
+	FamilyName *string `json:"familyName,omitempty"`
+	Picture    *string `json:"picture,omitempty"`
+	Email      *string `json:"email,omitempty"`
 }
+
+func (User) IsNode()            {}
+func (this User) GetID() string { return this.ID }
+
+type UserConnection struct {
+	Edges    []*UserEdge `json:"edges,omitempty"`
+	PageInfo *PageInfo   `json:"pageInfo"`
+}
+
+func (UserConnection) IsConnection() {}
+func (this UserConnection) GetEdges() []Edge {
+	if this.Edges == nil {
+		return nil
+	}
+	interfaceSlice := make([]Edge, 0, len(this.Edges))
+	for _, concrete := range this.Edges {
+		interfaceSlice = append(interfaceSlice, concrete)
+	}
+	return interfaceSlice
+}
+func (this UserConnection) GetPageInfo() *PageInfo { return this.PageInfo }
+
+type UserEdge struct {
+	Node   *User  `json:"node,omitempty"`
+	Cursor string `json:"cursor"`
+}
+
+func (UserEdge) IsEdge()                {}
+func (this UserEdge) GetNode() Node     { return *this.Node }
+func (this UserEdge) GetCursor() string { return this.Cursor }

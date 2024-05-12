@@ -5,6 +5,9 @@ type Query {
   userEvents(userID: ID!): [Event!]
   event(id: ID!): Event
   paginatedAvailableRooms(from: Int!, to: Int!, first: Int = 20, after: String): RoomConnection!
+
+  user(id: ID!): User!
+  paginatedUsers(first: Int = 20, after: String): UserConnection!
 }
 
 type Mutation {
@@ -13,6 +16,26 @@ type Mutation {
 
   upsertEvent(input: UpsertEventInput!): Event!
   deleteEvent(id: ID!): Event!
+}
+
+type User implements Node  {
+  id: ID!
+  sub: String
+  name: String      
+  givenName: String 
+  familyName: String
+  picture: String    
+  email: String  
+}
+
+type UserConnection implements Connection {
+  edges: [UserEdge]
+  pageInfo: PageInfo!
+}
+
+type UserEdge implements Edge {
+  node: User
+  cursor: String!
 }
 
 type Room implements Node {
@@ -80,12 +103,6 @@ type Event {
   remindAt: Int!
   creator: User!
   isDelete: Boolean
-}
-
-type User {
-  id: ID!
-  name: String!
-  email: String!
 }
 
 input UpsertEventInput {

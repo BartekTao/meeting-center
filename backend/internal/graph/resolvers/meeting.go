@@ -187,7 +187,7 @@ func (r *queryResolver) PaginatedRooms(ctx context.Context, first *int, after *s
 	}
 
 	if len(rooms) == 0 {
-		return &model.RoomConnection{}, nil
+		return nil, nil
 	}
 
 	edges := make([]*model.RoomEdge, len(rooms))
@@ -284,6 +284,64 @@ func (r *queryResolver) Event(ctx context.Context, id string) (*model.Event, err
 // PaginatedAvailableRooms is the resolver for the paginatedAvailableRooms field.
 func (r *queryResolver) PaginatedAvailableRooms(ctx context.Context, from int, to int, first *int, after *string) (*model.RoomConnection, error) {
 	panic(fmt.Errorf("not implemented: PaginatedAvailableRooms - paginatedAvailableRooms"))
+}
+
+// User is the resolver for the user field.
+func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error) {
+	user, err := r.userService.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &model.User{
+		ID:         *user.ID,
+		Sub:        common.ToPtr(user.Sub),
+		Name:       &user.Name,
+		GivenName:  &user.GivenName,
+		FamilyName: &user.FamilyName,
+		Picture:    &user.Picture,
+		Email:      &user.Email,
+	}, nil
+}
+
+// PaginatedUsers is the resolver for the paginatedUsers field.
+func (r *queryResolver) PaginatedUsers(ctx context.Context, first *int, after *string) (*model.UserConnection, error) {
+	skip, err := common.DecodeCursor(after)
+	if err != nil {
+		return nil, err
+	}
+
+	users, err := r.userService.QueryPaginated(ctx, *skip, *first)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(users) == 0 {
+		return nil, nil
+	}
+
+	edges := make([]*model.UserEdge, len(users))
+	for idx, user := range users {
+		edges[idx] = &model.UserEdge{
+			Node: &model.User{
+				ID:         *user.ID,
+				Sub:        common.ToPtr(user.Sub),
+				Name:       &user.Name,
+				GivenName:  &user.GivenName,
+				FamilyName: &user.FamilyName,
+				Picture:    &user.Picture,
+				Email:      &user.Email,
+			},
+			Cursor: common.EncodeCursor(idx + 1 + *skip),
+		}
+	}
+
+	return &model.UserConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			StartCursor: &edges[0].Cursor,
+			EndCursor:   &edges[len(edges)-1].Cursor,
+		},
+	}, nil
 }
 
 // Mutation returns graph.MutationResolver implementation.

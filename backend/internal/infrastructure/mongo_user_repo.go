@@ -86,7 +86,7 @@ func (r *mongoUserRepo) QueryPaginated(ctx context.Context, skip int, limit int)
 	users, err := r.queryPaginated(
 		ctx,
 		r.userCollection,
-		skip, limit, bson.M{"isDelete": false},
+		skip, limit, bson.M{},
 		bson.D{{Key: "CreatedAt", Value: 1}},
 	)
 	if err != nil {

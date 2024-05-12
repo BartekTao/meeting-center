@@ -11,11 +11,13 @@ import (
 type Resolver struct {
 	roomService  app.RoomService
 	eventService app.EventService
+	userService  app.UserService
 }
 
-func NewResolver(roomService app.RoomService, eventService app.EventService) *Resolver {
+func NewResolver(roomService app.RoomService, eventService app.EventService, userService app.UserService) *Resolver {
 	return &Resolver{
 		roomService:  roomService,
 		eventService: eventService,
+		userService:  userService,
 	}
 }
