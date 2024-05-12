@@ -1,14 +1,16 @@
+scalar Int64
+
 type Query {
   paginatedRooms(first: Int = 20, after: String): RoomConnection!
   room(id: ID!): Room!
 
   userEvent(userID: ID!): [Event!]
   event(id: ID!): Event
-  paginatedAvailableRooms(startAt: Int!, endAt: Int!, first: Int = 20, after: String): RoomConnection!
+  paginatedAvailableRooms(startAt: Int64!, endAt: Int64!, first: Int = 20, after: String): RoomConnection!
 
   user(id: ID!): User!
   paginatedUsers(first: Int = 20, after: String): UserConnection!
-  userEvents(userIDs: [ID!]!, startAt: Int!, endAt: Int!): [UserEvent!]!
+  userEvents(userIDs: [ID!]!, startAt: Int64!, endAt: Int64!): [UserEvent!]!
 }
 
 type Mutation {
@@ -101,12 +103,12 @@ type Event {
   id: ID!
   title: String!
   description: String
-  startAt: Int!
-  endAt: Int!
+  startAt: Int64!
+  endAt: Int64!
   room: Room
   participants: [User!]
   notes: String
-  remindAt: Int!
+  remindAt: Int64!
   creator: User!
   isDelete: Boolean
 }
@@ -115,10 +117,10 @@ input UpsertEventInput {
   id: ID
   title: String!
   description: String
-  startAt: Int!
-  endAt: Int!
+  startAt: Int64!
+  endAt: Int64!
   roomId: ID
   participantsIDs: [ID!]
   notes: String
-  remindAt: Int!
+  remindAt: Int64!
 }

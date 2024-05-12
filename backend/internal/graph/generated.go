@@ -81,13 +81,13 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Event                   func(childComplexity int, id string) int
-		PaginatedAvailableRooms func(childComplexity int, startAt int, endAt int, first *int, after *string) int
+		PaginatedAvailableRooms func(childComplexity int, startAt int64, endAt int64, first *int, after *string) int
 		PaginatedRooms          func(childComplexity int, first *int, after *string) int
 		PaginatedUsers          func(childComplexity int, first *int, after *string) int
 		Room                    func(childComplexity int, id string) int
 		User                    func(childComplexity int, id string) int
 		UserEvent               func(childComplexity int, userID string) int
-		UserEvents              func(childComplexity int, userIDs []string, startAt int, endAt int) int
+		UserEvents              func(childComplexity int, userIDs []string, startAt int64, endAt int64) int
 	}
 
 	Room struct {
@@ -147,10 +147,10 @@ type QueryResolver interface {
 	Room(ctx context.Context, id string) (*model.Room, error)
 	UserEvent(ctx context.Context, userID string) ([]*model.Event, error)
 	Event(ctx context.Context, id string) (*model.Event, error)
-	PaginatedAvailableRooms(ctx context.Context, startAt int, endAt int, first *int, after *string) (*model.RoomConnection, error)
+	PaginatedAvailableRooms(ctx context.Context, startAt int64, endAt int64, first *int, after *string) (*model.RoomConnection, error)
 	User(ctx context.Context, id string) (*model.User, error)
 	PaginatedUsers(ctx context.Context, first *int, after *string) (*model.UserConnection, error)
-	UserEvents(ctx context.Context, userIDs []string, startAt int, endAt int) ([]*model.UserEvent, error)
+	UserEvents(ctx context.Context, userIDs []string, startAt int64, endAt int64) ([]*model.UserEvent, error)
 }
 
 type executableSchema struct {
@@ -354,7 +354,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.PaginatedAvailableRooms(childComplexity, args["startAt"].(int), args["endAt"].(int), args["first"].(*int), args["after"].(*string)), true
+		return e.complexity.Query.PaginatedAvailableRooms(childComplexity, args["startAt"].(int64), args["endAt"].(int64), args["first"].(*int), args["after"].(*string)), true
 
 	case "Query.paginatedRooms":
 		if e.complexity.Query.PaginatedRooms == nil {
@@ -426,7 +426,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.UserEvents(childComplexity, args["userIDs"].([]string), args["startAt"].(int), args["endAt"].(int)), true
+		return e.complexity.Query.UserEvents(childComplexity, args["userIDs"].([]string), args["startAt"].(int64), args["endAt"].(int64)), true
 
 	case "Room.bookings":
 		if e.complexity.Room.Bookings == nil {
@@ -815,19 +815,19 @@ func (ec *executionContext) field_Query_event_args(ctx context.Context, rawArgs 
 func (ec *executionContext) field_Query_paginatedAvailableRooms_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 int
+	var arg0 int64
 	if tmp, ok := rawArgs["startAt"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startAt"))
-		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		arg0, err = ec.unmarshalNInt642int64(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["startAt"] = arg0
-	var arg1 int
+	var arg1 int64
 	if tmp, ok := rawArgs["endAt"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endAt"))
-		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		arg1, err = ec.unmarshalNInt642int64(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -944,19 +944,19 @@ func (ec *executionContext) field_Query_userEvents_args(ctx context.Context, raw
 		}
 	}
 	args["userIDs"] = arg0
-	var arg1 int
+	var arg1 int64
 	if tmp, ok := rawArgs["startAt"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startAt"))
-		arg1, err = ec.unmarshalNInt2int(ctx, tmp)
+		arg1, err = ec.unmarshalNInt642int64(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["startAt"] = arg1
-	var arg2 int
+	var arg2 int64
 	if tmp, ok := rawArgs["endAt"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endAt"))
-		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		arg2, err = ec.unmarshalNInt642int64(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1321,9 +1321,9 @@ func (ec *executionContext) _Event_startAt(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNInt642int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Event_startAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1333,7 +1333,7 @@ func (ec *executionContext) fieldContext_Event_startAt(ctx context.Context, fiel
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type Int64 does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1365,9 +1365,9 @@ func (ec *executionContext) _Event_endAt(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNInt642int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Event_endAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1377,7 +1377,7 @@ func (ec *executionContext) fieldContext_Event_endAt(ctx context.Context, field 
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type Int64 does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1564,9 +1564,9 @@ func (ec *executionContext) _Event_remindAt(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNInt642int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Event_remindAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1576,7 +1576,7 @@ func (ec *executionContext) fieldContext_Event_remindAt(ctx context.Context, fie
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type Int64 does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2363,7 +2363,7 @@ func (ec *executionContext) _Query_paginatedAvailableRooms(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().PaginatedAvailableRooms(rctx, fc.Args["startAt"].(int), fc.Args["endAt"].(int), fc.Args["first"].(*int), fc.Args["after"].(*string))
+		return ec.resolvers.Query().PaginatedAvailableRooms(rctx, fc.Args["startAt"].(int64), fc.Args["endAt"].(int64), fc.Args["first"].(*int), fc.Args["after"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2556,7 +2556,7 @@ func (ec *executionContext) _Query_userEvents(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().UserEvents(rctx, fc.Args["userIDs"].([]string), fc.Args["startAt"].(int), fc.Args["endAt"].(int))
+		return ec.resolvers.Query().UserEvents(rctx, fc.Args["userIDs"].([]string), fc.Args["startAt"].(int64), fc.Args["endAt"].(int64))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5657,14 +5657,14 @@ func (ec *executionContext) unmarshalInputUpsertEventInput(ctx context.Context, 
 			it.Description = data
 		case "startAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startAt"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
+			data, err := ec.unmarshalNInt642int64(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.StartAt = data
 		case "endAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endAt"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
+			data, err := ec.unmarshalNInt642int64(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5692,7 +5692,7 @@ func (ec *executionContext) unmarshalInputUpsertEventInput(ctx context.Context, 
 			it.Notes = data
 		case "remindAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("remindAt"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
+			data, err := ec.unmarshalNInt642int64(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -7018,6 +7018,21 @@ func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}
 
 func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
 	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInt642int64(ctx context.Context, v interface{}) (int64, error) {
+	res, err := graphql.UnmarshalInt64(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt642int64(ctx context.Context, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")

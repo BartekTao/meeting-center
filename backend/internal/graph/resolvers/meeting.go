@@ -282,7 +282,7 @@ func (r *queryResolver) Event(ctx context.Context, id string) (*model.Event, err
 }
 
 // PaginatedAvailableRooms is the resolver for the paginatedAvailableRooms field.
-func (r *queryResolver) PaginatedAvailableRooms(ctx context.Context, startAt int, endAt int, first *int, after *string) (*model.RoomConnection, error) {
+func (r *queryResolver) PaginatedAvailableRooms(ctx context.Context, startAt int64, endAt int64, first *int, after *string) (*model.RoomConnection, error) {
 	panic(fmt.Errorf("not implemented: PaginatedAvailableRooms - paginatedAvailableRooms"))
 }
 
@@ -345,7 +345,7 @@ func (r *queryResolver) PaginatedUsers(ctx context.Context, first *int, after *s
 }
 
 // UserEvents is the resolver for the userEvents field.
-func (r *queryResolver) UserEvents(ctx context.Context, userIDs []string, startAt int, endAt int) ([]*model.UserEvent, error) {
+func (r *queryResolver) UserEvents(ctx context.Context, userIDs []string, startAt int64, endAt int64) ([]*model.UserEvent, error) {
 	// r.eventService.GetUserEvents(ctx, userIDs, startA)
 	panic(fmt.Errorf("not implemented: UserEvents - userEvents"))
 }

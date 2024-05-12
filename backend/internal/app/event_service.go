@@ -10,12 +10,12 @@ type UpsertEventRequest struct {
 	ID              *string  `json:"_id,omitempty"`
 	Title           string   `json:"title"`
 	Description     *string  `json:"description"`
-	StartAt         int      `json:"startAt"`
-	EndAt           int      `json:"endAt"`
+	StartAt         int64    `json:"startAt"`
+	EndAt           int64    `json:"endAt"`
 	RoomID          *string  `json:"roomId"`
 	ParticipantsIDs []string `json:"participantsIDs"`
 	Notes           *string  `json:"notes"`
-	RemindAt        int      `json:"remindAt"`
+	RemindAt        int64    `json:"remindAt"`
 	UpdaterId       string   `json:"updaterId"`
 }
 

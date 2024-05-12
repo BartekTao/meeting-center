@@ -17,12 +17,12 @@ type Event struct {
 	ID              primitive.ObjectID `bson:"_id,omitempty"`
 	Title           string             `bson:"title"`
 	Description     *string            `bson:"description"`
-	StartAt         int                `bson:"startAt"`
-	EndAt           int                `bson:"endAt"`
+	StartAt         int64              `bson:"startAt"`
+	EndAt           int64              `bson:"endAt"`
 	RoomID          *string            `bson:"roomId"`
 	ParticipantsIDs []string           `bson:"participantsIDs"`
 	Notes           *string            `bson:"notes"`
-	RemindAt        int                `bson:"remindAt"`
+	RemindAt        int64              `bson:"remindAt"`
 	IsDelete        bool               `bson:"isDelete"`
 	CreatedAt       int64              `bson:"createdAt"`
 	UpdatedAt       int64              `bson:"updatedAt"`

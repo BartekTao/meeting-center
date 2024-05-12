@@ -29,12 +29,12 @@ type Event struct {
 	ID           string  `json:"id"`
 	Title        string  `json:"title"`
 	Description  *string `json:"description,omitempty"`
-	StartAt      int     `json:"startAt"`
-	EndAt        int     `json:"endAt"`
+	StartAt      int64   `json:"startAt"`
+	EndAt        int64   `json:"endAt"`
 	Room         *Room   `json:"room,omitempty"`
 	Participants []*User `json:"participants,omitempty"`
 	Notes        *string `json:"notes,omitempty"`
-	RemindAt     int     `json:"remindAt"`
+	RemindAt     int64   `json:"remindAt"`
 	Creator      *User   `json:"creator"`
 	IsDelete     *bool   `json:"isDelete,omitempty"`
 }
@@ -94,12 +94,12 @@ type UpsertEventInput struct {
 	ID              *string  `json:"id,omitempty"`
 	Title           string   `json:"title"`
 	Description     *string  `json:"description,omitempty"`
-	StartAt         int      `json:"startAt"`
-	EndAt           int      `json:"endAt"`
+	StartAt         int64    `json:"startAt"`
+	EndAt           int64    `json:"endAt"`
 	RoomID          *string  `json:"roomId,omitempty"`
 	ParticipantsIDs []string `json:"participantsIDs,omitempty"`
 	Notes           *string  `json:"notes,omitempty"`
-	RemindAt        int      `json:"remindAt"`
+	RemindAt        int64    `json:"remindAt"`
 }
 
 type UpsertRoomInput struct {
