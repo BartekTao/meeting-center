@@ -104,7 +104,7 @@ func (g *googleOAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jwtToken, err := g.jwtHandler.GenerateJWT(userinfo.Email)
+	jwtToken, err := g.jwtHandler.GenerateJWT(userinfo)
 	if err != nil {
 		log.Printf("Failed to generate JWT: %s\n", err)
 		httpError(w, "Failed to generate JWT", http.StatusInternalServerError) // 500 Internal Server Error

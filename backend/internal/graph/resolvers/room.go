@@ -13,21 +13,25 @@ import (
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
+	"github.com/BartekTao/nycu-meeting-room-api/pkg/middleware"
 )
 
 // BookedBy is the resolver for the bookedBy field.
 func (r *bookingResolver) BookedBy(ctx context.Context, obj *model.Booking) (*domain.User, error) {
-	panic(fmt.Errorf("not implemented: BookedBy - bookedBy"))
+	return r.userService.GetByID(ctx, *obj.BookedBy.ID)
 }
 
 // UpsertRoom is the resolver for the upsertRoom field.
 func (r *mutationResolver) UpsertRoom(ctx context.Context, room model.UpsertRoomInput) (*domain.Room, error) {
+	claims, _ := ctx.Value(middleware.UserCtxKey).(middleware.MeetingCenterClaims)
+
 	upsertRoom := app.UpsertRoomRequest{
 		ID:        room.ID,
 		RoomID:    room.RoomID,
 		Capacity:  room.Capacity,
 		Equipment: room.Equipment,
 		Rules:     room.Rules,
+		UpdaterID: claims.Sub,
 	}
 	res, err := r.roomService.Upsert(ctx, upsertRoom)
 	if err != nil {

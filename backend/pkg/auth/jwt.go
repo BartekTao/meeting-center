@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -20,9 +21,11 @@ func NewJWTHandler() *jwtHandler {
 	return &jwtHandler{jwtKey: []byte(jwtKey)}
 }
 
-func (j *jwtHandler) GenerateJWT(email string) (string, error) {
+func (j *jwtHandler) GenerateJWT(userinfo *domain.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email": email,
+		"sub":   userinfo.ID,
+		"name":  userinfo.Name,
+		"email": userinfo.Email,
 		"exp":   time.Now().Add(time.Hour * 24).Unix(),
 	})
 	tokenString, err := token.SignedString(j.jwtKey)

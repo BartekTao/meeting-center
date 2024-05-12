@@ -21,8 +21,9 @@ type Room struct {
 	Rules     []string           `bson:"rules"`
 	IsDelete  bool               `bson:"isDelete"`
 	CreatedAt int64              `bson:"createdAt"`
+	CreatorID string             `bson:"creatorID"`
 	UpdatedAt int64              `bson:"updatedAt"`
-	UpdaterId string             `bson:"updaterId"`
+	UpdaterID string             `bson:"updaterID"`
 }
 
 type mongoRoomRepository struct {
@@ -50,7 +51,9 @@ func (m *mongoRoomRepository) Upsert(ctx context.Context, room domain.Room) (*do
 			Rules:     room.Rules,
 			IsDelete:  false,
 			CreatedAt: currentTime,
+			CreatorID: room.UpdaterID,
 			UpdatedAt: currentTime,
+			UpdaterID: room.UpdaterID,
 		}
 		result, err := collection.InsertOne(ctx, newRoom)
 		if err != nil {
@@ -77,6 +80,7 @@ func (m *mongoRoomRepository) Upsert(ctx context.Context, room domain.Room) (*do
 				"equipment": room.Equipment,
 				"rules":     room.Rules,
 				"updatedAt": time.Now().Unix(),
+				"updaterID": room.UpdaterID,
 			},
 		}
 

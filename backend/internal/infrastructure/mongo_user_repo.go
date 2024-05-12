@@ -48,6 +48,27 @@ func (r *mongoUserRepo) GetByID(ctx context.Context, id string) (*domain.User, e
 	return ToDomainUser(user), nil
 }
 
+func (r *mongoUserRepo) GetByIDs(ctx context.Context, ids []string) ([]domain.User, error) {
+	bsonIds, err := common.ToBsonIDs(ids)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.M{
+		"_id": bson.M{"$in": bsonIds},
+	}
+	users, err := r.findAllByFilter(ctx, r.userCollection, filter)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	domainUsers := make([]domain.User, len(users))
+	for i, user := range users {
+		domainUsers[i] = *ToDomainUser(user)
+	}
+	return domainUsers, nil
+}
+
 func (r *mongoUserRepo) GetUserBySub(ctx context.Context, sub string) (*domain.User, error) {
 	filter := bson.M{"sub": sub}
 	user, err := r.findOneByFilter(ctx, r.userCollection, filter)

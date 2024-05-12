@@ -2,6 +2,7 @@ extend type Query {
   userEvent(userID: ID!): [Event!]
   event(id: ID!): Event
   paginatedAvailableRooms(startAt: Int64!, endAt: Int64!, first: Int = 20, after: String): RoomConnection!
+  userEvents(userIDs: [ID!]!, startAt: Int64!, endAt: Int64!): [UserEvent]
 }
 
 extend type Mutation {
@@ -16,11 +17,16 @@ type Event @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/
   startAt: Int64!
   endAt: Int64!
   room: Room @goField(forceResolver: true)
-  participants: [User!] @goField(forceResolver: true)
+  participants: [User!]! @goField(forceResolver: true)
   notes: String
   remindAt: Int64!
   creator: User!
   isDelete: Boolean
+}
+
+type UserEvent {
+  user: User! @goField(forceResolver: true)
+  events: [Event!]
 }
 
 input UpsertEventInput {

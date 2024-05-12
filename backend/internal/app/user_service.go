@@ -8,6 +8,7 @@ import (
 
 type UserService interface {
 	GetByID(ctx context.Context, id string) (*domain.User, error)
+	GetByIDs(ctx context.Context, ids []string) ([]domain.User, error)
 	QueryPaginated(ctx context.Context, skip int, limit int) ([]domain.User, error)
 }
 
@@ -22,6 +23,10 @@ func NewUserService(userRepo domain.UserRepo) UserService {
 func (h *userService) GetByID(ctx context.Context, id string) (*domain.User, error) {
 	room, err := h.userRepo.GetByID(ctx, id)
 	return room, err
+}
+
+func (h *userService) GetByIDs(ctx context.Context, ids []string) ([]domain.User, error) {
+	return h.userRepo.GetByIDs(ctx, ids)
 }
 
 func (h *userService) QueryPaginated(ctx context.Context, skip int, limit int) ([]domain.User, error) {

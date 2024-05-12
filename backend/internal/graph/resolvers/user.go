@@ -6,11 +6,9 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/BartekTao/nycu-meeting-room-api/internal/common"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
-	"github.com/BartekTao/nycu-meeting-room-api/internal/graph"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
 )
 
@@ -55,32 +53,3 @@ func (r *queryResolver) PaginatedUsers(ctx context.Context, first *int, after *s
 		},
 	}, nil
 }
-
-// UserEvents is the resolver for the userEvents field.
-func (r *queryResolver) UserEvents(ctx context.Context, userIDs []string, startAt int64, endAt int64) ([]*model.UserEvent, error) {
-	userEvents, err := r.eventService.GetUserEvents(ctx, userIDs, startAt, endAt)
-	if err != nil {
-		return nil, err
-	}
-
-	res := make([]*model.UserEvent, len(userEvents))
-	for userID, userEvent := range userEvents {
-		res = append(res, &model.UserEvent{
-			User: &domain.User{
-				ID: common.ToPtr(userID),
-			},
-			Events: userEvent,
-		})
-	}
-	return res, nil
-}
-
-// User is the resolver for the user field.
-func (r *userEventResolver) User(ctx context.Context, obj *model.UserEvent) (*domain.User, error) {
-	panic(fmt.Errorf("not implemented: User - user"))
-}
-
-// UserEvent returns graph.UserEventResolver implementation.
-func (r *Resolver) UserEvent() graph.UserEventResolver { return &userEventResolver{r} }
-
-type userEventResolver struct{ *Resolver }

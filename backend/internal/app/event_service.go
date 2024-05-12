@@ -16,7 +16,7 @@ type UpsertEventRequest struct {
 	ParticipantsIDs []string `json:"participantsIDs"`
 	Notes           *string  `json:"notes"`
 	RemindAt        int64    `json:"remindAt"`
-	UpdaterId       string   `json:"updaterId"`
+	UpdaterID       string   `json:"updaterID"`
 }
 
 type EventService interface {
@@ -45,6 +45,7 @@ func (h *eventService) Upsert(ctx context.Context, req UpsertEventRequest) (*dom
 		ParticipantsIDs: req.ParticipantsIDs,
 		Notes:           req.Notes,
 		RemindAt:        req.RemindAt,
+		UpdaterID:       req.UpdaterID,
 	}
 	res, err := h.eventRepository.Upsert(ctx, event)
 	if err != nil {

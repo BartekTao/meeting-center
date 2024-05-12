@@ -9,13 +9,19 @@ import (
 	"fmt"
 
 	"github.com/BartekTao/nycu-meeting-room-api/internal/app"
+	"github.com/BartekTao/nycu-meeting-room-api/internal/common"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
+	"github.com/BartekTao/nycu-meeting-room-api/pkg/middleware"
 )
 
 // Room is the resolver for the room field.
 func (r *eventResolver) Room(ctx context.Context, obj *domain.Event) (*domain.Room, error) {
+	if obj.RoomID == nil {
+		return nil, nil
+	}
+
 	room, err := r.roomService.GetByID(ctx, *obj.RoomID)
 	if err != nil {
 		return nil, err
@@ -25,16 +31,18 @@ func (r *eventResolver) Room(ctx context.Context, obj *domain.Event) (*domain.Ro
 
 // Participants is the resolver for the participants field.
 func (r *eventResolver) Participants(ctx context.Context, obj *domain.Event) ([]domain.User, error) {
-	panic(fmt.Errorf("not implemented: Participants - participants"))
+	return r.userService.GetByIDs(ctx, obj.ParticipantsIDs)
 }
 
 // Creator is the resolver for the creator field.
 func (r *eventResolver) Creator(ctx context.Context, obj *domain.Event) (*domain.User, error) {
-	panic(fmt.Errorf("not implemented: Creator - creator"))
+	return r.userService.GetByID(ctx, obj.CreatorID)
 }
 
 // UpsertEvent is the resolver for the upsertEvent field.
 func (r *mutationResolver) UpsertEvent(ctx context.Context, input model.UpsertEventInput) (*domain.Event, error) {
+	claims, _ := ctx.Value(middleware.UserCtxKey).(middleware.MeetingCenterClaims)
+
 	upsertEvent := app.UpsertEventRequest{
 		ID:              input.ID,
 		Title:           input.Title,
@@ -45,6 +53,7 @@ func (r *mutationResolver) UpsertEvent(ctx context.Context, input model.UpsertEv
 		ParticipantsIDs: input.ParticipantsIDs,
 		Notes:           input.Notes,
 		RemindAt:        input.RemindAt,
+		UpdaterID:       claims.Sub,
 	}
 
 	event, upsert_err := r.eventService.Upsert(ctx, upsertEvent)
@@ -52,35 +61,7 @@ func (r *mutationResolver) UpsertEvent(ctx context.Context, input model.UpsertEv
 		return nil, upsert_err
 	}
 
-	if event.RoomID == nil {
-		return event, nil
-	}
-
-	// temp_room, query_err := r.roomService.GetByID(ctx, *event.RoomID)
-	// if query_err != nil {
-	// 	return nil, query_err
-	// }
-	// room := &domain.Room{
-	// 	ID:        temp_room.ID,
-	// 	RoomID:    temp_room.RoomID,
-	// 	Capacity:  temp_room.Capacity,
-	// 	Equipment: temp_room.Equipment,
-	// 	Rules:     temp_room.Rules,
-	// 	IsDelete:  temp_room.IsDelete,
-	// }
-
-	return &domain.Event{
-		ID:          event.ID,
-		Title:       event.Title,
-		Description: event.Description,
-		StartAt:     event.StartAt,
-		EndAt:       event.EndAt,
-		// Room:        room,
-		// Participants: ,
-		Notes:    event.Notes,
-		RemindAt: event.RemindAt,
-		IsDelete: event.IsDelete,
-	}, nil
+	return event, nil
 }
 
 // DeleteEvent is the resolver for the deleteEvent field.
@@ -91,32 +72,6 @@ func (r *mutationResolver) DeleteEvent(ctx context.Context, id string) (*domain.
 	}
 
 	return event, nil
-
-	// temp_room, query_err := r.roomService.GetByID(ctx, *event.RoomID)
-	// if query_err != nil {
-	// 	return nil, query_err
-	// }
-	// room := &model.Room{
-	// 	ID:        *temp_room.ID,
-	// 	RoomID:    temp_room.RoomID,
-	// 	Capacity:  temp_room.Capacity,
-	// 	Equipment: temp_room.Equipment,
-	// 	Rules:     temp_room.Rules,
-	// 	IsDelete:  &temp_room.IsDelete,
-	// }
-
-	// return &domain.Event.Event{
-	// 	ID:          *event.ID,
-	// 	Title:       event.Title,
-	// 	Description: event.Description,
-	// 	StartAt:     event.StartAt,
-	// 	EndAt:       event.EndAt,
-	// 	Room:        room,
-	// 	// Participants: ,
-	// 	Notes:    event.Notes,
-	// 	RemindAt: event.RemindAt,
-	// 	IsDelete: &event.IsDelete,
-	// }, nil
 }
 
 // UserEvent is the resolver for the userEvent field.
@@ -132,46 +87,6 @@ func (r *queryResolver) Event(ctx context.Context, id string) (*domain.Event, er
 	}
 
 	return event, nil
-
-	// if event.RoomID == nil {
-	// 	return &model.Event{
-	// 		ID:          *event.ID,
-	// 		Title:       event.Title,
-	// 		Description: event.Description,
-	// 		StartAt:     event.StartAt,
-	// 		EndAt:       event.EndAt,
-	// 		// Participants: ,
-	// 		Notes:    event.Notes,
-	// 		RemindAt: event.RemindAt,
-	// 		IsDelete: &event.IsDelete,
-	// 	}, nil
-	// }
-
-	// temp_room, query_err := r.roomService.GetByID(ctx, *event.RoomID)
-	// if query_err != nil {
-	// 	return nil, query_err
-	// }
-	// room := &model.Room{
-	// 	ID:        *temp_room.ID,
-	// 	RoomID:    temp_room.RoomID,
-	// 	Capacity:  temp_room.Capacity,
-	// 	Equipment: temp_room.Equipment,
-	// 	Rules:     temp_room.Rules,
-	// 	IsDelete:  &temp_room.IsDelete,
-	// }
-
-	// return &model.Event{
-	// 	ID:          *event.ID,
-	// 	Title:       event.Title,
-	// 	Description: event.Description,
-	// 	StartAt:     event.StartAt,
-	// 	EndAt:       event.EndAt,
-	// 	Room:        room,
-	// 	// Participants: ,
-	// 	Notes:    event.Notes,
-	// 	RemindAt: event.RemindAt,
-	// 	IsDelete: &event.IsDelete,
-	// }, nil
 }
 
 // PaginatedAvailableRooms is the resolver for the paginatedAvailableRooms field.
@@ -179,7 +94,37 @@ func (r *queryResolver) PaginatedAvailableRooms(ctx context.Context, startAt int
 	panic(fmt.Errorf("not implemented: PaginatedAvailableRooms - paginatedAvailableRooms"))
 }
 
+// UserEvents is the resolver for the userEvents field.
+func (r *queryResolver) UserEvents(ctx context.Context, userIDs []string, startAt int64, endAt int64) ([]*model.UserEvent, error) {
+	userEvents, err := r.eventService.GetUserEvents(ctx, userIDs, startAt, endAt)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]*model.UserEvent, len(userEvents))
+	for userID, userEvent := range userEvents {
+		res = append(res, &model.UserEvent{
+			User: &domain.User{
+				ID: common.ToPtr(userID),
+			},
+			Events: userEvent,
+		})
+	}
+	return res, nil
+}
+
+// User is the resolver for the user field.
+func (r *userEventResolver) User(ctx context.Context, obj *model.UserEvent) (*domain.User, error) {
+	return r.userService.GetByID(ctx, *obj.User.ID)
+}
+
 // Event returns graph.EventResolver implementation.
 func (r *Resolver) Event() graph.EventResolver { return &eventResolver{r} }
 
-type eventResolver struct{ *Resolver }
+// UserEvent returns graph.UserEventResolver implementation.
+func (r *Resolver) UserEvent() graph.UserEventResolver { return &userEventResolver{r} }
+
+type (
+	eventResolver     struct{ *Resolver }
+	userEventResolver struct{ *Resolver }
+)

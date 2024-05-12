@@ -17,6 +17,7 @@ type User struct {
 type UserRepo interface {
 	GetUserBySub(ctx context.Context, sub string) (*User, error)
 	GetByID(ctx context.Context, id string) (*User, error)
+	GetByIDs(ctx context.Context, ids []string) ([]User, error)
 	SignUp(ctx context.Context, user User) (*string, error)
 	QueryPaginated(ctx context.Context, skip int, limit int) ([]User, error)
 }

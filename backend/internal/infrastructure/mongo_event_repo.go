@@ -25,8 +25,9 @@ type Event struct {
 	RemindAt        int64              `bson:"remindAt"`
 	IsDelete        bool               `bson:"isDelete"`
 	CreatedAt       int64              `bson:"createdAt"`
+	CreatorID       string             `bson:"creatorID"`
 	UpdatedAt       int64              `bson:"updatedAt"`
-	UpdaterId       string             `bson:"updaterId"`
+	UpdaterID       string             `bson:"updaterID"`
 }
 
 type mongoEventRepository struct {
@@ -58,7 +59,9 @@ func (m *mongoEventRepository) Upsert(ctx context.Context, event domain.Event) (
 			RemindAt:        event.RemindAt,
 			IsDelete:        false,
 			CreatedAt:       currentTime,
+			CreatorID:       event.UpdaterID,
 			UpdatedAt:       currentTime,
+			UpdaterID:       event.UpdaterID,
 		}
 		result, err := collection.InsertOne(ctx, newEvent)
 		if err != nil {
@@ -89,6 +92,7 @@ func (m *mongoEventRepository) Upsert(ctx context.Context, event domain.Event) (
 				"notes":           event.Notes,
 				"remindAt":        event.RemindAt,
 				"updatedAt":       time.Now().Unix(),
+				"updaterID":       event.UpdaterID,
 			},
 		}
 
@@ -129,13 +133,17 @@ func (m *mongoEventRepository) GetByID(ctx context.Context, id string) (*domain.
 }
 
 func (m *mongoEventRepository) GetByUsers(ctx context.Context, ids []string, startAt, endAt int64) (map[string][]domain.Event, error) {
+	bsonIds, err := common.ToBsonIDs(ids)
+	if err != nil {
+		return nil, err
+	}
 	filter := bson.M{
-		"participantsIDs": bson.M{"$in": ids},
+		"participantsIDs": bson.M{"$in": bsonIds},
 		"startAt":         bson.M{"$gte": startAt},
 		"endAt":           bson.M{"$lte": endAt},
 		"isDelete":        false,
 	}
-	events, err := m.BaseRepository.FindAllByFilter(ctx, m.eventCollection, filter)
+	events, err := m.BaseRepository.findAllByFilter(ctx, m.eventCollection, filter)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -171,8 +179,9 @@ func ToDomainEvent(event *Event) *domain.Event {
 		RemindAt:        event.RemindAt,
 		IsDelete:        event.IsDelete,
 		CreatedAt:       event.CreatedAt,
+		CreatorID:       event.CreatorID,
 		UpdatedAt:       event.UpdatedAt,
-		UpdaterId:       event.UpdaterId,
+		UpdaterID:       event.UpdaterID,
 	}
 	return &domainRoom
 }

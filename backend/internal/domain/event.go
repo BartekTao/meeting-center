@@ -16,8 +16,9 @@ type Event struct {
 	RemindAt        int64    `json:"remindAt"`
 	IsDelete        bool     `json:"isDelete"`
 	CreatedAt       int64    `json:"createdAt"`
+	CreatorID       string   `json:"creatorID"`
 	UpdatedAt       int64    `json:"updatedAt"`
-	UpdaterId       string   `json:"updaterId"`
+	UpdaterID       string   `json:"updaterID"`
 }
 
 type EventRepository interface {

@@ -90,7 +90,7 @@ func (r *BaseRepository[T]) findOneByFilter(
 	return &result, nil
 }
 
-func (r *BaseRepository[T]) FindAllByFilter(
+func (r *BaseRepository[T]) findAllByFilter(
 	ctx context.Context,
 	collection *mongo.Collection,
 	filter bson.M,
