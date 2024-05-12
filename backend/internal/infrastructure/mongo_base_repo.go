@@ -73,6 +73,23 @@ func (r *BaseRepository[T]) getByID(ctx context.Context, collection *mongo.Colle
 	return &result, nil
 }
 
+func (r *BaseRepository[T]) findOneByFilter(
+	ctx context.Context,
+	collection *mongo.Collection,
+	filter bson.M,
+) (*T, error) {
+	var result T
+	err := collection.FindOne(ctx, filter).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
+		log.Printf("Failed to decode document: %v", err)
+		return nil, err
+	}
+	return &result, nil
+}
+
 func (r *BaseRepository[T]) softDelete(ctx context.Context, collection *mongo.Collection, id string) (*T, error) {
 	deleteID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -105,4 +122,38 @@ func (r *BaseRepository[T]) softDelete(ctx context.Context, collection *mongo.Co
 	}
 
 	return &result, nil
+}
+
+func (r *BaseRepository[T]) queryPaginated(
+	ctx context.Context,
+	collection *mongo.Collection,
+	skip int, limit int,
+	filter bson.M,
+	sort bson.D,
+) ([]*T, error) {
+	findOptions := options.Find()
+	findOptions.SetSort(sort)
+	findOptions.SetSkip(int64(skip))
+	findOptions.SetLimit(int64(limit))
+
+	cur, err := collection.Find(ctx, filter, findOptions)
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+
+	var results []*T
+	for cur.Next(ctx) {
+		var result T
+		err := cur.Decode(&result)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, &result)
+	}
+
+	if err := cur.Err(); err != nil {
+		return nil, err
+	}
+	return results, nil
 }

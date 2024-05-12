@@ -2,23 +2,19 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
-
-func SetGoogleOAuth() {
-	authHandler := NewGoogleOAuthHandler()
-
-	http.HandleFunc("/auth/google/login", authHandler.Login)
-
-	http.HandleFunc("/auth/google/callback", authHandler.Callback)
-}
 
 type OAuthHandler interface {
 	Login(w http.ResponseWriter, r *http.Request)
@@ -28,9 +24,10 @@ type OAuthHandler interface {
 type googleOAuthHandler struct {
 	googleOauthConfig *oauth2.Config
 	jwtHandler        *jwtHandler
+	userRepo          domain.UserRepo
 }
 
-func NewGoogleOAuthHandler() OAuthHandler {
+func NewGoogleOAuthHandler(userRepo domain.UserRepo) OAuthHandler {
 	clientID := os.Getenv("GOOGLE_OAUTH_CLIENT_ID")
 	if clientID == "" {
 		log.Fatal("You must set the GOOGLE_OAUTH_CLIENT_ID environment variable")
@@ -41,7 +38,7 @@ func NewGoogleOAuthHandler() OAuthHandler {
 		log.Fatal("You must set the GOOGLE_OAUTH_CLIENT_SECRET environment variable")
 	}
 
-	var googleOauthConfig = &oauth2.Config{
+	googleOauthConfig := &oauth2.Config{
 		RedirectURL:  "http://localhost:8080/auth/google/callback",
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
@@ -49,17 +46,36 @@ func NewGoogleOAuthHandler() OAuthHandler {
 		Endpoint:     google.Endpoint,
 	}
 	jwtHandler := NewJWTHandler()
-	return &googleOAuthHandler{googleOauthConfig: googleOauthConfig, jwtHandler: jwtHandler}
+	return &googleOAuthHandler{
+		googleOauthConfig: googleOauthConfig,
+		jwtHandler:        jwtHandler,
+		userRepo:          userRepo,
+	}
+}
+
+func generateStateOauthCookie(w http.ResponseWriter) string {
+	expiration := time.Now().Add(365 * 24 * time.Hour)
+
+	b := make([]byte, 16)
+	rand.Read(b)
+	state := base64.URLEncoding.EncodeToString(b)
+	cookie := http.Cookie{Name: "oauthstate", Value: state, Expires: expiration, HttpOnly: true}
+	http.SetCookie(w, &cookie)
+
+	return state
 }
 
 func (g *googleOAuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	state := "random" // 應該產生一個隨機的狀態值用於防止 CSRF 攻擊
+	state := generateStateOauthCookie(w)
 	url := g.googleOauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
 func (g *googleOAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
+
+	// oauthState, _ := r.Cookie("oauthstate")
+
 	code := r.URL.Query().Get("code")
 	if code == "" {
 		log.Println("Code not found")
@@ -75,7 +91,7 @@ func (g *googleOAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	client := g.googleOauthConfig.Client(ctx, token)
-	userinfo, err := getUserInfo(client)
+	userinfo, err := g.getUserInfo(client)
 	if err != nil {
 		log.Printf("Failed to get user info: %s\n", err)
 		httpError(w, "Failed to retrieve user information", http.StatusInternalServerError) // 500 Internal Server Error
@@ -110,7 +126,8 @@ func httpError(w http.ResponseWriter, message string, statusCode int) {
 	json.NewEncoder(w).Encode(map[string]string{"error": message})
 }
 
-func getUserInfo(client *http.Client) (*User, error) {
+func (g *googleOAuthHandler) getUserInfo(client *http.Client) (*domain.User, error) {
+	ctx := context.Background()
 	resp, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
 	if err != nil {
 		return nil, err
@@ -120,12 +137,28 @@ func getUserInfo(client *http.Client) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-	var user User
+	var user domain.User
 
 	err = json.Unmarshal(data, &user)
 	if err != nil {
 		return nil, err
 	}
 
-	return &user, nil
+	// check user sign up
+	userInDB, err := g.userRepo.GetUser(ctx, user.Sub)
+	if err != nil {
+		log.Println("fail to get user")
+		return nil, err
+	}
+	if userInDB != nil {
+		return userInDB, nil
+	} else {
+		id, err := g.userRepo.SignUp(ctx, user)
+		if err != nil {
+			log.Println("fail to SignUp")
+			return nil, err
+		}
+		user.ID = id
+		return &user, nil
+	}
 }

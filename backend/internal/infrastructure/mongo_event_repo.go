@@ -128,6 +128,10 @@ func (m *mongoEventRepository) GetByID(ctx context.Context, id string) (*domain.
 	return ToDomainEvent(event), nil
 }
 
+func (m *mongoEventRepository) GetByUsers(ctx context.Context, ids []string, startAt, endAt int64) (map[string][]*domain.Event, error) {
+	return nil, nil
+}
+
 func ToDomainEvent(event *Event) *domain.Event {
 	domainRoom := domain.Event{
 		ID:              common.ToPtr(event.ID.Hex()),

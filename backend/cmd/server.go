@@ -104,7 +104,8 @@ func newHTTPHandler(mongoClient *mongo.Client) http.Handler {
 	}
 	jwtMiddleware := middleware.JWTMiddleware(jwtSecret)
 
-	authHandler := auth.NewGoogleOAuthHandler()
+	userRepo := infra.NewMongoUserRepo(mongoClient)
+	authHandler := auth.NewGoogleOAuthHandler(userRepo)
 
 	mux.HandleFunc("/auth/google/login", authHandler.Login)
 	mux.HandleFunc("/auth/google/callback", authHandler.Callback)

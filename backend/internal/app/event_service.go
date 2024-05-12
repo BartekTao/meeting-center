@@ -66,3 +66,8 @@ func (h eventService) GetByID(ctx context.Context, id string) (*domain.Event, er
 	res, err := h.eventRepository.GetByID(ctx, id)
 	return res, err
 }
+
+func (h eventService) GetParticipantEvents(ctx context.Context, ids []string, startAt, endAt int64) ([]*domain.Event, error) {
+	h.eventRepository.GetByUsers(ctx, ids, startAt, endAt)
+	return nil, nil
+}
