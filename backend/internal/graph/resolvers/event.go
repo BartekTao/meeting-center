@@ -124,7 +124,5 @@ func (r *Resolver) Event() graph.EventResolver { return &eventResolver{r} }
 // UserEvent returns graph.UserEventResolver implementation.
 func (r *Resolver) UserEvent() graph.UserEventResolver { return &userEventResolver{r} }
 
-type (
-	eventResolver     struct{ *Resolver }
-	userEventResolver struct{ *Resolver }
-)
+type eventResolver struct{ *Resolver }
+type userEventResolver struct{ *Resolver }

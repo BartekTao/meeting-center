@@ -72,7 +72,7 @@ func (g *googleOAuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (g *googleOAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
+	ctx := r.Context()
 
 	// oauthState, _ := r.Cookie("oauthstate")
 
@@ -91,7 +91,7 @@ func (g *googleOAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	client := g.googleOauthConfig.Client(ctx, token)
-	userinfo, err := g.getUserInfo(client)
+	userinfo, err := g.getUserInfo(ctx, client)
 	if err != nil {
 		log.Printf("Failed to get user info: %s\n", err)
 		httpError(w, "Failed to retrieve user information", http.StatusInternalServerError) // 500 Internal Server Error
@@ -126,8 +126,7 @@ func httpError(w http.ResponseWriter, message string, statusCode int) {
 	json.NewEncoder(w).Encode(map[string]string{"error": message})
 }
 
-func (g *googleOAuthHandler) getUserInfo(client *http.Client) (*domain.User, error) {
-	ctx := context.Background()
+func (g *googleOAuthHandler) getUserInfo(ctx context.Context, client *http.Client) (*domain.User, error) {
 	resp, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
 	if err != nil {
 		return nil, err
