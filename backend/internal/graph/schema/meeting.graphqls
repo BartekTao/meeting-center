@@ -2,12 +2,13 @@ type Query {
   paginatedRooms(first: Int = 20, after: String): RoomConnection!
   room(id: ID!): Room!
 
-  userEvents(userID: ID!): [Event!]
+  userEvent(userID: ID!): [Event!]
   event(id: ID!): Event
-  paginatedAvailableRooms(from: Int!, to: Int!, first: Int = 20, after: String): RoomConnection!
+  paginatedAvailableRooms(startAt: Int!, endAt: Int!, first: Int = 20, after: String): RoomConnection!
 
   user(id: ID!): User!
   paginatedUsers(first: Int = 20, after: String): UserConnection!
+  userEvents(userIDs: [ID!]!, startAt: Int!, endAt: Int!): [UserEvent!]!
 }
 
 type Mutation {
@@ -16,6 +17,11 @@ type Mutation {
 
   upsertEvent(input: UpsertEventInput!): Event!
   deleteEvent(id: ID!): Event!
+}
+
+type UserEvent {
+  user: User!
+  events: [Event!]
 }
 
 type User implements Node  {

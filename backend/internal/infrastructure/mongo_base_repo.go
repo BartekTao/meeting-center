@@ -90,6 +90,36 @@ func (r *BaseRepository[T]) findOneByFilter(
 	return &result, nil
 }
 
+func (r *BaseRepository[T]) FindAllByFilter(
+	ctx context.Context,
+	collection *mongo.Collection,
+	filter bson.M,
+) ([]*T, error) {
+	var results []*T
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		log.Printf("Failed to find documents: %v", err)
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		var element T
+		if err := cursor.Decode(&element); err != nil {
+			log.Printf("Failed to decode document: %v", err)
+			return nil, err
+		}
+		results = append(results, &element)
+	}
+
+	if err := cursor.Err(); err != nil {
+		log.Printf("Cursor error: %v", err)
+		return nil, err
+	}
+
+	return results, nil
+}
+
 func (r *BaseRepository[T]) softDelete(ctx context.Context, collection *mongo.Collection, id string) (*T, error) {
 	deleteID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {

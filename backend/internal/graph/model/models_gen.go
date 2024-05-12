@@ -149,3 +149,8 @@ type UserEdge struct {
 func (UserEdge) IsEdge()                {}
 func (this UserEdge) GetNode() Node     { return *this.Node }
 func (this UserEdge) GetCursor() string { return this.Cursor }
+
+type UserEvent struct {
+	User   *User    `json:"user"`
+	Events []*Event `json:"events,omitempty"`
+}

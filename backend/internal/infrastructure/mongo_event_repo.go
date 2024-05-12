@@ -128,8 +128,34 @@ func (m *mongoEventRepository) GetByID(ctx context.Context, id string) (*domain.
 	return ToDomainEvent(event), nil
 }
 
-func (m *mongoEventRepository) GetByUsers(ctx context.Context, ids []string, startAt, endAt int64) (map[string][]*domain.Event, error) {
-	return nil, nil
+func (m *mongoEventRepository) GetByUsers(ctx context.Context, ids []string, startAt, endAt int64) (map[string][]domain.Event, error) {
+	filter := bson.M{
+		"participantsIDs": bson.M{"$in": ids},
+		"startAt":         bson.M{"$gte": startAt},
+		"endAt":           bson.M{"$lte": endAt},
+		"isDelete":        false,
+	}
+	events, err := m.BaseRepository.FindAllByFilter(ctx, m.eventCollection, filter)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	idSet := make(map[string]struct{})
+	for _, id := range ids {
+		idSet[id] = struct{}{}
+	}
+
+	result := make(map[string][]domain.Event)
+	for _, event := range events {
+		for _, participantID := range event.ParticipantsIDs {
+			if _, exists := idSet[participantID]; exists {
+				result[participantID] = append(result[participantID], *ToDomainEvent(event))
+			}
+		}
+	}
+
+	return result, nil
 }
 
 func ToDomainEvent(event *Event) *domain.Event {

@@ -229,9 +229,9 @@ func (r *queryResolver) Room(ctx context.Context, id string) (*model.Room, error
 	}, nil
 }
 
-// UserEvents is the resolver for the userEvents field.
-func (r *queryResolver) UserEvents(ctx context.Context, userID string) ([]*model.Event, error) {
-	panic(fmt.Errorf("not implemented: UserEvents - userEvents"))
+// UserEvent is the resolver for the userEvent field.
+func (r *queryResolver) UserEvent(ctx context.Context, userID string) ([]*model.Event, error) {
+	panic(fmt.Errorf("not implemented: UserEvent - userEvent"))
 }
 
 // Event is the resolver for the event field.
@@ -282,7 +282,7 @@ func (r *queryResolver) Event(ctx context.Context, id string) (*model.Event, err
 }
 
 // PaginatedAvailableRooms is the resolver for the paginatedAvailableRooms field.
-func (r *queryResolver) PaginatedAvailableRooms(ctx context.Context, from int, to int, first *int, after *string) (*model.RoomConnection, error) {
+func (r *queryResolver) PaginatedAvailableRooms(ctx context.Context, startAt int, endAt int, first *int, after *string) (*model.RoomConnection, error) {
 	panic(fmt.Errorf("not implemented: PaginatedAvailableRooms - paginatedAvailableRooms"))
 }
 
@@ -344,13 +344,17 @@ func (r *queryResolver) PaginatedUsers(ctx context.Context, first *int, after *s
 	}, nil
 }
 
+// UserEvents is the resolver for the userEvents field.
+func (r *queryResolver) UserEvents(ctx context.Context, userIDs []string, startAt int, endAt int) ([]*model.UserEvent, error) {
+	// r.eventService.GetUserEvents(ctx, userIDs, startA)
+	panic(fmt.Errorf("not implemented: UserEvents - userEvents"))
+}
+
 // Mutation returns graph.MutationResolver implementation.
 func (r *Resolver) Mutation() graph.MutationResolver { return &mutationResolver{r} }
 
 // Query returns graph.QueryResolver implementation.
 func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
 
-type (
-	mutationResolver struct{ *Resolver }
-	queryResolver    struct{ *Resolver }
-)
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
