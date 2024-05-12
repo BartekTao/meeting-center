@@ -9,7 +9,7 @@ extend type Mutation {
   deleteEvent(id: ID!): Event!
 }
 
-type Event {
+type Event @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.Event") {
   id: ID!
   title: String!
   description: String

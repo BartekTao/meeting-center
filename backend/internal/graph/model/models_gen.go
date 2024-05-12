@@ -2,41 +2,14 @@
 
 package model
 
-type Connection interface {
-	IsConnection()
-	GetEdges() []Edge
-	GetPageInfo() *PageInfo
-}
-
-type Edge interface {
-	IsEdge()
-	GetNode() Node
-	GetCursor() string
-}
-
-type Node interface {
-	IsNode()
-	GetID() string
-}
+import (
+	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
+)
 
 type Booking struct {
-	StartAt  int   `json:"startAt"`
-	EndAt    int   `json:"endAt"`
-	BookedBy *User `json:"bookedBy"`
-}
-
-type Event struct {
-	ID           string  `json:"id"`
-	Title        string  `json:"title"`
-	Description  *string `json:"description,omitempty"`
-	StartAt      int64   `json:"startAt"`
-	EndAt        int64   `json:"endAt"`
-	Room         *Room   `json:"room,omitempty"`
-	Participants []User  `json:"participants,omitempty"`
-	Notes        *string `json:"notes,omitempty"`
-	RemindAt     int64   `json:"remindAt"`
-	Creator      *User   `json:"creator"`
-	IsDelete     *bool   `json:"isDelete,omitempty"`
+	StartAt  int          `json:"startAt"`
+	EndAt    int          `json:"endAt"`
+	BookedBy *domain.User `json:"bookedBy"`
 }
 
 type Mutation struct {
@@ -50,45 +23,15 @@ type PageInfo struct {
 type Query struct {
 }
 
-type Room struct {
-	ID        string    `json:"id"`
-	RoomID    string    `json:"roomId"`
-	Capacity  int       `json:"capacity"`
-	Equipment []string  `json:"equipment,omitempty"`
-	Rules     []string  `json:"rules,omitempty"`
-	IsDelete  *bool     `json:"isDelete,omitempty"`
-	Bookings  []Booking `json:"bookings,omitempty"`
-}
-
-func (Room) IsNode()            {}
-func (this Room) GetID() string { return this.ID }
-
 type RoomConnection struct {
 	Edges    []*RoomEdge `json:"edges,omitempty"`
 	PageInfo *PageInfo   `json:"pageInfo"`
 }
 
-func (RoomConnection) IsConnection() {}
-func (this RoomConnection) GetEdges() []Edge {
-	if this.Edges == nil {
-		return nil
-	}
-	interfaceSlice := make([]Edge, 0, len(this.Edges))
-	for _, concrete := range this.Edges {
-		interfaceSlice = append(interfaceSlice, concrete)
-	}
-	return interfaceSlice
-}
-func (this RoomConnection) GetPageInfo() *PageInfo { return this.PageInfo }
-
 type RoomEdge struct {
-	Node   *Room  `json:"node,omitempty"`
-	Cursor string `json:"cursor"`
+	Node   *domain.Room `json:"node,omitempty"`
+	Cursor string       `json:"cursor"`
 }
-
-func (RoomEdge) IsEdge()                {}
-func (this RoomEdge) GetNode() Node     { return *this.Node }
-func (this RoomEdge) GetCursor() string { return this.Cursor }
 
 type UpsertEventInput struct {
 	ID              *string  `json:"id,omitempty"`
@@ -110,47 +53,17 @@ type UpsertRoomInput struct {
 	Rules     []string `json:"rules,omitempty"`
 }
 
-type User struct {
-	ID         string  `json:"id"`
-	Sub        *string `json:"sub,omitempty"`
-	Name       *string `json:"name,omitempty"`
-	GivenName  *string `json:"givenName,omitempty"`
-	FamilyName *string `json:"familyName,omitempty"`
-	Picture    *string `json:"picture,omitempty"`
-	Email      *string `json:"email,omitempty"`
-}
-
-func (User) IsNode()            {}
-func (this User) GetID() string { return this.ID }
-
 type UserConnection struct {
 	Edges    []*UserEdge `json:"edges,omitempty"`
 	PageInfo *PageInfo   `json:"pageInfo"`
 }
 
-func (UserConnection) IsConnection() {}
-func (this UserConnection) GetEdges() []Edge {
-	if this.Edges == nil {
-		return nil
-	}
-	interfaceSlice := make([]Edge, 0, len(this.Edges))
-	for _, concrete := range this.Edges {
-		interfaceSlice = append(interfaceSlice, concrete)
-	}
-	return interfaceSlice
-}
-func (this UserConnection) GetPageInfo() *PageInfo { return this.PageInfo }
-
 type UserEdge struct {
-	Node   *User  `json:"node,omitempty"`
-	Cursor string `json:"cursor"`
+	Node   *domain.User `json:"node,omitempty"`
+	Cursor string       `json:"cursor"`
 }
-
-func (UserEdge) IsEdge()                {}
-func (this UserEdge) GetNode() Node     { return *this.Node }
-func (this UserEdge) GetCursor() string { return this.Cursor }
 
 type UserEvent struct {
-	User   *User   `json:"user"`
-	Events []Event `json:"events,omitempty"`
+	User   *domain.User   `json:"user"`
+	Events []domain.Event `json:"events,omitempty"`
 }

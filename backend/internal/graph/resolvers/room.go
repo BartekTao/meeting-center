@@ -10,17 +10,18 @@ import (
 
 	"github.com/BartekTao/nycu-meeting-room-api/internal/app"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/common"
+	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
 )
 
 // BookedBy is the resolver for the bookedBy field.
-func (r *bookingResolver) BookedBy(ctx context.Context, obj *model.Booking) (*model.User, error) {
+func (r *bookingResolver) BookedBy(ctx context.Context, obj *model.Booking) (*domain.User, error) {
 	panic(fmt.Errorf("not implemented: BookedBy - bookedBy"))
 }
 
 // UpsertRoom is the resolver for the upsertRoom field.
-func (r *mutationResolver) UpsertRoom(ctx context.Context, room model.UpsertRoomInput) (*model.Room, error) {
+func (r *mutationResolver) UpsertRoom(ctx context.Context, room model.UpsertRoomInput) (*domain.Room, error) {
 	upsertRoom := app.UpsertRoomRequest{
 		ID:        room.ID,
 		RoomID:    room.RoomID,
@@ -32,30 +33,16 @@ func (r *mutationResolver) UpsertRoom(ctx context.Context, room model.UpsertRoom
 	if err != nil {
 		return nil, err
 	}
-	return &model.Room{
-		ID:        *res.ID,
-		RoomID:    res.RoomID,
-		Capacity:  res.Capacity,
-		Equipment: res.Equipment,
-		Rules:     res.Rules,
-		IsDelete:  &res.IsDelete,
-	}, nil
+	return res, nil
 }
 
 // DeleteRoom is the resolver for the deleteRoom field.
-func (r *mutationResolver) DeleteRoom(ctx context.Context, id string) (*model.Room, error) {
+func (r *mutationResolver) DeleteRoom(ctx context.Context, id string) (*domain.Room, error) {
 	room, err := r.roomService.Delete(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	return &model.Room{
-		ID:        *room.ID,
-		RoomID:    room.RoomID,
-		Capacity:  room.Capacity,
-		Equipment: room.Equipment,
-		Rules:     room.Rules,
-		IsDelete:  &room.IsDelete,
-	}, nil
+	return room, nil
 }
 
 // PaginatedRooms is the resolver for the paginatedRooms field.
@@ -77,13 +64,7 @@ func (r *queryResolver) PaginatedRooms(ctx context.Context, first *int, after *s
 	edges := make([]*model.RoomEdge, len(rooms))
 	for idx, room := range rooms {
 		edges[idx] = &model.RoomEdge{
-			Node: &model.Room{
-				ID:        *room.ID,
-				RoomID:    room.RoomID,
-				Capacity:  room.Capacity,
-				Equipment: room.Equipment,
-				Rules:     room.Rules,
-			},
+			Node:   &room,
 			Cursor: common.EncodeCursor(idx + 1 + *skip),
 		}
 	}
@@ -98,23 +79,16 @@ func (r *queryResolver) PaginatedRooms(ctx context.Context, first *int, after *s
 }
 
 // Room is the resolver for the room field.
-func (r *queryResolver) Room(ctx context.Context, id string) (*model.Room, error) {
+func (r *queryResolver) Room(ctx context.Context, id string) (*domain.Room, error) {
 	room, err := r.roomService.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	return &model.Room{
-		ID:        *room.ID,
-		RoomID:    room.RoomID,
-		Capacity:  room.Capacity,
-		Equipment: room.Equipment,
-		Rules:     room.Rules,
-		IsDelete:  &room.IsDelete,
-	}, nil
+	return room, nil
 }
 
 // Bookings is the resolver for the bookings field.
-func (r *roomResolver) Bookings(ctx context.Context, obj *model.Room) ([]model.Booking, error) {
+func (r *roomResolver) Bookings(ctx context.Context, obj *domain.Room) ([]model.Booking, error) {
 	panic(fmt.Errorf("not implemented: Bookings - bookings"))
 }
 

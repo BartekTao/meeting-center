@@ -10,7 +10,7 @@ type UserEvent {
   events: [Event!]
 }
 
-type User implements Node  {
+type User @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.User") {
   id: ID!
   sub: String
   name: String      
@@ -20,12 +20,12 @@ type User implements Node  {
   email: String  
 }
 
-type UserConnection implements Connection {
+type UserConnection {
   edges: [UserEdge]
   pageInfo: PageInfo!
 }
 
-type UserEdge implements Edge {
+type UserEdge {
   node: User
   cursor: String!
 }

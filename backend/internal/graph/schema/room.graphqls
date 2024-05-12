@@ -20,7 +20,7 @@ type Mutation {
   deleteRoom(id: ID!): Room!
 }
 
-type Room implements Node {
+type Room @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.Room") {
   id: ID!
   roomId: String!
   capacity: Int!
@@ -36,26 +36,12 @@ type Booking {
   bookedBy: User! @goField(forceResolver: true)
 }
 
-interface Connection {
-  edges: [Edge]
-  pageInfo: PageInfo!
-}
-
-interface Edge {
-  node: Node
-  cursor: String!
-}
-
-interface Node {
-  id: ID!
-}
-
-type RoomConnection implements Connection {
+type RoomConnection {
   edges: [RoomEdge]
   pageInfo: PageInfo!
 }
 
-type RoomEdge implements Edge {
+type RoomEdge {
   node: Room
   cursor: String!
 }

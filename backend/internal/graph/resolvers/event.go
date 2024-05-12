@@ -9,22 +9,32 @@ import (
 	"fmt"
 
 	"github.com/BartekTao/nycu-meeting-room-api/internal/app"
+	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
 )
 
 // Room is the resolver for the room field.
-func (r *eventResolver) Room(ctx context.Context, obj *model.Event) (*model.Room, error) {
-	panic(fmt.Errorf("not implemented: Room - room"))
+func (r *eventResolver) Room(ctx context.Context, obj *domain.Event) (*domain.Room, error) {
+	room, err := r.roomService.GetByID(ctx, *obj.RoomID)
+	if err != nil {
+		return nil, err
+	}
+	return room, nil
 }
 
 // Participants is the resolver for the participants field.
-func (r *eventResolver) Participants(ctx context.Context, obj *model.Event) ([]model.User, error) {
+func (r *eventResolver) Participants(ctx context.Context, obj *domain.Event) ([]domain.User, error) {
 	panic(fmt.Errorf("not implemented: Participants - participants"))
 }
 
+// Creator is the resolver for the creator field.
+func (r *eventResolver) Creator(ctx context.Context, obj *domain.Event) (*domain.User, error) {
+	panic(fmt.Errorf("not implemented: Creator - creator"))
+}
+
 // UpsertEvent is the resolver for the upsertEvent field.
-func (r *mutationResolver) UpsertEvent(ctx context.Context, input model.UpsertEventInput) (*model.Event, error) {
+func (r *mutationResolver) UpsertEvent(ctx context.Context, input model.UpsertEventInput) (*domain.Event, error) {
 	upsertEvent := app.UpsertEventRequest{
 		ID:              input.ID,
 		Title:           input.Title,
@@ -43,157 +53,125 @@ func (r *mutationResolver) UpsertEvent(ctx context.Context, input model.UpsertEv
 	}
 
 	if event.RoomID == nil {
-		return &model.Event{
-			ID:          *event.ID,
-			Title:       event.Title,
-			Description: event.Description,
-			StartAt:     event.StartAt,
-			EndAt:       event.EndAt,
-			// Participants: ,
-			Notes:    event.Notes,
-			RemindAt: event.RemindAt,
-			IsDelete: &event.IsDelete,
-		}, nil
+		return event, nil
 	}
 
-	temp_room, query_err := r.roomService.GetByID(ctx, *event.RoomID)
-	if query_err != nil {
-		return nil, query_err
-	}
-	room := &model.Room{
-		ID:        *temp_room.ID,
-		RoomID:    temp_room.RoomID,
-		Capacity:  temp_room.Capacity,
-		Equipment: temp_room.Equipment,
-		Rules:     temp_room.Rules,
-		IsDelete:  &temp_room.IsDelete,
-	}
+	// temp_room, query_err := r.roomService.GetByID(ctx, *event.RoomID)
+	// if query_err != nil {
+	// 	return nil, query_err
+	// }
+	// room := &domain.Room{
+	// 	ID:        temp_room.ID,
+	// 	RoomID:    temp_room.RoomID,
+	// 	Capacity:  temp_room.Capacity,
+	// 	Equipment: temp_room.Equipment,
+	// 	Rules:     temp_room.Rules,
+	// 	IsDelete:  temp_room.IsDelete,
+	// }
 
-	return &model.Event{
-		ID:          *event.ID,
+	return &domain.Event{
+		ID:          event.ID,
 		Title:       event.Title,
 		Description: event.Description,
 		StartAt:     event.StartAt,
 		EndAt:       event.EndAt,
-		Room:        room,
+		// Room:        room,
 		// Participants: ,
 		Notes:    event.Notes,
 		RemindAt: event.RemindAt,
-		IsDelete: &event.IsDelete,
+		IsDelete: event.IsDelete,
 	}, nil
 }
 
 // DeleteEvent is the resolver for the deleteEvent field.
-func (r *mutationResolver) DeleteEvent(ctx context.Context, id string) (*model.Event, error) {
+func (r *mutationResolver) DeleteEvent(ctx context.Context, id string) (*domain.Event, error) {
 	event, err := r.eventService.Delete(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	if event.RoomID == nil {
-		return &model.Event{
-			ID:          *event.ID,
-			Title:       event.Title,
-			Description: event.Description,
-			StartAt:     event.StartAt,
-			EndAt:       event.EndAt,
-			// Participants: ,
-			Notes:    event.Notes,
-			RemindAt: event.RemindAt,
-		}, nil
-	}
+	return event, nil
 
-	if event.RoomID == nil {
-		return &model.Event{
-			ID:          *event.ID,
-			Title:       event.Title,
-			Description: event.Description,
-			StartAt:     event.StartAt,
-			EndAt:       event.EndAt,
-			// Participants: ,
-			Notes:    event.Notes,
-			RemindAt: event.RemindAt,
-			IsDelete: &event.IsDelete,
-		}, nil
-	}
+	// temp_room, query_err := r.roomService.GetByID(ctx, *event.RoomID)
+	// if query_err != nil {
+	// 	return nil, query_err
+	// }
+	// room := &model.Room{
+	// 	ID:        *temp_room.ID,
+	// 	RoomID:    temp_room.RoomID,
+	// 	Capacity:  temp_room.Capacity,
+	// 	Equipment: temp_room.Equipment,
+	// 	Rules:     temp_room.Rules,
+	// 	IsDelete:  &temp_room.IsDelete,
+	// }
 
-	temp_room, query_err := r.roomService.GetByID(ctx, *event.RoomID)
-	if query_err != nil {
-		return nil, query_err
-	}
-	room := &model.Room{
-		ID:        *temp_room.ID,
-		RoomID:    temp_room.RoomID,
-		Capacity:  temp_room.Capacity,
-		Equipment: temp_room.Equipment,
-		Rules:     temp_room.Rules,
-		IsDelete:  &temp_room.IsDelete,
-	}
-
-	return &model.Event{
-		ID:          *event.ID,
-		Title:       event.Title,
-		Description: event.Description,
-		StartAt:     event.StartAt,
-		EndAt:       event.EndAt,
-		Room:        room,
-		// Participants: ,
-		Notes:    event.Notes,
-		RemindAt: event.RemindAt,
-		IsDelete: &event.IsDelete,
-	}, nil
+	// return &domain.Event.Event{
+	// 	ID:          *event.ID,
+	// 	Title:       event.Title,
+	// 	Description: event.Description,
+	// 	StartAt:     event.StartAt,
+	// 	EndAt:       event.EndAt,
+	// 	Room:        room,
+	// 	// Participants: ,
+	// 	Notes:    event.Notes,
+	// 	RemindAt: event.RemindAt,
+	// 	IsDelete: &event.IsDelete,
+	// }, nil
 }
 
 // UserEvent is the resolver for the userEvent field.
-func (r *queryResolver) UserEvent(ctx context.Context, userID string) ([]model.Event, error) {
+func (r *queryResolver) UserEvent(ctx context.Context, userID string) ([]domain.Event, error) {
 	panic(fmt.Errorf("not implemented: UserEvent - userEvent"))
 }
 
 // Event is the resolver for the event field.
-func (r *queryResolver) Event(ctx context.Context, id string) (*model.Event, error) {
+func (r *queryResolver) Event(ctx context.Context, id string) (*domain.Event, error) {
 	event, err := r.eventService.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if event.RoomID == nil {
-		return &model.Event{
-			ID:          *event.ID,
-			Title:       event.Title,
-			Description: event.Description,
-			StartAt:     event.StartAt,
-			EndAt:       event.EndAt,
-			// Participants: ,
-			Notes:    event.Notes,
-			RemindAt: event.RemindAt,
-			IsDelete: &event.IsDelete,
-		}, nil
-	}
 
-	temp_room, query_err := r.roomService.GetByID(ctx, *event.RoomID)
-	if query_err != nil {
-		return nil, query_err
-	}
-	room := &model.Room{
-		ID:        *temp_room.ID,
-		RoomID:    temp_room.RoomID,
-		Capacity:  temp_room.Capacity,
-		Equipment: temp_room.Equipment,
-		Rules:     temp_room.Rules,
-		IsDelete:  &temp_room.IsDelete,
-	}
+	return event, nil
 
-	return &model.Event{
-		ID:          *event.ID,
-		Title:       event.Title,
-		Description: event.Description,
-		StartAt:     event.StartAt,
-		EndAt:       event.EndAt,
-		Room:        room,
-		// Participants: ,
-		Notes:    event.Notes,
-		RemindAt: event.RemindAt,
-		IsDelete: &event.IsDelete,
-	}, nil
+	// if event.RoomID == nil {
+	// 	return &model.Event{
+	// 		ID:          *event.ID,
+	// 		Title:       event.Title,
+	// 		Description: event.Description,
+	// 		StartAt:     event.StartAt,
+	// 		EndAt:       event.EndAt,
+	// 		// Participants: ,
+	// 		Notes:    event.Notes,
+	// 		RemindAt: event.RemindAt,
+	// 		IsDelete: &event.IsDelete,
+	// 	}, nil
+	// }
+
+	// temp_room, query_err := r.roomService.GetByID(ctx, *event.RoomID)
+	// if query_err != nil {
+	// 	return nil, query_err
+	// }
+	// room := &model.Room{
+	// 	ID:        *temp_room.ID,
+	// 	RoomID:    temp_room.RoomID,
+	// 	Capacity:  temp_room.Capacity,
+	// 	Equipment: temp_room.Equipment,
+	// 	Rules:     temp_room.Rules,
+	// 	IsDelete:  &temp_room.IsDelete,
+	// }
+
+	// return &model.Event{
+	// 	ID:          *event.ID,
+	// 	Title:       event.Title,
+	// 	Description: event.Description,
+	// 	StartAt:     event.StartAt,
+	// 	EndAt:       event.EndAt,
+	// 	Room:        room,
+	// 	// Participants: ,
+	// 	Notes:    event.Notes,
+	// 	RemindAt: event.RemindAt,
+	// 	IsDelete: &event.IsDelete,
+	// }, nil
 }
 
 // PaginatedAvailableRooms is the resolver for the paginatedAvailableRooms field.

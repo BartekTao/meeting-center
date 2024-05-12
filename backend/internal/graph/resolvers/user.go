@@ -9,25 +9,18 @@ import (
 	"fmt"
 
 	"github.com/BartekTao/nycu-meeting-room-api/internal/common"
+	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
 )
 
 // User is the resolver for the user field.
-func (r *queryResolver) User(ctx context.Context, id string) (*model.User, error) {
+func (r *queryResolver) User(ctx context.Context, id string) (*domain.User, error) {
 	user, err := r.userService.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	return &model.User{
-		ID:         *user.ID,
-		Sub:        common.ToPtr(user.Sub),
-		Name:       &user.Name,
-		GivenName:  &user.GivenName,
-		FamilyName: &user.FamilyName,
-		Picture:    &user.Picture,
-		Email:      &user.Email,
-	}, nil
+	return user, nil
 }
 
 // PaginatedUsers is the resolver for the paginatedUsers field.
@@ -49,15 +42,7 @@ func (r *queryResolver) PaginatedUsers(ctx context.Context, first *int, after *s
 	edges := make([]*model.UserEdge, len(users))
 	for idx, user := range users {
 		edges[idx] = &model.UserEdge{
-			Node: &model.User{
-				ID:         *user.ID,
-				Sub:        common.ToPtr(user.Sub),
-				Name:       &user.Name,
-				GivenName:  &user.GivenName,
-				FamilyName: &user.FamilyName,
-				Picture:    &user.Picture,
-				Email:      &user.Email,
-			},
+			Node:   &user,
 			Cursor: common.EncodeCursor(idx + 1 + *skip),
 		}
 	}
@@ -80,32 +65,18 @@ func (r *queryResolver) UserEvents(ctx context.Context, userIDs []string, startA
 
 	res := make([]*model.UserEvent, len(userEvents))
 	for userID, userEvent := range userEvents {
-		eventOutput := make([]model.Event, len(userEvent))
-		for i, event := range userEvent {
-			eventOutput[i] = model.Event{
-				ID:          *event.ID,
-				Title:       event.Title,
-				Description: event.Description,
-				StartAt:     event.StartAt,
-				EndAt:       event.EndAt,
-				// Participants: ,
-				Notes:    event.Notes,
-				RemindAt: event.RemindAt,
-				IsDelete: &event.IsDelete,
-			}
-		}
 		res = append(res, &model.UserEvent{
-			User: &model.User{
-				ID: userID,
+			User: &domain.User{
+				ID: common.ToPtr(userID),
 			},
-			Events: eventOutput,
+			Events: userEvent,
 		})
 	}
 	return res, nil
 }
 
 // User is the resolver for the user field.
-func (r *userEventResolver) User(ctx context.Context, obj *model.UserEvent) (*model.User, error) {
+func (r *userEventResolver) User(ctx context.Context, obj *model.UserEvent) (*domain.User, error) {
 	panic(fmt.Errorf("not implemented: User - user"))
 }
 
