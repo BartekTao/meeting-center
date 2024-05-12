@@ -11,7 +11,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Room struct {
@@ -109,31 +108,21 @@ func (m *mongoRoomRepository) Delete(ctx context.Context, id string) (*domain.Ro
 }
 
 func (m *mongoRoomRepository) QueryPaginated(ctx context.Context, skip int, limit int) ([]domain.Room, error) {
-	collection := m.roomCollection
-	findOptions := options.Find()
-	findOptions.SetSort(bson.D{{Key: "CreatedAt", Value: 1}})
-	findOptions.SetSkip(int64(skip))
-	findOptions.SetLimit(int64(limit))
-
-	cur, err := collection.Find(ctx, bson.D{{}}, findOptions)
+	rooms, err := m.queryPaginated(
+		ctx,
+		m.roomCollection,
+		skip, limit, bson.M{},
+		bson.D{{Key: "CreatedAt", Value: 1}},
+	)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
-	defer cur.Close(ctx)
-
 	var results []domain.Room
-	for cur.Next(ctx) {
-		var result Room
-		err := cur.Decode(&result)
-		if err != nil {
-			return nil, err
-		}
-		results = append(results, *ToDomainRoom(&result))
+	for _, room := range rooms {
+		results = append(results, *ToDomainRoom(room))
 	}
 
-	if err := cur.Err(); err != nil {
-		return nil, err
-	}
 	return results, nil
 }
 
