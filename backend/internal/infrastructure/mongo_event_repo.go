@@ -24,6 +24,7 @@ type Event struct {
 	Notes           *string            `bson:"notes"`
 	RemindAt        int64              `bson:"remindAt"`
 	IsDelete        bool               `bson:"isDelete"`
+	Summary         string             `bson:"summary"`
 	CreatedAt       int64              `bson:"createdAt"`
 	CreatorID       string             `bson:"creatorID"`
 	UpdatedAt       int64              `bson:"updatedAt"`
@@ -164,6 +165,38 @@ func (m *mongoEventRepository) GetByUsers(ctx context.Context, ids []string, sta
 	}
 
 	return result, nil
+}
+
+func (m *mongoEventRepository) UpdateSummary(ctx context.Context, id string, summary string, updaterID string) (bool, error) {
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Printf("Invalid ID format: %v", err)
+		return false, err
+	}
+	filter := bson.M{
+		"_id":      objID,
+		"isDelete": false,
+	}
+	update := bson.M{
+		"$set": bson.M{
+			"summary":   summary,
+			"updatedAt": time.Now().Unix(),
+			"updaterID": updaterID,
+		},
+	}
+
+	_, err = m.eventCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		// ErrNoDocuments means that the filter did not match any documents in the collection.
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			log.Printf("Document with the given ID not found or deleted: %v", err)
+			return false, err
+		} else {
+			log.Printf("Failed to update: %v", err)
+			return false, err
+		}
+	}
+	return true, nil
 }
 
 func ToDomainEvent(event *Event) *domain.Event {

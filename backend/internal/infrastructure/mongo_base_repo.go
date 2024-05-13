@@ -187,3 +187,23 @@ func (r *BaseRepository[T]) queryPaginated(
 	}
 	return results, nil
 }
+
+func (r *BaseRepository[T]) updateOne(
+	ctx context.Context,
+	collection *mongo.Collection,
+	filter bson.M,
+	update bson.M,
+) (*mongo.UpdateResult, error) {
+	res, err := collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		// ErrNoDocuments means that the filter did not match any documents in the collection.
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			log.Printf("Document with the given ID not found: %v", err)
+			return nil, err
+		} else {
+			log.Printf("Failed to update: %v", err)
+			return nil, err
+		}
+	}
+	return res, err
+}

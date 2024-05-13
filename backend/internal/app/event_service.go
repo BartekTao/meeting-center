@@ -24,6 +24,7 @@ type EventService interface {
 	Delete(ctx context.Context, id string) (*domain.Event, error)
 	GetByID(ctx context.Context, id string) (*domain.Event, error)
 	GetUserEvents(ctx context.Context, ids []string, startAt, endAt int64) (map[string][]domain.Event, error)
+	UpdateSummary(ctx context.Context, id string, summary string, updaterID string) (bool, error)
 }
 
 type eventService struct {
@@ -88,4 +89,8 @@ func (h *eventService) CheckUserAvailable(ctx context.Context, ids []string, sta
 		availableMap[userID] = userEvent != nil
 	}
 	return availableMap, nil
+}
+
+func (h *eventService) UpdateSummary(ctx context.Context, id string, summary string, updaterID string) (bool, error) {
+	return h.eventRepository.UpdateSummary(ctx, id, summary, updaterID)
 }

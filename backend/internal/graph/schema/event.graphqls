@@ -8,6 +8,7 @@ extend type Query {
 extend type Mutation {
   upsertEvent(input: UpsertEventInput!): Event!
   deleteEvent(id: ID!): Event!
+  updateEventSummary(id: ID!, summary: String!): Boolean!
 }
 
 type Event @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.Event") {
@@ -20,7 +21,7 @@ type Event @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/
   participants: [User!]! @goField(forceResolver: true)
   notes: String
   remindAt: Int64!
-  creator: User!
+  creator: User! @goField(forceResolver: true)
   isDelete: Boolean
 }
 

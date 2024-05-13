@@ -108,9 +108,7 @@ func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
 // Room returns graph.RoomResolver implementation.
 func (r *Resolver) Room() graph.RoomResolver { return &roomResolver{r} }
 
-type (
-	bookingResolver  struct{ *Resolver }
-	mutationResolver struct{ *Resolver }
-	queryResolver    struct{ *Resolver }
-	roomResolver     struct{ *Resolver }
-)
+type bookingResolver struct{ *Resolver }
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
+type roomResolver struct{ *Resolver }

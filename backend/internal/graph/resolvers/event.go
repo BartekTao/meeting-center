@@ -57,21 +57,20 @@ func (r *mutationResolver) UpsertEvent(ctx context.Context, input model.UpsertEv
 	}
 
 	event, upsert_err := r.eventService.Upsert(ctx, upsertEvent)
-	if upsert_err != nil {
-		return nil, upsert_err
-	}
 
-	return event, nil
+	return event, upsert_err
 }
 
 // DeleteEvent is the resolver for the deleteEvent field.
 func (r *mutationResolver) DeleteEvent(ctx context.Context, id string) (*domain.Event, error) {
-	event, err := r.eventService.Delete(ctx, id)
-	if err != nil {
-		return nil, err
-	}
+	return r.eventService.Delete(ctx, id)
+}
 
-	return event, nil
+// UpdateEventSummary is the resolver for the updateEventSummary field.
+func (r *mutationResolver) UpdateEventSummary(ctx context.Context, id string, summary string) (bool, error) {
+	claims, _ := ctx.Value(middleware.UserCtxKey).(*middleware.MeetingCenterClaims)
+
+	return r.eventService.UpdateSummary(ctx, id, summary, claims.ID)
 }
 
 // UserEvent is the resolver for the userEvent field.
@@ -82,11 +81,8 @@ func (r *queryResolver) UserEvent(ctx context.Context, userID string) ([]domain.
 // Event is the resolver for the event field.
 func (r *queryResolver) Event(ctx context.Context, id string) (*domain.Event, error) {
 	event, err := r.eventService.GetByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
 
-	return event, nil
+	return event, err
 }
 
 // PaginatedAvailableRooms is the resolver for the paginatedAvailableRooms field.
