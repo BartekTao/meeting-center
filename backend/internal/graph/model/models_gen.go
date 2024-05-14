@@ -6,12 +6,6 @@ import (
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 )
 
-type Booking struct {
-	StartAt  int          `json:"startAt"`
-	EndAt    int          `json:"endAt"`
-	BookedBy *domain.User `json:"bookedBy"`
-}
-
 type Mutation struct {
 }
 
@@ -46,11 +40,11 @@ type UpsertEventInput struct {
 }
 
 type UpsertRoomInput struct {
-	ID        *string  `json:"id,omitempty"`
-	RoomID    string   `json:"roomId"`
-	Capacity  int      `json:"capacity"`
-	Equipment []string `json:"equipment,omitempty"`
-	Rules     []string `json:"rules,omitempty"`
+	ID         *string            `json:"id,omitempty"`
+	Name       string             `json:"name"`
+	Capacity   int                `json:"capacity"`
+	Equipments []domain.Equipment `json:"equipments,omitempty"`
+	Rules      []domain.Rule      `json:"rules,omitempty"`
 }
 
 type UserConnection struct {

@@ -6,7 +6,6 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/BartekTao/nycu-meeting-room-api/internal/app"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/common"
@@ -16,22 +15,17 @@ import (
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/middleware"
 )
 
-// BookedBy is the resolver for the bookedBy field.
-func (r *bookingResolver) BookedBy(ctx context.Context, obj *model.Booking) (*domain.User, error) {
-	return r.userService.GetByID(ctx, *obj.BookedBy.ID)
-}
-
 // UpsertRoom is the resolver for the upsertRoom field.
 func (r *mutationResolver) UpsertRoom(ctx context.Context, room model.UpsertRoomInput) (*domain.Room, error) {
 	claims, _ := ctx.Value(middleware.UserCtxKey).(*middleware.MeetingCenterClaims)
 
 	upsertRoom := app.UpsertRoomRequest{
-		ID:        room.ID,
-		RoomID:    room.RoomID,
-		Capacity:  room.Capacity,
-		Equipment: room.Equipment,
-		Rules:     room.Rules,
-		UpdaterID: claims.Sub,
+		ID:         room.ID,
+		Name:       room.Name,
+		Capacity:   room.Capacity,
+		Equipments: room.Equipments,
+		Rules:      room.Rules,
+		UpdaterID:  claims.Sub,
 	}
 	res, err := r.roomService.Upsert(ctx, upsertRoom)
 	if err != nil {
@@ -91,24 +85,11 @@ func (r *queryResolver) Room(ctx context.Context, id string) (*domain.Room, erro
 	return room, nil
 }
 
-// Bookings is the resolver for the bookings field.
-func (r *roomResolver) Bookings(ctx context.Context, obj *domain.Room) ([]model.Booking, error) {
-	panic(fmt.Errorf("not implemented: Bookings - bookings"))
-}
-
-// Booking returns graph.BookingResolver implementation.
-func (r *Resolver) Booking() graph.BookingResolver { return &bookingResolver{r} }
-
 // Mutation returns graph.MutationResolver implementation.
 func (r *Resolver) Mutation() graph.MutationResolver { return &mutationResolver{r} }
 
 // Query returns graph.QueryResolver implementation.
 func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
 
-// Room returns graph.RoomResolver implementation.
-func (r *Resolver) Room() graph.RoomResolver { return &roomResolver{r} }
-
-type bookingResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-type roomResolver struct{ *Resolver }

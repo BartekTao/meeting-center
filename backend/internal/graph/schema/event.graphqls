@@ -1,7 +1,11 @@
 extend type Query {
-  userEvent(userID: ID!): [Event!]
   event(id: ID!): Event
-  paginatedAvailableRooms(startAt: Int64!, endAt: Int64!, first: Int = 20, after: String): RoomConnection!
+  paginatedAvailableRooms(
+    startAt: Int64!, 
+    endAt: Int64!, 
+    first: Int = 20, 
+    after: String,
+    ): RoomConnection!
   userEvents(userIDs: [ID!]!, startAt: Int64!, endAt: Int64!): [UserEvent]
 }
 
@@ -17,7 +21,7 @@ type Event @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/
   description: String
   startAt: Int64!
   endAt: Int64!
-  roomReservation: RoomReservation @goField(forceResolver: true)
+  roomReservation: RoomReservation
   participants: [User!]! @goField(forceResolver: true)
   notes: String
   remindAt: Int64!
@@ -26,8 +30,13 @@ type Event @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/
 }
 
 type RoomReservation @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.RoomReservation") {
-  room: Room! 
-  status: String
+  room: Room! @goField(forceResolver: true)
+  status: ReservationStatus
+}
+
+enum ReservationStatus @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.ReservationStatus") {
+  CONFIRMED
+  CANCELED
 }
 
 type UserEvent {

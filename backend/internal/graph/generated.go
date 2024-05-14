@@ -40,11 +40,9 @@ type Config struct {
 }
 
 type ResolverRoot interface {
-	Booking() BookingResolver
 	Event() EventResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
-	Room() RoomResolver
 	RoomReservation() RoomReservationResolver
 	UserEvent() UserEventResolver
 }
@@ -53,12 +51,6 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
-	Booking struct {
-		BookedBy func(childComplexity int) int
-		EndAt    func(childComplexity int) int
-		StartAt  func(childComplexity int) int
-	}
-
 	Event struct {
 		Creator         func(childComplexity int) int
 		Description     func(childComplexity int) int
@@ -93,18 +85,16 @@ type ComplexityRoot struct {
 		PaginatedUsers          func(childComplexity int, first *int, after *string) int
 		Room                    func(childComplexity int, id string) int
 		User                    func(childComplexity int, id string) int
-		UserEvent               func(childComplexity int, userID string) int
 		UserEvents              func(childComplexity int, userIDs []string, startAt int64, endAt int64) int
 	}
 
 	Room struct {
-		Bookings  func(childComplexity int) int
-		Capacity  func(childComplexity int) int
-		Equipment func(childComplexity int) int
-		ID        func(childComplexity int) int
-		IsDelete  func(childComplexity int) int
-		RoomID    func(childComplexity int) int
-		Rules     func(childComplexity int) int
+		Capacity   func(childComplexity int) int
+		Equipments func(childComplexity int) int
+		ID         func(childComplexity int) int
+		IsDelete   func(childComplexity int) int
+		Name       func(childComplexity int) int
+		Rules      func(childComplexity int) int
 	}
 
 	RoomConnection struct {
@@ -148,11 +138,7 @@ type ComplexityRoot struct {
 	}
 }
 
-type BookingResolver interface {
-	BookedBy(ctx context.Context, obj *model.Booking) (*domain.User, error)
-}
 type EventResolver interface {
-	RoomReservation(ctx context.Context, obj *domain.Event) (*domain.RoomReservation, error)
 	Participants(ctx context.Context, obj *domain.Event) ([]domain.User, error)
 
 	Creator(ctx context.Context, obj *domain.Event) (*domain.User, error)
@@ -167,19 +153,15 @@ type MutationResolver interface {
 type QueryResolver interface {
 	PaginatedRooms(ctx context.Context, first *int, after *string) (*model.RoomConnection, error)
 	Room(ctx context.Context, id string) (*domain.Room, error)
-	UserEvent(ctx context.Context, userID string) ([]domain.Event, error)
 	Event(ctx context.Context, id string) (*domain.Event, error)
 	PaginatedAvailableRooms(ctx context.Context, startAt int64, endAt int64, first *int, after *string) (*model.RoomConnection, error)
 	UserEvents(ctx context.Context, userIDs []string, startAt int64, endAt int64) ([]*model.UserEvent, error)
 	User(ctx context.Context, id string) (*domain.User, error)
 	PaginatedUsers(ctx context.Context, first *int, after *string) (*model.UserConnection, error)
 }
-type RoomResolver interface {
-	Bookings(ctx context.Context, obj *domain.Room) ([]model.Booking, error)
-}
 type RoomReservationResolver interface {
 	Room(ctx context.Context, obj *domain.RoomReservation) (*domain.Room, error)
-	Status(ctx context.Context, obj *domain.RoomReservation) (*string, error)
+	Status(ctx context.Context, obj *domain.RoomReservation) (*domain.ReservationStatus, error)
 }
 type UserEventResolver interface {
 	User(ctx context.Context, obj *model.UserEvent) (*domain.User, error)
@@ -203,27 +185,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
-
-	case "Booking.bookedBy":
-		if e.complexity.Booking.BookedBy == nil {
-			break
-		}
-
-		return e.complexity.Booking.BookedBy(childComplexity), true
-
-	case "Booking.endAt":
-		if e.complexity.Booking.EndAt == nil {
-			break
-		}
-
-		return e.complexity.Booking.EndAt(childComplexity), true
-
-	case "Booking.startAt":
-		if e.complexity.Booking.StartAt == nil {
-			break
-		}
-
-		return e.complexity.Booking.StartAt(childComplexity), true
 
 	case "Event.creator":
 		if e.complexity.Event.Creator == nil {
@@ -448,18 +409,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.User(childComplexity, args["id"].(string)), true
 
-	case "Query.userEvent":
-		if e.complexity.Query.UserEvent == nil {
-			break
-		}
-
-		args, err := ec.field_Query_userEvent_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.UserEvent(childComplexity, args["userID"].(string)), true
-
 	case "Query.userEvents":
 		if e.complexity.Query.UserEvents == nil {
 			break
@@ -472,13 +421,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.UserEvents(childComplexity, args["userIDs"].([]string), args["startAt"].(int64), args["endAt"].(int64)), true
 
-	case "Room.bookings":
-		if e.complexity.Room.Bookings == nil {
-			break
-		}
-
-		return e.complexity.Room.Bookings(childComplexity), true
-
 	case "Room.capacity":
 		if e.complexity.Room.Capacity == nil {
 			break
@@ -486,12 +428,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Room.Capacity(childComplexity), true
 
-	case "Room.equipment":
-		if e.complexity.Room.Equipment == nil {
+	case "Room.equipments":
+		if e.complexity.Room.Equipments == nil {
 			break
 		}
 
-		return e.complexity.Room.Equipment(childComplexity), true
+		return e.complexity.Room.Equipments(childComplexity), true
 
 	case "Room.id":
 		if e.complexity.Room.ID == nil {
@@ -507,12 +449,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Room.IsDelete(childComplexity), true
 
-	case "Room.roomId":
-		if e.complexity.Room.RoomID == nil {
+	case "Room.name":
+		if e.complexity.Room.Name == nil {
 			break
 		}
 
-		return e.complexity.Room.RoomID(childComplexity), true
+		return e.complexity.Room.Name(childComplexity), true
 
 	case "Room.rules":
 		if e.complexity.Room.Rules == nil {
@@ -1001,21 +943,6 @@ func (ec *executionContext) field_Query_room_args(ctx context.Context, rawArgs m
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_userEvent_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["userID"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userID"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["userID"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Query_userEvents_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1101,154 +1028,6 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
-
-func (ec *executionContext) _Booking_startAt(ctx context.Context, field graphql.CollectedField, obj *model.Booking) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Booking_startAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.StartAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Booking_startAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Booking",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Booking_endAt(ctx context.Context, field graphql.CollectedField, obj *model.Booking) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Booking_endAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.EndAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Booking_endAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Booking",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Booking_bookedBy(ctx context.Context, field graphql.CollectedField, obj *model.Booking) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Booking_bookedBy(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Booking().BookedBy(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*domain.User)
-	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Booking_bookedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Booking",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "sub":
-				return ec.fieldContext_User_sub(ctx, field)
-			case "name":
-				return ec.fieldContext_User_name(ctx, field)
-			case "givenName":
-				return ec.fieldContext_User_givenName(ctx, field)
-			case "familyName":
-				return ec.fieldContext_User_familyName(ctx, field)
-			case "picture":
-				return ec.fieldContext_User_picture(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	return fc, nil
-}
 
 func (ec *executionContext) _Event_id(ctx context.Context, field graphql.CollectedField, obj *domain.Event) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Event_id(ctx, field)
@@ -1481,7 +1260,7 @@ func (ec *executionContext) _Event_roomReservation(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Event().RoomReservation(rctx, obj)
+		return obj.RoomReservation, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1499,8 +1278,8 @@ func (ec *executionContext) fieldContext_Event_roomReservation(ctx context.Conte
 	fc = &graphql.FieldContext{
 		Object:     "Event",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "room":
@@ -1801,18 +1580,16 @@ func (ec *executionContext) fieldContext_Mutation_upsertRoom(ctx context.Context
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Room_id(ctx, field)
-			case "roomId":
-				return ec.fieldContext_Room_roomId(ctx, field)
+			case "name":
+				return ec.fieldContext_Room_name(ctx, field)
 			case "capacity":
 				return ec.fieldContext_Room_capacity(ctx, field)
-			case "equipment":
-				return ec.fieldContext_Room_equipment(ctx, field)
+			case "equipments":
+				return ec.fieldContext_Room_equipments(ctx, field)
 			case "rules":
 				return ec.fieldContext_Room_rules(ctx, field)
 			case "isDelete":
 				return ec.fieldContext_Room_isDelete(ctx, field)
-			case "bookings":
-				return ec.fieldContext_Room_bookings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Room", field.Name)
 		},
@@ -1872,18 +1649,16 @@ func (ec *executionContext) fieldContext_Mutation_deleteRoom(ctx context.Context
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Room_id(ctx, field)
-			case "roomId":
-				return ec.fieldContext_Room_roomId(ctx, field)
+			case "name":
+				return ec.fieldContext_Room_name(ctx, field)
 			case "capacity":
 				return ec.fieldContext_Room_capacity(ctx, field)
-			case "equipment":
-				return ec.fieldContext_Room_equipment(ctx, field)
+			case "equipments":
+				return ec.fieldContext_Room_equipments(ctx, field)
 			case "rules":
 				return ec.fieldContext_Room_rules(ctx, field)
 			case "isDelete":
 				return ec.fieldContext_Room_isDelete(ctx, field)
-			case "bookings":
-				return ec.fieldContext_Room_bookings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Room", field.Name)
 		},
@@ -2218,14 +1993,11 @@ func (ec *executionContext) _Query_paginatedRooms(ctx context.Context, field gra
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.RoomConnection)
 	fc.Result = res
-	return ec.marshalNRoomConnection2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoomConnection(ctx, field.Selections, res)
+	return ec.marshalORoomConnection2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoomConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_paginatedRooms(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2299,18 +2071,16 @@ func (ec *executionContext) fieldContext_Query_room(ctx context.Context, field g
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Room_id(ctx, field)
-			case "roomId":
-				return ec.fieldContext_Room_roomId(ctx, field)
+			case "name":
+				return ec.fieldContext_Room_name(ctx, field)
 			case "capacity":
 				return ec.fieldContext_Room_capacity(ctx, field)
-			case "equipment":
-				return ec.fieldContext_Room_equipment(ctx, field)
+			case "equipments":
+				return ec.fieldContext_Room_equipments(ctx, field)
 			case "rules":
 				return ec.fieldContext_Room_rules(ctx, field)
 			case "isDelete":
 				return ec.fieldContext_Room_isDelete(ctx, field)
-			case "bookings":
-				return ec.fieldContext_Room_bookings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Room", field.Name)
 		},
@@ -2323,82 +2093,6 @@ func (ec *executionContext) fieldContext_Query_room(ctx context.Context, field g
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_room_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_userEvent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_userEvent(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().UserEvent(rctx, fc.Args["userID"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]domain.Event)
-	fc.Result = res
-	return ec.marshalOEvent2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐEventᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_userEvent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Event_id(ctx, field)
-			case "title":
-				return ec.fieldContext_Event_title(ctx, field)
-			case "description":
-				return ec.fieldContext_Event_description(ctx, field)
-			case "startAt":
-				return ec.fieldContext_Event_startAt(ctx, field)
-			case "endAt":
-				return ec.fieldContext_Event_endAt(ctx, field)
-			case "roomReservation":
-				return ec.fieldContext_Event_roomReservation(ctx, field)
-			case "participants":
-				return ec.fieldContext_Event_participants(ctx, field)
-			case "notes":
-				return ec.fieldContext_Event_notes(ctx, field)
-			case "remindAt":
-				return ec.fieldContext_Event_remindAt(ctx, field)
-			case "creator":
-				return ec.fieldContext_Event_creator(ctx, field)
-			case "isDelete":
-				return ec.fieldContext_Event_isDelete(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_userEvent_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -2902,8 +2596,8 @@ func (ec *executionContext) fieldContext_Room_id(ctx context.Context, field grap
 	return fc, nil
 }
 
-func (ec *executionContext) _Room_roomId(ctx context.Context, field graphql.CollectedField, obj *domain.Room) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Room_roomId(ctx, field)
+func (ec *executionContext) _Room_name(ctx context.Context, field graphql.CollectedField, obj *domain.Room) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Room_name(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2916,7 +2610,7 @@ func (ec *executionContext) _Room_roomId(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.RoomID, nil
+		return obj.Name, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2933,7 +2627,7 @@ func (ec *executionContext) _Room_roomId(ctx context.Context, field graphql.Coll
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Room_roomId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Room_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Room",
 		Field:      field,
@@ -2990,8 +2684,8 @@ func (ec *executionContext) fieldContext_Room_capacity(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Room_equipment(ctx context.Context, field graphql.CollectedField, obj *domain.Room) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Room_equipment(ctx, field)
+func (ec *executionContext) _Room_equipments(ctx context.Context, field graphql.CollectedField, obj *domain.Room) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Room_equipments(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3004,7 +2698,7 @@ func (ec *executionContext) _Room_equipment(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Equipment, nil
+		return obj.Equipments, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3013,19 +2707,19 @@ func (ec *executionContext) _Room_equipment(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]string)
+	res := resTmp.([]domain.Equipment)
 	fc.Result = res
-	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+	return ec.marshalOEquipment2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐEquipmentᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Room_equipment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Room_equipments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Room",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Equipment does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3054,9 +2748,9 @@ func (ec *executionContext) _Room_rules(ctx context.Context, field graphql.Colle
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]string)
+	res := resTmp.([]domain.Rule)
 	fc.Result = res
-	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+	return ec.marshalORule2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐRuleᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Room_rules(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3066,7 +2760,7 @@ func (ec *executionContext) fieldContext_Room_rules(ctx context.Context, field g
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Rule does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3108,55 +2802,6 @@ func (ec *executionContext) fieldContext_Room_isDelete(ctx context.Context, fiel
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Room_bookings(ctx context.Context, field graphql.CollectedField, obj *domain.Room) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Room_bookings(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Room().Bookings(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]model.Booking)
-	fc.Result = res
-	return ec.marshalOBooking2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐBookingᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Room_bookings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Room",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "startAt":
-				return ec.fieldContext_Booking_startAt(ctx, field)
-			case "endAt":
-				return ec.fieldContext_Booking_endAt(ctx, field)
-			case "bookedBy":
-				return ec.fieldContext_Booking_bookedBy(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Booking", field.Name)
 		},
 	}
 	return fc, nil
@@ -3297,18 +2942,16 @@ func (ec *executionContext) fieldContext_RoomEdge_node(ctx context.Context, fiel
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Room_id(ctx, field)
-			case "roomId":
-				return ec.fieldContext_Room_roomId(ctx, field)
+			case "name":
+				return ec.fieldContext_Room_name(ctx, field)
 			case "capacity":
 				return ec.fieldContext_Room_capacity(ctx, field)
-			case "equipment":
-				return ec.fieldContext_Room_equipment(ctx, field)
+			case "equipments":
+				return ec.fieldContext_Room_equipments(ctx, field)
 			case "rules":
 				return ec.fieldContext_Room_rules(ctx, field)
 			case "isDelete":
 				return ec.fieldContext_Room_isDelete(ctx, field)
-			case "bookings":
-				return ec.fieldContext_Room_bookings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Room", field.Name)
 		},
@@ -3401,18 +3044,16 @@ func (ec *executionContext) fieldContext_RoomReservation_room(ctx context.Contex
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Room_id(ctx, field)
-			case "roomId":
-				return ec.fieldContext_Room_roomId(ctx, field)
+			case "name":
+				return ec.fieldContext_Room_name(ctx, field)
 			case "capacity":
 				return ec.fieldContext_Room_capacity(ctx, field)
-			case "equipment":
-				return ec.fieldContext_Room_equipment(ctx, field)
+			case "equipments":
+				return ec.fieldContext_Room_equipments(ctx, field)
 			case "rules":
 				return ec.fieldContext_Room_rules(ctx, field)
 			case "isDelete":
 				return ec.fieldContext_Room_isDelete(ctx, field)
-			case "bookings":
-				return ec.fieldContext_Room_bookings(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Room", field.Name)
 		},
@@ -3443,9 +3084,9 @@ func (ec *executionContext) _RoomReservation_status(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(*domain.ReservationStatus)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOReservationStatus2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐReservationStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_RoomReservation_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3455,7 +3096,7 @@ func (ec *executionContext) fieldContext_RoomReservation_status(ctx context.Cont
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type ReservationStatus does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5937,7 +5578,7 @@ func (ec *executionContext) unmarshalInputUpsertRoomInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "roomId", "capacity", "equipment", "rules"}
+	fieldsInOrder := [...]string{"id", "name", "capacity", "equipments", "rules"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5951,13 +5592,13 @@ func (ec *executionContext) unmarshalInputUpsertRoomInput(ctx context.Context, o
 				return it, err
 			}
 			it.ID = data
-		case "roomId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roomId"))
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.RoomID = data
+			it.Name = data
 		case "capacity":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("capacity"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
@@ -5965,16 +5606,16 @@ func (ec *executionContext) unmarshalInputUpsertRoomInput(ctx context.Context, o
 				return it, err
 			}
 			it.Capacity = data
-		case "equipment":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("equipment"))
-			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+		case "equipments":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("equipments"))
+			data, err := ec.unmarshalOEquipment2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐEquipmentᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Equipment = data
+			it.Equipments = data
 		case "rules":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rules"))
-			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalORule2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐRuleᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5992,86 +5633,6 @@ func (ec *executionContext) unmarshalInputUpsertRoomInput(ctx context.Context, o
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
-
-var bookingImplementors = []string{"Booking"}
-
-func (ec *executionContext) _Booking(ctx context.Context, sel ast.SelectionSet, obj *model.Booking) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, bookingImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Booking")
-		case "startAt":
-			out.Values[i] = ec._Booking_startAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "endAt":
-			out.Values[i] = ec._Booking_endAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "bookedBy":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Booking_bookedBy(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
 
 var eventImplementors = []string{"Event"}
 
@@ -6107,38 +5668,7 @@ func (ec *executionContext) _Event(ctx context.Context, sel ast.SelectionSet, ob
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "roomReservation":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Event_roomReservation(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			out.Values[i] = ec._Event_roomReservation(ctx, field, obj)
 		case "participants":
 			field := field
 
@@ -6387,9 +5917,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_paginatedRooms(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -6412,25 +5939,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "userEvent":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_userEvent(ctx, field)
 				return res
 			}
 
@@ -6586,57 +6094,24 @@ func (ec *executionContext) _Room(ctx context.Context, sel ast.SelectionSet, obj
 		case "id":
 			out.Values[i] = ec._Room_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
-		case "roomId":
-			out.Values[i] = ec._Room_roomId(ctx, field, obj)
+		case "name":
+			out.Values[i] = ec._Room_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "capacity":
 			out.Values[i] = ec._Room_capacity(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
-		case "equipment":
-			out.Values[i] = ec._Room_equipment(ctx, field, obj)
+		case "equipments":
+			out.Values[i] = ec._Room_equipments(ctx, field, obj)
 		case "rules":
 			out.Values[i] = ec._Room_rules(ctx, field, obj)
 		case "isDelete":
 			out.Values[i] = ec._Room_isDelete(ctx, field, obj)
-		case "bookings":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Room_bookings(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7376,10 +6851,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNBooking2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐBooking(ctx context.Context, sel ast.SelectionSet, v model.Booking) graphql.Marshaler {
-	return ec._Booking(ctx, sel, &v)
-}
-
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7387,6 +6858,22 @@ func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interf
 
 func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.SelectionSet, v bool) graphql.Marshaler {
 	res := graphql.MarshalBoolean(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNEquipment2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐEquipment(ctx context.Context, v interface{}) (domain.Equipment, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := domain.Equipment(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNEquipment2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐEquipment(ctx context.Context, sel ast.SelectionSet, v domain.Equipment) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -7543,6 +7030,22 @@ func (ec *executionContext) marshalNRoomConnection2ᚖgithubᚗcomᚋBartekTao�
 		return graphql.Null
 	}
 	return ec._RoomConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNRule2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐRule(ctx context.Context, v interface{}) (domain.Rule, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := domain.Rule(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRule2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐRule(ctx context.Context, sel ast.SelectionSet, v domain.Rule) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -7881,7 +7384,53 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) marshalOBooking2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐBookingᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Booking) graphql.Marshaler {
+func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOBoolean2bool(ctx context.Context, sel ast.SelectionSet, v bool) graphql.Marshaler {
+	res := graphql.MarshalBoolean(v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOBoolean2ᚖbool(ctx context.Context, v interface{}) (*bool, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast.SelectionSet, v *bool) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalBoolean(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOEquipment2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐEquipmentᚄ(ctx context.Context, v interface{}) ([]domain.Equipment, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]domain.Equipment, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNEquipment2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐEquipment(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOEquipment2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐEquipmentᚄ(ctx context.Context, sel ast.SelectionSet, v []domain.Equipment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7908,7 +7457,7 @@ func (ec *executionContext) marshalOBooking2ᚕgithubᚗcomᚋBartekTaoᚋnycu�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNBooking2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐBooking(ctx, sel, v[i])
+			ret[i] = ec.marshalNEquipment2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐEquipment(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7926,32 +7475,6 @@ func (ec *executionContext) marshalOBooking2ᚕgithubᚗcomᚋBartekTaoᚋnycu�
 	}
 
 	return ret
-}
-
-func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
-	res, err := graphql.UnmarshalBoolean(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOBoolean2bool(ctx context.Context, sel ast.SelectionSet, v bool) graphql.Marshaler {
-	res := graphql.MarshalBoolean(v)
-	return res
-}
-
-func (ec *executionContext) unmarshalOBoolean2ᚖbool(ctx context.Context, v interface{}) (*bool, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalBoolean(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast.SelectionSet, v *bool) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalBoolean(*v)
-	return res
 }
 
 func (ec *executionContext) marshalOEvent2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐEventᚄ(ctx context.Context, sel ast.SelectionSet, v []domain.Event) graphql.Marshaler {
@@ -8078,11 +7601,35 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
+func (ec *executionContext) unmarshalOReservationStatus2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐReservationStatus(ctx context.Context, v interface{}) (*domain.ReservationStatus, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := domain.ReservationStatus(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOReservationStatus2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐReservationStatus(ctx context.Context, sel ast.SelectionSet, v *domain.ReservationStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
 func (ec *executionContext) marshalORoom2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐRoom(ctx context.Context, sel ast.SelectionSet, v *domain.Room) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Room(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalORoomConnection2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoomConnection(ctx context.Context, sel ast.SelectionSet, v *model.RoomConnection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._RoomConnection(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalORoomEdge2ᚕᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoomEdge(ctx context.Context, sel ast.SelectionSet, v []*model.RoomEdge) graphql.Marshaler {
@@ -8138,6 +7685,73 @@ func (ec *executionContext) marshalORoomReservation2ᚖgithubᚗcomᚋBartekTao�
 		return graphql.Null
 	}
 	return ec._RoomReservation(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalORule2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐRuleᚄ(ctx context.Context, v interface{}) ([]domain.Rule, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]domain.Rule, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNRule2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐRule(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalORule2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐRuleᚄ(ctx context.Context, sel ast.SelectionSet, v []domain.Rule) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNRule2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐRule(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

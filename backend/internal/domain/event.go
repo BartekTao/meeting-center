@@ -7,17 +7,16 @@ import (
 type ReservationStatus string
 
 const (
-	ReservationStatus_Canceled  ReservationStatus = "Canceled"
-	ReservationStatus_Confirmed ReservationStatus = "Confirmed"
+	ReservationStatus_Canceled  ReservationStatus = "CANCELED"
+	ReservationStatus_Confirmed ReservationStatus = "CONFIRMED"
 )
 
 type Event struct {
-	ID          *string `json:"_id,omitempty"`
-	Title       string  `json:"title"`
-	Description *string `json:"description"`
-	StartAt     int64   `json:"startAt"`
-	EndAt       int64   `json:"endAt"`
-	// RoomID          *string          `json:"roomId"`
+	ID              *string          `json:"_id,omitempty"`
+	Title           string           `json:"title"`
+	Description     *string          `json:"description"`
+	StartAt         int64            `json:"startAt"`
+	EndAt           int64            `json:"endAt"`
 	RoomReservation *RoomReservation `json:"roomReservation"`
 	ParticipantsIDs []string         `json:"participantsIDs"`
 	Notes           *string          `json:"notes"`

@@ -7,12 +7,12 @@ import (
 )
 
 type UpsertRoomRequest struct {
-	ID        *string  `json:"_id,omitempty"`
-	RoomID    string   `json:"roomID"`
-	Capacity  int      `json:"capacity"`
-	Equipment []string `json:"equipment"`
-	Rules     []string `json:"rules"`
-	UpdaterID string   `json:"updaterID"`
+	ID         *string            `json:"_id,omitempty"`
+	Name       string             `json:"name"`
+	Capacity   int                `json:"capacity"`
+	Equipments []domain.Equipment `json:"equipments"`
+	Rules      []domain.Rule      `json:"rules"`
+	UpdaterID  string             `json:"updaterID"`
 }
 
 type RoomService interface {
@@ -32,12 +32,12 @@ func NewRoomService(roomRepository domain.RoomRepository) RoomService {
 
 func (h *roomService) Upsert(ctx context.Context, req UpsertRoomRequest) (*domain.Room, error) {
 	room := domain.Room{
-		ID:        req.ID,
-		RoomID:    req.RoomID,
-		Capacity:  req.Capacity,
-		Equipment: req.Equipment,
-		Rules:     req.Rules,
-		UpdaterID: req.UpdaterID,
+		ID:         req.ID,
+		Name:       req.Name,
+		Capacity:   req.Capacity,
+		Equipments: req.Equipments,
+		Rules:      req.Rules,
+		UpdaterID:  req.UpdaterID,
 	}
 	res, err := h.roomRepository.Upsert(ctx, room)
 	if err != nil {

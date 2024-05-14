@@ -4,17 +4,33 @@ import (
 	"context"
 )
 
+type Rule string
+
+const (
+	RULE_NO_FOOD  Rule = "NO_FOOD"
+	RULE_NO_DRINK Rule = "NO_DRINK"
+)
+
+type Equipment string
+
+const (
+	EQUIPMENT_PROJECTOR Equipment = "PROJECTOR"
+	EQUIPMENT_TABLE     Equipment = "TABLE"
+	EQUIPMENT_TV        Equipment = "TV"
+	EQUIPMENT_CAMERA    Equipment = "CAMERA"
+)
+
 type Room struct {
-	ID        *string  `json:"_id,omitempty"`
-	RoomID    string   `json:"roomID"`
-	Capacity  int      `json:"capacity"`
-	Equipment []string `json:"equipment"`
-	Rules     []string `json:"rules"`
-	IsDelete  bool     `json:"isDelete"`
-	CreatedAt int64    `json:"createdAt"`
-	CreatorID string   `json:"creatorID"`
-	UpdatedAt int64    `json:"updatedAt"`
-	UpdaterID string   `json:"updaterID"`
+	ID         *string     `json:"_id,omitempty"`
+	Name       string      `json:"name"`
+	Capacity   int         `json:"capacity"`
+	Equipments []Equipment `json:"equipments"`
+	Rules      []Rule      `json:"rules"`
+	IsDelete   bool        `json:"isDelete"`
+	CreatedAt  int64       `json:"createdAt"`
+	CreatorID  string      `json:"creatorID"`
+	UpdatedAt  int64       `json:"updatedAt"`
+	UpdaterID  string      `json:"updaterID"`
 }
 
 type RoomRepository interface {

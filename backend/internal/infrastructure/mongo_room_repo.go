@@ -14,16 +14,16 @@ import (
 )
 
 type Room struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty"`
-	RoomID    string             `bson:"roomID"`
-	Capacity  int                `bson:"capacity"`
-	Equipment []string           `bson:"equipment"`
-	Rules     []string           `bson:"rules"`
-	IsDelete  bool               `bson:"isDelete"`
-	CreatedAt int64              `bson:"createdAt"`
-	CreatorID string             `bson:"creatorID"`
-	UpdatedAt int64              `bson:"updatedAt"`
-	UpdaterID string             `bson:"updaterID"`
+	ID         primitive.ObjectID `bson:"_id,omitempty"`
+	Name       string             `bson:"name"`
+	Capacity   int                `bson:"capacity"`
+	Equipments []domain.Equipment `bson:"equipments"`
+	Rules      []domain.Rule      `bson:"rules"`
+	IsDelete   bool               `bson:"isDelete"`
+	CreatedAt  int64              `bson:"createdAt"`
+	CreatorID  string             `bson:"creatorID"`
+	UpdatedAt  int64              `bson:"updatedAt"`
+	UpdaterID  string             `bson:"updaterID"`
 }
 
 type mongoRoomRepository struct {
@@ -45,15 +45,15 @@ func (m *mongoRoomRepository) Upsert(ctx context.Context, room domain.Room) (*do
 	if room.ID == nil { // Insert new room
 		currentTime := time.Now().Unix()
 		newRoom := Room{
-			RoomID:    room.RoomID,
-			Capacity:  room.Capacity,
-			Equipment: room.Equipment,
-			Rules:     room.Rules,
-			IsDelete:  false,
-			CreatedAt: currentTime,
-			CreatorID: room.UpdaterID,
-			UpdatedAt: currentTime,
-			UpdaterID: room.UpdaterID,
+			Name:       room.Name,
+			Capacity:   room.Capacity,
+			Equipments: room.Equipments,
+			Rules:      room.Rules,
+			IsDelete:   false,
+			CreatedAt:  currentTime,
+			CreatorID:  room.UpdaterID,
+			UpdatedAt:  currentTime,
+			UpdaterID:  room.UpdaterID,
 		}
 		result, err := collection.InsertOne(ctx, newRoom)
 		if err != nil {
@@ -75,9 +75,9 @@ func (m *mongoRoomRepository) Upsert(ctx context.Context, room domain.Room) (*do
 		}
 		update := bson.M{
 			"$set": bson.M{
-				"roomID":    room.RoomID,
+				"roomID":    room.Name,
 				"capacity":  room.Capacity,
-				"equipment": room.Equipment,
+				"equipment": room.Equipments,
 				"rules":     room.Rules,
 				"updatedAt": time.Now().Unix(),
 				"updaterID": room.UpdaterID,
@@ -141,14 +141,14 @@ func (m *mongoRoomRepository) GetByID(ctx context.Context, id string) (*domain.R
 
 func ToDomainRoom(room *Room) *domain.Room {
 	domainRoom := domain.Room{
-		ID:        common.ToPtr(room.ID.Hex()),
-		RoomID:    room.RoomID,
-		Capacity:  room.Capacity,
-		Equipment: room.Equipment,
-		Rules:     room.Rules,
-		IsDelete:  room.IsDelete,
-		CreatedAt: room.CreatedAt,
-		UpdatedAt: room.UpdatedAt,
+		ID:         common.ToPtr(room.ID.Hex()),
+		Name:       room.Name,
+		Capacity:   room.Capacity,
+		Equipments: room.Equipments,
+		Rules:      room.Rules,
+		IsDelete:   room.IsDelete,
+		CreatedAt:  room.CreatedAt,
+		UpdatedAt:  room.UpdatedAt,
 	}
 	return &domainRoom
 }

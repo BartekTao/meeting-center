@@ -11,7 +11,7 @@ directive @goField(forceResolver: Boolean, name: String, omittable: Boolean) on 
 scalar Int64
 
 type Query {
-  paginatedRooms(first: Int = 20, after: String): RoomConnection!
+  paginatedRooms(first: Int = 20, after: String): RoomConnection
   room(id: ID!): Room!
 }
 
@@ -22,19 +22,25 @@ type Mutation {
 
 type Room @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.Room") {
   id: ID!
-  roomId: String!
+  name: String!
   capacity: Int!
-  equipment: [String!]
-  rules: [String!]
+  equipments: [Equipment!]
+  rules: [Rule!]
   isDelete: Boolean
-  bookings: [Booking!] @goField(forceResolver: true)
 }
 
-type Booking {
-  startAt: Int!
-  endAt: Int!
-  bookedBy: User! @goField(forceResolver: true)
+enum Rule @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.Rule") {
+  NO_FOOD
+  NO_DRINK
 }
+
+enum Equipment @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.Equipment") {
+  PROJECTOR
+  TABLE
+  TV
+  CAMERA
+}
+
 
 type RoomConnection {
   edges: [RoomEdge]
@@ -53,8 +59,8 @@ type PageInfo {
 
 input UpsertRoomInput {
   id: ID
-  roomId: String!
+  name: String!
   capacity: Int!
-  equipment: [String!]
-  rules: [String!]
+  equipments: [Equipment!]
+  rules: [Rule!]
 }
