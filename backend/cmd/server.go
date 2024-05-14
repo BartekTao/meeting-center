@@ -19,8 +19,12 @@ import (
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/resolvers"
 	infra "github.com/BartekTao/nycu-meeting-room-api/internal/infrastructure"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/auth"
+	"github.com/BartekTao/nycu-meeting-room-api/pkg/lock"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/middleware"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/otelwrapper"
+	"github.com/go-redsync/redsync/v4"
+	"github.com/go-redsync/redsync/v4/redis/goredis/v9"
+	goredislib "github.com/redis/go-redis/v9"
 	"github.com/rs/cors"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -58,13 +62,18 @@ func run() (err error) {
 	mongoClient := infra.SetUpMongoDB()
 	defer infra.ShutdownMongoDB(mongoClient)
 
+	client := goredislib.NewClient(&goredislib.Options{
+		Addr: "localhost:6379",
+	})
+	defer client.Close()
+
 	// Start HTTP server.
 	srv := &http.Server{
 		Addr:         ":8080",
 		BaseContext:  func(_ net.Listener) context.Context { return ctx },
 		ReadTimeout:  time.Second,
 		WriteTimeout: 10 * time.Second,
-		Handler:      newHTTPHandler(mongoClient),
+		Handler:      newHTTPHandler(mongoClient, client),
 	}
 	srvErr := make(chan error, 1)
 	go func() {
@@ -87,7 +96,7 @@ func run() (err error) {
 	return
 }
 
-func newHTTPHandler(mongoClient *mongo.Client) http.Handler {
+func newHTTPHandler(mongoClient *mongo.Client, rsClient *goredislib.Client) http.Handler {
 	mux := http.NewServeMux()
 
 	c := cors.New(cors.Options{
@@ -111,12 +120,15 @@ func newHTTPHandler(mongoClient *mongo.Client) http.Handler {
 	mux.HandleFunc("/auth/google/callback", authHandler.Callback)
 
 	// Setup GraphQL server
+	pool := goredis.NewPool(rsClient)
+	rs := redsync.New(pool)
+	locker := lock.NewRedsyncLocker(rs)
 	roomRepo := infra.NewMongoRoomRepository(mongoClient)
 	eventRepo := infra.NewMongoEventRepository(mongoClient)
 	graphqlServer := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: resolvers.NewResolver(
 			app.NewRoomService(roomRepo),
-			app.NewEventService(eventRepo),
+			app.NewEventService(eventRepo, locker),
 			app.NewUserService(userRepo),
 		),
 	}))

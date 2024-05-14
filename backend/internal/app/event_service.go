@@ -2,8 +2,10 @@ package app
 
 import (
 	"context"
+	"time"
 
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
+	"github.com/BartekTao/nycu-meeting-room-api/pkg/lock"
 )
 
 type UpsertEventRequest struct {
@@ -29,10 +31,14 @@ type EventService interface {
 
 type eventService struct {
 	eventRepository domain.EventRepository
+	locker          lock.DistributedLocker
 }
 
-func NewEventService(eventRepository domain.EventRepository) EventService {
-	return &eventService{eventRepository: eventRepository}
+func NewEventService(eventRepository domain.EventRepository, locker lock.DistributedLocker) EventService {
+	return &eventService{
+		eventRepository: eventRepository,
+		locker:          locker,
+	}
 }
 
 func (h *eventService) Upsert(ctx context.Context, req UpsertEventRequest) (*domain.Event, error) {
@@ -42,18 +48,43 @@ func (h *eventService) Upsert(ctx context.Context, req UpsertEventRequest) (*dom
 		Description:     req.Description,
 		StartAt:         req.StartAt,
 		EndAt:           req.EndAt,
-		RoomID:          req.RoomID,
 		ParticipantsIDs: req.ParticipantsIDs,
 		Notes:           req.Notes,
 		RemindAt:        req.RemindAt,
 		UpdaterID:       req.UpdaterID,
 	}
-	res, err := h.eventRepository.Upsert(ctx, event)
+
+	if req.RoomID == nil {
+		res, err := h.eventRepository.Upsert(ctx, event)
+		return res, err
+	} else {
+		event.RoomReservation = &domain.RoomReservation{
+			RoomID:            req.RoomID,
+			ReservationStatus: domain.ReservationStatus_Confirmed,
+		}
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	key := *req.RoomID
+	locked, err := h.locker.TryLockWithWait(key, 500*time.Millisecond, 3)
+	if err != nil || !locked {
+		return nil, err
+	}
+	defer h.locker.Unlock(key)
+
+	available, err := h.eventRepository.CheckAvailableRoom(ctx, *event.RoomReservation.RoomID, event.StartAt, event.EndAt)
 	if err != nil {
 		return nil, err
-	} else {
-		return res, nil
 	}
+
+	if !available {
+		event.RoomReservation.ReservationStatus = domain.ReservationStatus_Canceled
+	}
+
+	res, err := h.eventRepository.Upsert(ctx, event)
+	return res, err
 }
 
 func (h *eventService) Delete(ctx context.Context, id string) (*domain.Event, error) {

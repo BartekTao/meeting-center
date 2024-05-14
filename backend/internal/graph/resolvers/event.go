@@ -16,17 +16,9 @@ import (
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/middleware"
 )
 
-// Room is the resolver for the room field.
-func (r *eventResolver) Room(ctx context.Context, obj *domain.Event) (*domain.Room, error) {
-	if obj.RoomID == nil {
-		return nil, nil
-	}
-
-	room, err := r.roomService.GetByID(ctx, *obj.RoomID)
-	if err != nil {
-		return nil, err
-	}
-	return room, nil
+// RoomReservation is the resolver for the roomReservation field.
+func (r *eventResolver) RoomReservation(ctx context.Context, obj *domain.Event) (*domain.RoomReservation, error) {
+	panic(fmt.Errorf("not implemented: RoomReservation - roomReservation"))
 }
 
 // Participants is the resolver for the participants field.
@@ -109,6 +101,16 @@ func (r *queryResolver) UserEvents(ctx context.Context, userIDs []string, startA
 	return res, nil
 }
 
+// Room is the resolver for the room field.
+func (r *roomReservationResolver) Room(ctx context.Context, obj *domain.RoomReservation) (*domain.Room, error) {
+	panic(fmt.Errorf("not implemented: Room - room"))
+}
+
+// Status is the resolver for the status field.
+func (r *roomReservationResolver) Status(ctx context.Context, obj *domain.RoomReservation) (*string, error) {
+	panic(fmt.Errorf("not implemented: Status - status"))
+}
+
 // User is the resolver for the user field.
 func (r *userEventResolver) User(ctx context.Context, obj *model.UserEvent) (*domain.User, error) {
 	return r.userService.GetByID(ctx, *obj.User.ID)
@@ -117,10 +119,32 @@ func (r *userEventResolver) User(ctx context.Context, obj *model.UserEvent) (*do
 // Event returns graph.EventResolver implementation.
 func (r *Resolver) Event() graph.EventResolver { return &eventResolver{r} }
 
+// RoomReservation returns graph.RoomReservationResolver implementation.
+func (r *Resolver) RoomReservation() graph.RoomReservationResolver {
+	return &roomReservationResolver{r}
+}
+
 // UserEvent returns graph.UserEventResolver implementation.
 func (r *Resolver) UserEvent() graph.UserEventResolver { return &userEventResolver{r} }
 
-type (
-	eventResolver     struct{ *Resolver }
-	userEventResolver struct{ *Resolver }
-)
+type eventResolver struct{ *Resolver }
+type roomReservationResolver struct{ *Resolver }
+type userEventResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *eventResolver) Room(ctx context.Context, obj *domain.Event) (*domain.Room, error) {
+	if obj.RoomReservation.RoomID == nil {
+		return nil, nil
+	}
+
+	room, err := r.roomService.GetByID(ctx, *obj.RoomReservation.RoomID)
+	if err != nil {
+		return nil, err
+	}
+	return room, nil
+}

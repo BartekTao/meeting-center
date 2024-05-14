@@ -19,7 +19,7 @@ type Event struct {
 	Description     *string            `bson:"description"`
 	StartAt         int64              `bson:"startAt"`
 	EndAt           int64              `bson:"endAt"`
-	RoomID          *string            `bson:"roomId"`
+	RoomReservation *RoomReservation   `bson:"roomReservation"`
 	ParticipantsIDs []string           `bson:"participantsIDs"`
 	Notes           *string            `bson:"notes"`
 	RemindAt        int64              `bson:"remindAt"`
@@ -29,6 +29,11 @@ type Event struct {
 	CreatorID       string             `bson:"creatorID"`
 	UpdatedAt       int64              `bson:"updatedAt"`
 	UpdaterID       string             `bson:"updaterID"`
+}
+
+type RoomReservation struct {
+	RoomID            *string                  `bson:"roomID"`
+	ReservationStatus domain.ReservationStatus `bson:"reservationStatus"`
 }
 
 type mongoEventRepository struct {
@@ -54,7 +59,6 @@ func (m *mongoEventRepository) Upsert(ctx context.Context, event domain.Event) (
 			Description:     event.Description,
 			StartAt:         event.StartAt,
 			EndAt:           event.EndAt,
-			RoomID:          event.RoomID,
 			ParticipantsIDs: event.ParticipantsIDs,
 			Notes:           event.Notes,
 			RemindAt:        event.RemindAt,
@@ -63,6 +67,12 @@ func (m *mongoEventRepository) Upsert(ctx context.Context, event domain.Event) (
 			CreatorID:       event.UpdaterID,
 			UpdatedAt:       currentTime,
 			UpdaterID:       event.UpdaterID,
+		}
+		if event.RoomReservation != nil {
+			newEvent.RoomReservation = &RoomReservation{
+				RoomID:            event.RoomReservation.RoomID,
+				ReservationStatus: event.RoomReservation.ReservationStatus,
+			}
 		}
 		result, err := collection.InsertOne(ctx, newEvent)
 		if err != nil {
@@ -88,7 +98,7 @@ func (m *mongoEventRepository) Upsert(ctx context.Context, event domain.Event) (
 				"description":     event.Description,
 				"startAt":         event.StartAt,
 				"endAt":           event.EndAt,
-				"roomId":          event.RoomID,
+				"roomReservation": event.RoomReservation,
 				"participantsIDs": event.ParticipantsIDs,
 				"notes":           event.Notes,
 				"remindAt":        event.RemindAt,
@@ -199,6 +209,23 @@ func (m *mongoEventRepository) UpdateSummary(ctx context.Context, id string, sum
 	return true, nil
 }
 
+func (m *mongoEventRepository) CheckAvailableRoom(ctx context.Context, roomID string, startAt, endAt int64) (bool, error) {
+	filter := bson.M{
+		"roomReservation.roomID":            roomID,
+		"roomReservation.reservationStatus": domain.ReservationStatus_Confirmed,
+		"$or": []bson.M{
+			{"startAt": bson.M{"$lte": endAt, "$gte": startAt}},
+			{"endAt": bson.M{"$gte": startAt, "$lte": endAt}},
+		},
+		"isDelete": false,
+	}
+	res, err := m.findOneByFilter(ctx, m.eventCollection, filter)
+	if err != nil {
+		return false, err
+	}
+	return res == nil, nil
+}
+
 func ToDomainEvent(event *Event) *domain.Event {
 	domainRoom := domain.Event{
 		ID:              common.ToPtr(event.ID.Hex()),
@@ -206,7 +233,7 @@ func ToDomainEvent(event *Event) *domain.Event {
 		Description:     event.Description,
 		StartAt:         event.StartAt,
 		EndAt:           event.EndAt,
-		RoomID:          event.RoomID,
+		RoomReservation: ToDomainRoomReservation(event.RoomReservation),
 		ParticipantsIDs: event.ParticipantsIDs,
 		Notes:           event.Notes,
 		RemindAt:        event.RemindAt,
@@ -215,6 +242,17 @@ func ToDomainEvent(event *Event) *domain.Event {
 		CreatorID:       event.CreatorID,
 		UpdatedAt:       event.UpdatedAt,
 		UpdaterID:       event.UpdaterID,
+	}
+	return &domainRoom
+}
+
+func ToDomainRoomReservation(roomReservation *RoomReservation) *domain.RoomReservation {
+	if roomReservation == nil {
+		return nil
+	}
+	domainRoom := domain.RoomReservation{
+		RoomID:            roomReservation.RoomID,
+		ReservationStatus: roomReservation.ReservationStatus,
 	}
 	return &domainRoom
 }

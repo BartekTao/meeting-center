@@ -17,12 +17,17 @@ type Event @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/
   description: String
   startAt: Int64!
   endAt: Int64!
-  room: Room @goField(forceResolver: true)
+  roomReservation: RoomReservation @goField(forceResolver: true)
   participants: [User!]! @goField(forceResolver: true)
   notes: String
   remindAt: Int64!
   creator: User! @goField(forceResolver: true)
   isDelete: Boolean
+}
+
+type RoomReservation @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.RoomReservation") {
+  room: Room! 
+  status: String
 }
 
 type UserEvent {
