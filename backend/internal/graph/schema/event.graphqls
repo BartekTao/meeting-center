@@ -3,6 +3,8 @@ extend type Query {
   paginatedAvailableRooms(
     startAt: Int64!, 
     endAt: Int64!, 
+    rules: [Rule!],
+    equipments: [Equipment!]
     first: Int = 20, 
     after: String,
     ): RoomConnection!

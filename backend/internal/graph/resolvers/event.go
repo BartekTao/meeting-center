@@ -68,7 +68,7 @@ func (r *queryResolver) Event(ctx context.Context, id string) (*domain.Event, er
 }
 
 // PaginatedAvailableRooms is the resolver for the paginatedAvailableRooms field.
-func (r *queryResolver) PaginatedAvailableRooms(ctx context.Context, startAt int64, endAt int64, first *int, after *string) (*model.RoomConnection, error) {
+func (r *queryResolver) PaginatedAvailableRooms(ctx context.Context, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) (*model.RoomConnection, error) {
 	panic(fmt.Errorf("not implemented: PaginatedAvailableRooms - paginatedAvailableRooms"))
 }
 

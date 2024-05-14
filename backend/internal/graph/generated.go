@@ -80,7 +80,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Event                   func(childComplexity int, id string) int
-		PaginatedAvailableRooms func(childComplexity int, startAt int64, endAt int64, first *int, after *string) int
+		PaginatedAvailableRooms func(childComplexity int, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) int
 		PaginatedRooms          func(childComplexity int, first *int, after *string) int
 		PaginatedUsers          func(childComplexity int, first *int, after *string) int
 		Room                    func(childComplexity int, id string) int
@@ -154,7 +154,7 @@ type QueryResolver interface {
 	PaginatedRooms(ctx context.Context, first *int, after *string) (*model.RoomConnection, error)
 	Room(ctx context.Context, id string) (*domain.Room, error)
 	Event(ctx context.Context, id string) (*domain.Event, error)
-	PaginatedAvailableRooms(ctx context.Context, startAt int64, endAt int64, first *int, after *string) (*model.RoomConnection, error)
+	PaginatedAvailableRooms(ctx context.Context, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) (*model.RoomConnection, error)
 	UserEvents(ctx context.Context, userIDs []string, startAt int64, endAt int64) ([]*model.UserEvent, error)
 	User(ctx context.Context, id string) (*domain.User, error)
 	PaginatedUsers(ctx context.Context, first *int, after *string) (*model.UserConnection, error)
@@ -359,7 +359,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.PaginatedAvailableRooms(childComplexity, args["startAt"].(int64), args["endAt"].(int64), args["first"].(*int), args["after"].(*string)), true
+		return e.complexity.Query.PaginatedAvailableRooms(childComplexity, args["startAt"].(int64), args["endAt"].(int64), args["rules"].([]domain.Rule), args["equipments"].([]domain.Equipment), args["first"].(*int), args["after"].(*string)), true
 
 	case "Query.paginatedRooms":
 		if e.complexity.Query.PaginatedRooms == nil {
@@ -859,24 +859,42 @@ func (ec *executionContext) field_Query_paginatedAvailableRooms_args(ctx context
 		}
 	}
 	args["endAt"] = arg1
-	var arg2 *int
+	var arg2 []domain.Rule
+	if tmp, ok := rawArgs["rules"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rules"))
+		arg2, err = ec.unmarshalORule2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐRuleᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["rules"] = arg2
+	var arg3 []domain.Equipment
+	if tmp, ok := rawArgs["equipments"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("equipments"))
+		arg3, err = ec.unmarshalOEquipment2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐEquipmentᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["equipments"] = arg3
+	var arg4 *int
 	if tmp, ok := rawArgs["first"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-		arg2, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		arg4, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["first"] = arg2
-	var arg3 *string
+	args["first"] = arg4
+	var arg5 *string
 	if tmp, ok := rawArgs["after"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg5, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["after"] = arg3
+	args["after"] = arg5
 	return args, nil
 }
 
@@ -2189,7 +2207,7 @@ func (ec *executionContext) _Query_paginatedAvailableRooms(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().PaginatedAvailableRooms(rctx, fc.Args["startAt"].(int64), fc.Args["endAt"].(int64), fc.Args["first"].(*int), fc.Args["after"].(*string))
+		return ec.resolvers.Query().PaginatedAvailableRooms(rctx, fc.Args["startAt"].(int64), fc.Args["endAt"].(int64), fc.Args["rules"].([]domain.Rule), fc.Args["equipments"].([]domain.Equipment), fc.Args["first"].(*int), fc.Args["after"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2787,11 +2805,14 @@ func (ec *executionContext) _Room_isDelete(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Room_isDelete(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6112,6 +6133,9 @@ func (ec *executionContext) _Room(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = ec._Room_rules(ctx, field, obj)
 		case "isDelete":
 			out.Values[i] = ec._Room_isDelete(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

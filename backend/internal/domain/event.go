@@ -40,4 +40,5 @@ type EventRepository interface {
 	GetByID(ctx context.Context, id string) (*Event, error)
 	GetByUsers(ctx context.Context, ids []string, startAt, endAt int64) (map[string][]Event, error)
 	CheckAvailableRoom(ctx context.Context, roomID string, startAt, endAt int64) (bool, error)
+	GetAll(ctx context.Context, roomIDs []string, startAt, endAt int64) ([]Event, error)
 }

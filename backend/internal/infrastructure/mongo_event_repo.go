@@ -150,9 +150,11 @@ func (m *mongoEventRepository) GetByUsers(ctx context.Context, ids []string, sta
 	}
 	filter := bson.M{
 		"participantsIDs": bson.M{"$in": bsonIds},
-		"startAt":         bson.M{"$gte": startAt},
-		"endAt":           bson.M{"$lte": endAt},
-		"isDelete":        false,
+		"$or": []bson.M{
+			{"startAt": bson.M{"$lt": endAt, "$gte": startAt}},
+			{"endAt": bson.M{"$gt": startAt, "$lte": endAt}},
+		},
+		"isDelete": false,
 	}
 	events, err := m.BaseRepository.findAllByFilter(ctx, m.eventCollection, filter)
 	if err != nil {
@@ -224,6 +226,26 @@ func (m *mongoEventRepository) CheckAvailableRoom(ctx context.Context, roomID st
 		return false, err
 	}
 	return res == nil, nil
+}
+
+func (m *mongoEventRepository) GetAll(ctx context.Context, roomIDs []string, startAt, endAt int64) ([]domain.Event, error) {
+	filter := bson.M{
+		"roomReservation.roomID": bson.M{"$in": roomIDs},
+		"$or": []bson.M{
+			{"startAt": bson.M{"$lt": endAt, "$gte": startAt}},
+			{"endAt": bson.M{"$gt": startAt, "$lte": endAt}},
+		},
+		"isDelete": false,
+	}
+	events, err := m.findAllByFilter(ctx, m.eventCollection, filter)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]domain.Event, len(events))
+	for i, event := range events {
+		res[i] = *ToDomainEvent(event)
+	}
+	return res, nil
 }
 
 func ToDomainEvent(event *Event) *domain.Event {

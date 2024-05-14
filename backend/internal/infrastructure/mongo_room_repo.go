@@ -139,6 +139,30 @@ func (m *mongoRoomRepository) GetByID(ctx context.Context, id string) (*domain.R
 	return ToDomainRoom(room), nil
 }
 
+func (m *mongoRoomRepository) GetAll(ctx context.Context, equipments []domain.Equipment, rules []domain.Rule) ([]domain.Room, error) {
+	filter := bson.M{
+		"isDelete": false,
+	}
+
+	if equipments != nil {
+		filter["equipments"] = bson.M{"$all": equipments}
+	}
+	if rules != nil {
+		filter["rules"] = bson.M{"$all": rules}
+	}
+
+	rooms, err := m.findAllByFilter(ctx, m.roomCollection, filter)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]domain.Room, len(rooms))
+	for i, room := range rooms {
+		res[i] = *ToDomainRoom(room)
+	}
+
+	return res, nil
+}
+
 func ToDomainRoom(room *Room) *domain.Room {
 	domainRoom := domain.Room{
 		ID:         common.ToPtr(room.ID.Hex()),

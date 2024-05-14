@@ -31,6 +31,7 @@ type EventService interface {
 
 type eventService struct {
 	eventRepository domain.EventRepository
+	roomRepository  domain.RoomRepository
 	locker          lock.DistributedLocker
 }
 
@@ -41,7 +42,7 @@ func NewEventService(eventRepository domain.EventRepository, locker lock.Distrib
 	}
 }
 
-func (h *eventService) Upsert(ctx context.Context, req UpsertEventRequest) (*domain.Event, error) {
+func (s *eventService) Upsert(ctx context.Context, req UpsertEventRequest) (*domain.Event, error) {
 	event := domain.Event{
 		ID:              req.ID,
 		Title:           req.Title,
@@ -55,7 +56,7 @@ func (h *eventService) Upsert(ctx context.Context, req UpsertEventRequest) (*dom
 	}
 
 	if req.RoomID == nil {
-		res, err := h.eventRepository.Upsert(ctx, event)
+		res, err := s.eventRepository.Upsert(ctx, event)
 		return res, err
 	} else {
 		event.RoomReservation = &domain.RoomReservation{
@@ -68,13 +69,13 @@ func (h *eventService) Upsert(ctx context.Context, req UpsertEventRequest) (*dom
 	defer cancel()
 
 	key := *req.RoomID
-	locked, err := h.locker.TryLockWithWait(key, 500*time.Millisecond, 3)
+	locked, err := s.locker.TryLockWithWait(key, 500*time.Millisecond, 3)
 	if err != nil {
 		return nil, err
 	}
-	defer h.locker.Unlock(locked)
+	defer s.locker.Unlock(locked)
 
-	available, err := h.eventRepository.CheckAvailableRoom(ctx, *event.RoomReservation.RoomID, event.StartAt, event.EndAt)
+	available, err := s.eventRepository.CheckAvailableRoom(ctx, *event.RoomReservation.RoomID, event.StartAt, event.EndAt)
 	if err != nil {
 		return nil, err
 	}
@@ -83,13 +84,13 @@ func (h *eventService) Upsert(ctx context.Context, req UpsertEventRequest) (*dom
 		event.RoomReservation.ReservationStatus = domain.ReservationStatus_Canceled
 	}
 
-	res, err := h.eventRepository.Upsert(ctx, event)
+	res, err := s.eventRepository.Upsert(ctx, event)
 
 	return res, err
 }
 
-func (h *eventService) Delete(ctx context.Context, id string) (*domain.Event, error) {
-	res, err := h.eventRepository.Delete(ctx, id)
+func (s *eventService) Delete(ctx context.Context, id string) (*domain.Event, error) {
+	res, err := s.eventRepository.Delete(ctx, id)
 	if err != nil {
 		return nil, err
 	} else {
@@ -97,21 +98,21 @@ func (h *eventService) Delete(ctx context.Context, id string) (*domain.Event, er
 	}
 }
 
-func (h *eventService) GetByID(ctx context.Context, id string) (*domain.Event, error) {
-	res, err := h.eventRepository.GetByID(ctx, id)
+func (s *eventService) GetByID(ctx context.Context, id string) (*domain.Event, error) {
+	res, err := s.eventRepository.GetByID(ctx, id)
 	return res, err
 }
 
-func (h *eventService) GetUserEvents(ctx context.Context, ids []string, startAt, endAt int64) (map[string][]domain.Event, error) {
-	userEventMap, err := h.eventRepository.GetByUsers(ctx, ids, startAt, endAt)
+func (s *eventService) GetUserEvents(ctx context.Context, ids []string, startAt, endAt int64) (map[string][]domain.Event, error) {
+	userEventMap, err := s.eventRepository.GetByUsers(ctx, ids, startAt, endAt)
 	if err != nil {
 		return nil, err
 	}
 	return userEventMap, nil
 }
 
-func (h *eventService) CheckUserAvailable(ctx context.Context, ids []string, startAt, endAt int64) (map[string]bool, error) {
-	userEventMap, err := h.eventRepository.GetByUsers(ctx, ids, startAt, endAt)
+func (s *eventService) CheckUserAvailable(ctx context.Context, ids []string, startAt, endAt int64) (map[string]bool, error) {
+	userEventMap, err := s.eventRepository.GetByUsers(ctx, ids, startAt, endAt)
 	if err != nil {
 		return nil, err
 	}
@@ -123,6 +124,34 @@ func (h *eventService) CheckUserAvailable(ctx context.Context, ids []string, sta
 	return availableMap, nil
 }
 
-func (h *eventService) UpdateSummary(ctx context.Context, id string, summary string, updaterID string) (bool, error) {
-	return h.eventRepository.UpdateSummary(ctx, id, summary, updaterID)
+func (s *eventService) UpdateSummary(ctx context.Context, id string, summary string, updaterID string) (bool, error) {
+	return s.eventRepository.UpdateSummary(ctx, id, summary, updaterID)
+}
+
+func (s *eventService) PaginatedAvailableRooms(
+	ctx context.Context,
+	startAt, endAt int64,
+	equipments []domain.Equipment, rules []domain.Rule,
+	skip, limit int,
+) ([]domain.Event, error) {
+	rooms, err := s.roomRepository.GetAll(ctx, equipments, rules)
+	if err != nil {
+		return nil, err
+	}
+	roomIDs := make([]string, len(rooms))
+	for i, room := range rooms {
+		roomIDs[i] = *room.ID
+	}
+	events, err := s.eventRepository.GetAll(ctx, roomIDs, startAt, endAt)
+	return events, err
+}
+
+func (s *eventService) PaginatedRoomStatus(
+	ctx context.Context,
+	startAt, endAt int64,
+	roomIDs []string,
+	skip, limit int,
+) ([]domain.Event, error) {
+	events, err := s.eventRepository.GetAll(ctx, roomIDs, startAt, endAt)
+	return events, err
 }

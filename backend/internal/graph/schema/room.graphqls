@@ -26,7 +26,7 @@ type Room @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/d
   capacity: Int!
   equipments: [Equipment!]
   rules: [Rule!]
-  isDelete: Boolean
+  isDelete: Boolean!
 }
 
 enum Rule @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.Rule") {
