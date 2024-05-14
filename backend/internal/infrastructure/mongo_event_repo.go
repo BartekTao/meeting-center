@@ -214,8 +214,8 @@ func (m *mongoEventRepository) CheckAvailableRoom(ctx context.Context, roomID st
 		"roomReservation.roomID":            roomID,
 		"roomReservation.reservationStatus": domain.ReservationStatus_Confirmed,
 		"$or": []bson.M{
-			{"startAt": bson.M{"$lte": endAt, "$gte": startAt}},
-			{"endAt": bson.M{"$gte": startAt, "$lte": endAt}},
+			{"startAt": bson.M{"$lt": endAt, "$gte": startAt}},
+			{"endAt": bson.M{"$gt": startAt, "$lte": endAt}},
 		},
 		"isDelete": false,
 	}

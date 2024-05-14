@@ -69,10 +69,10 @@ func (h *eventService) Upsert(ctx context.Context, req UpsertEventRequest) (*dom
 
 	key := *req.RoomID
 	locked, err := h.locker.TryLockWithWait(key, 500*time.Millisecond, 3)
-	if err != nil || !locked {
+	if err != nil {
 		return nil, err
 	}
-	defer h.locker.Unlock(key)
+	defer h.locker.Unlock(locked)
 
 	available, err := h.eventRepository.CheckAvailableRoom(ctx, *event.RoomReservation.RoomID, event.StartAt, event.EndAt)
 	if err != nil {
@@ -84,6 +84,7 @@ func (h *eventService) Upsert(ctx context.Context, req UpsertEventRequest) (*dom
 	}
 
 	res, err := h.eventRepository.Upsert(ctx, event)
+
 	return res, err
 }
 
