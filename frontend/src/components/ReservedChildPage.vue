@@ -4,7 +4,7 @@
         <div class="row">
           <div class="col-lg-12">
             <div class="section-heading">
-              <h2>查詢空間</h2>
+              <h2>已預約空間</h2>
             </div>
           </div>
           <div class="col-lg-12">
@@ -22,9 +22,14 @@
                           <li>人數限制：{{ item.people_limit }}</li>
                           <li>可否飲食：{{ item.can_eat ? '是' : '否' }}</li>
                         </ul><br>
-                        <div class="main-white-button">
-                          <a class="openFormBtn" @click="openForm"><img :src="tapImage" alt="Booking">預約</a>
-                        </div>
+                        <div class="flex-container">
+                          <div class="main-white-button">
+                              <a class="openFormBtn" @click="openForm"><img :src="docImage" alt="Edit">編輯</a>
+                          </div>
+                          <div class="main-white-button">
+                              <a class="openFormBtn"><img :src="deleteImage" alt="Delete">刪除</a>
+                          </div>
+                      </div>
                       </div>
                     </div>
                   </div>
@@ -40,23 +45,20 @@
           <label for="name">會議名稱：</label>
           <input type="text" id="name" name="name" v-model="formInfo.name" required><br><br>
           
-          <label for="email">參與人信箱(如有多個，請在間隔留下,符號)：</label><br>
-          <input type="text" id="email" name="email" v-model="formInfo.email" required><br><br>
-  
-          <label>開始時間：</label>
-          <select v-model="formInfo.start_time" required>
-              <option :value="item" v-for="item in time_period"  :key="item">{{ item }}</option>
+          <label for="email">參與人信箱：</label>
+          <input type="email" id="email" name="email" v-model="formInfo.email" required><br><br>
+          
+          <label for="period">選擇時段：</label>
+          <select id="period" name="period" v-model="formInfo.period" required>
+            <option value="13:00">13:00</option>
+            <option value="14:00">14:00</option>
+            <option value="15:00">15:00</option>
           </select><br><br>
-  
-          <label>結束時間：</label>
-          <select v-model="formInfo.end_time" required>
-              <option :value="item" v-for="item in time_period"  :key="item">{{ item }}</option>
-          </select><br><br>
-  
-          <label>會議內容：</label><br>
+          
+          <label for="content">會議內容：</label><br>
           <textarea id="content" name="content" maxlength="200" v-model="formInfo.content"></textarea><br><br>
           
-          <label>上傳檔案：</label>
+          <label for="file">上傳檔案：</label>
           <input type="file" id="file" name="file"><br><br>
           
           <button type="submit" @click.prevent="submitForm">預約</button>
@@ -68,22 +70,18 @@
   
   <script>
   export default {
-    name: 'QueryItem',
     data() {
       return {
-        time_period: ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30',
-          '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00',
-          '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'],
         formDisplay: false,
-        tapImage: require('@/assets/images/tap.png'),
         formInfo: {
-          name: 'Ray',
-          email: 'example@gmail.com',
-          start_time: '10:00',
-          end_time: '12:00',
-          content: 'test content',
+          name: '',
+          email: '',
+          period: '',
+          content: '',
           file: ''
         },
+        docImage: require('@/assets/images/google-docs.png'),
+        deleteImage: require('@/assets/images/delete.png'),
         items: [
           {
             name: '001',
@@ -104,7 +102,7 @@
             can_eat: true
           },
         ]
-      };
+      }
     },
     methods: {
       openForm() {
@@ -114,11 +112,9 @@
         this.formDisplay = false;
       },
       submitForm() {
-        alert(JSON.stringify(this.formInfo, null, 2)); 
-        this.closeForm();
+        this.formDisplay = false;
       }
     }
   };
   </script>
-  
   

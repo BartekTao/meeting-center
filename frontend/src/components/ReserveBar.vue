@@ -62,14 +62,12 @@
   </template>
   
   <script>
-  import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client/core';
-  import { BOOKS_QUERY } from './QueryObj.vue';
 
   export default {
-    name: 'QueryBar',
+    name: 'ReserveBar',
     data() {
       return {
-        time_period: ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'],
+        time_period: [],
         selectedNumberOfPeople: 5,
         currentDate: this.getCurrentDate(), 
         selectedStartPeriod: '9:00',
@@ -106,31 +104,10 @@
         const mm = String(today.getMonth() + 1).padStart(2, '0');
         const yyyy = today.getFullYear();
         return `${yyyy}-${mm}-${dd}`;
-      },
-      fetchBooks() {
-        const httpLink = createHttpLink({
-          uri: 'http://localhost:4000/' // 替换为您的 GraphQL API URI
-        });
-
-        const client = new ApolloClient({
-          link: httpLink,
-          cache: new InMemoryCache()
-        });
-
-        client.query({
-          query: BOOKS_QUERY
-        }).then(result => {
-          console.log(result.data);
-          if (result.data && result.data.books && result.data.books.length > 0) {
-            this.first_data = result.data.books[0];  // 更新 first_data 为查询结果的第一条数据
-          }
-        }).catch(error => {
-          console.error("Error fetching the books:", error);
-        });
       }
     },
     mounted() {
-      this.fetchBooks();
+      this.time_period = this.$names;
     },
   };
   </script>

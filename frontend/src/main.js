@@ -1,30 +1,13 @@
 import { createApp } from 'vue'
-// import { createApp, h } from 'vue'
 import App from './App.vue'
 import router from './router'
-// import { createApolloProvider } from '@vue/apollo-option'
-// import { ApolloClient, createHttpLink, InMemoryCache } from '@apollo/client/core'
 
-createApp(App).use(router).mount('#app')
+// createApp(App).use(router).mount('#app')
 
-// const httpLink = createHttpLink({
-//   uri: 'http://localhost:3020/graphql',
-// })
 
-// const cache = new InMemoryCache()
-// const apolloClient = new ApolloClient({
-//   link: httpLink,
-//   cache,
-// })
-// console.log(apolloClient)
 
-// const apolloProvider = createApolloProvider({
-//   defaultClient: apolloClient,
-// })
+const app = createApp(App);
 
-// const app = createApp({
-//   render: () => h(App),
-// })
+app.config.globalProperties.$names = ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'];
 
-// app.use(apolloProvider)
-
+app.use(router).mount('#app');
