@@ -127,7 +127,7 @@ func newHTTPHandler(mongoClient *mongo.Client, rsClient *goredislib.Client) http
 	eventRepo := infra.NewMongoEventRepository(mongoClient)
 	graphqlServer := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: resolvers.NewResolver(
-			app.NewRoomService(roomRepo),
+			app.NewRoomService(roomRepo, eventRepo),
 			app.NewEventService(eventRepo, locker),
 			app.NewUserService(userRepo),
 		),

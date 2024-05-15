@@ -6,7 +6,6 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/BartekTao/nycu-meeting-room-api/internal/app"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/common"
@@ -65,11 +64,6 @@ func (r *queryResolver) Event(ctx context.Context, id string) (*domain.Event, er
 	event, err := r.eventService.GetByID(ctx, id)
 
 	return event, err
-}
-
-// PaginatedAvailableRooms is the resolver for the paginatedAvailableRooms field.
-func (r *queryResolver) PaginatedAvailableRooms(ctx context.Context, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) (*model.RoomConnection, error) {
-	panic(fmt.Errorf("not implemented: PaginatedAvailableRooms - paginatedAvailableRooms"))
 }
 
 // UserEvents is the resolver for the userEvents field.

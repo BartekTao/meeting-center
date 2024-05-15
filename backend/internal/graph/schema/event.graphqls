@@ -1,13 +1,5 @@
 extend type Query {
   event(id: ID!): Event
-  paginatedAvailableRooms(
-    startAt: Int64!, 
-    endAt: Int64!, 
-    rules: [Rule!],
-    equipments: [Equipment!]
-    first: Int = 20, 
-    after: String,
-    ): RoomConnection!
   userEvents(userIDs: [ID!]!, startAt: Int64!, endAt: Int64!): [UserEvent]
 }
 

@@ -3,6 +3,7 @@
 package model
 
 import (
+	"github.com/BartekTao/nycu-meeting-room-api/internal/app"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 )
 
@@ -25,6 +26,16 @@ type RoomConnection struct {
 type RoomEdge struct {
 	Node   *domain.Room `json:"node,omitempty"`
 	Cursor string       `json:"cursor"`
+}
+
+type RoomScheduleConnection struct {
+	Edges    []*RoomScheduleEdge `json:"edges,omitempty"`
+	PageInfo *PageInfo           `json:"pageInfo"`
+}
+
+type RoomScheduleEdge struct {
+	Node   *app.QueryPaginatedRoomScheduleResult `json:"node,omitempty"`
+	Cursor string                                `json:"cursor"`
 }
 
 type UpsertEventInput struct {

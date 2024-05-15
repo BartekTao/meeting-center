@@ -6,6 +6,7 @@ package resolvers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/BartekTao/nycu-meeting-room-api/internal/app"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/common"
@@ -83,6 +84,53 @@ func (r *queryResolver) Room(ctx context.Context, id string) (*domain.Room, erro
 		return nil, err
 	}
 	return room, nil
+}
+
+// PaginatedRoomWithSchedule is the resolver for the paginatedRoomWithSchedule field.
+func (r *queryResolver) PaginatedRoomWithSchedule(ctx context.Context, ids []string, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) (*model.RoomScheduleConnection, error) {
+	skip, err := common.DecodeCursor(after)
+	if err != nil {
+		return nil, err
+	}
+
+	roomSchedules, err := r.roomService.QueryPaginatedRoomSchedule(
+		ctx,
+		ids,
+		equipments,
+		rules,
+		startAt,
+		endAt,
+		*skip,
+		*first,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(roomSchedules) == 0 {
+		return nil, nil
+	}
+
+	edges := make([]*model.RoomScheduleEdge, len(roomSchedules))
+	for idx, roomSchedule := range roomSchedules {
+		edges[idx] = &model.RoomScheduleEdge{
+			Node:   &roomSchedule,
+			Cursor: common.EncodeCursor(idx + 1 + *skip),
+		}
+	}
+
+	return &model.RoomScheduleConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			StartCursor: &edges[0].Cursor,
+			EndCursor:   &edges[len(edges)-1].Cursor,
+		},
+	}, nil
+}
+
+// PaginatedAvailableRoom is the resolver for the paginatedAvailableRoom field.
+func (r *queryResolver) PaginatedAvailableRoom(ctx context.Context, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) (*model.RoomConnection, error) {
+	panic(fmt.Errorf("not implemented: PaginatedAvailableRoom - paginatedAvailableRoom"))
 }
 
 // Mutation returns graph.MutationResolver implementation.

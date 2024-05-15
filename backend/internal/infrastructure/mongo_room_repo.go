@@ -21,9 +21,9 @@ type Room struct {
 	Rules      []domain.Rule      `bson:"rules"`
 	IsDelete   bool               `bson:"isDelete"`
 	CreatedAt  int64              `bson:"createdAt"`
-	CreatorID  string             `bson:"creatorID"`
+	CreatorID  primitive.ObjectID `bson:"creatorID"`
 	UpdatedAt  int64              `bson:"updatedAt"`
-	UpdaterID  string             `bson:"updaterID"`
+	UpdaterID  primitive.ObjectID `bson:"updaterID"`
 }
 
 type mongoRoomRepository struct {
@@ -41,8 +41,14 @@ func NewMongoRoomRepository(client *mongo.Client) domain.RoomRepository {
 
 func (m *mongoRoomRepository) Upsert(ctx context.Context, room domain.Room) (*domain.Room, error) {
 	collection := m.roomCollection
+	updaterID, err := primitive.ObjectIDFromHex(room.UpdaterID)
+	if err != nil {
+		log.Printf("Invalid ID format: %v", err)
+		return nil, err
+	}
 
 	if room.ID == nil { // Insert new room
+
 		currentTime := time.Now().Unix()
 		newRoom := Room{
 			Name:       room.Name,
@@ -51,9 +57,9 @@ func (m *mongoRoomRepository) Upsert(ctx context.Context, room domain.Room) (*do
 			Rules:      room.Rules,
 			IsDelete:   false,
 			CreatedAt:  currentTime,
-			CreatorID:  room.UpdaterID,
+			CreatorID:  updaterID,
 			UpdatedAt:  currentTime,
-			UpdaterID:  room.UpdaterID,
+			UpdaterID:  updaterID,
 		}
 		result, err := collection.InsertOne(ctx, newRoom)
 		if err != nil {
@@ -75,12 +81,12 @@ func (m *mongoRoomRepository) Upsert(ctx context.Context, room domain.Room) (*do
 		}
 		update := bson.M{
 			"$set": bson.M{
-				"roomID":    room.Name,
-				"capacity":  room.Capacity,
-				"equipment": room.Equipments,
-				"rules":     room.Rules,
-				"updatedAt": time.Now().Unix(),
-				"updaterID": room.UpdaterID,
+				"name":       room.Name,
+				"capacity":   room.Capacity,
+				"equipments": room.Equipments,
+				"rules":      room.Rules,
+				"updatedAt":  time.Now().Unix(),
+				"updaterID":  updaterID,
 			},
 		}
 
@@ -116,7 +122,7 @@ func (m *mongoRoomRepository) QueryPaginated(ctx context.Context, skip int, limi
 		ctx,
 		m.roomCollection,
 		skip, limit, bson.M{},
-		bson.D{{Key: "CreatedAt", Value: 1}},
+		bson.D{{Key: "createdAt", Value: 1}},
 	)
 	if err != nil {
 		log.Println(err)
@@ -139,19 +145,44 @@ func (m *mongoRoomRepository) GetByID(ctx context.Context, id string) (*domain.R
 	return ToDomainRoom(room), nil
 }
 
-func (m *mongoRoomRepository) GetAll(ctx context.Context, equipments []domain.Equipment, rules []domain.Rule) ([]domain.Room, error) {
+func (m *mongoRoomRepository) GetByFilter(
+	ctx context.Context,
+	ids []string,
+	equipments []domain.Equipment, rules []domain.Rule,
+	skip int, limit int,
+) ([]domain.Room, error) {
 	filter := bson.M{
 		"isDelete": false,
 	}
 
-	if equipments != nil {
+	if len(ids) > 0 {
+		objIDs := make([]primitive.ObjectID, len(ids))
+		for i, id := range ids {
+			if objID, err := primitive.ObjectIDFromHex(id); err != nil {
+				log.Printf("Invalid ID format: %v", err)
+				return nil, err
+			} else {
+				objIDs[i] = objID
+			}
+		}
+		filter["_id"] = bson.M{"$all": objIDs}
+	}
+
+	if len(equipments) > 0 {
 		filter["equipments"] = bson.M{"$all": equipments}
 	}
-	if rules != nil {
+	if len(rules) > 0 {
 		filter["rules"] = bson.M{"$all": rules}
 	}
 
-	rooms, err := m.findAllByFilter(ctx, m.roomCollection, filter)
+	rooms, err := m.queryPaginated(
+		ctx,
+		m.roomCollection,
+		skip,
+		limit,
+		filter,
+		bson.D{{Key: "name", Value: 1}},
+	)
 	if err != nil {
 		return nil, err
 	}

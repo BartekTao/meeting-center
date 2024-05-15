@@ -13,6 +13,23 @@ scalar Int64
 type Query {
   paginatedRooms(first: Int = 20, after: String): RoomConnection
   room(id: ID!): Room!
+  paginatedRoomWithSchedule(
+    ids: [String!],
+    startAt: Int64!, 
+    endAt: Int64!, 
+    rules: [Rule!],
+    equipments: [Equipment!]
+    first: Int = 20, 
+    after: String,
+    ): RoomScheduleConnection
+  paginatedAvailableRoom(
+    startAt: Int64!, 
+    endAt: Int64!, 
+    rules: [Rule!],
+    equipments: [Equipment!]
+    first: Int = 20, 
+    after: String,
+    ): RoomConnection
 }
 
 type Mutation {
@@ -27,6 +44,26 @@ type Room @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/d
   equipments: [Equipment!]
   rules: [Rule!]
   isDelete: Boolean!
+}
+
+type RoomScheduleConnection {
+  edges: [RoomScheduleEdge]
+  pageInfo: PageInfo!
+}
+
+type RoomScheduleEdge {
+  node: RoomSchedule
+  cursor: String!
+}
+
+type RoomSchedule @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/app.QueryPaginatedRoomScheduleResult") {
+  room: Room
+  schedules: [Schedule!]!
+}
+
+type Schedule @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/app.Schedule") {
+  startAt: Int64!
+  endAt: Int64!
 }
 
 enum Rule @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.Rule") {

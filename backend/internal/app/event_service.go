@@ -31,7 +31,6 @@ type EventService interface {
 
 type eventService struct {
 	eventRepository domain.EventRepository
-	roomRepository  domain.RoomRepository
 	locker          lock.DistributedLocker
 }
 
@@ -128,30 +127,30 @@ func (s *eventService) UpdateSummary(ctx context.Context, id string, summary str
 	return s.eventRepository.UpdateSummary(ctx, id, summary, updaterID)
 }
 
-func (s *eventService) PaginatedAvailableRooms(
-	ctx context.Context,
-	startAt, endAt int64,
-	equipments []domain.Equipment, rules []domain.Rule,
-	skip, limit int,
-) ([]domain.Event, error) {
-	rooms, err := s.roomRepository.GetAll(ctx, equipments, rules)
-	if err != nil {
-		return nil, err
-	}
-	roomIDs := make([]string, len(rooms))
-	for i, room := range rooms {
-		roomIDs[i] = *room.ID
-	}
-	events, err := s.eventRepository.GetAll(ctx, roomIDs, startAt, endAt)
-	return events, err
-}
+// func (s *eventService) PaginatedAvailableRooms(
+// 	ctx context.Context,
+// 	startAt, endAt int64,
+// 	equipments []domain.Equipment, rules []domain.Rule,
+// 	skip, limit int,
+// ) ([]domain.Event, error) {
+// 	rooms, err := s.roomRepository.GetByFilter(ctx, equipments, rules)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	roomIDs := make([]string, len(rooms))
+// 	for i, room := range rooms {
+// 		roomIDs[i] = *room.ID
+// 	}
+// 	events, err := s.eventRepository.GetAll(ctx, roomIDs, startAt, endAt)
+// 	return events, err
+// }
 
-func (s *eventService) PaginatedRoomStatus(
-	ctx context.Context,
-	startAt, endAt int64,
-	roomIDs []string,
-	skip, limit int,
-) ([]domain.Event, error) {
-	events, err := s.eventRepository.GetAll(ctx, roomIDs, startAt, endAt)
-	return events, err
-}
+// func (s *eventService) PaginatedRoomStatus(
+// 	ctx context.Context,
+// 	startAt, endAt int64,
+// 	roomIDs []string,
+// 	skip, limit int,
+// ) ([]domain.Event, error) {
+// 	events, err := s.eventRepository.GetAll(ctx, roomIDs, startAt, endAt)
+// 	return events, err
+// }

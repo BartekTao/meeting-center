@@ -14,25 +14,25 @@ import (
 )
 
 type Event struct {
-	ID              primitive.ObjectID `bson:"_id,omitempty"`
-	Title           string             `bson:"title"`
-	Description     *string            `bson:"description"`
-	StartAt         int64              `bson:"startAt"`
-	EndAt           int64              `bson:"endAt"`
-	RoomReservation *RoomReservation   `bson:"roomReservation"`
-	ParticipantsIDs []string           `bson:"participantsIDs"`
-	Notes           *string            `bson:"notes"`
-	RemindAt        int64              `bson:"remindAt"`
-	IsDelete        bool               `bson:"isDelete"`
-	Summary         string             `bson:"summary"`
-	CreatedAt       int64              `bson:"createdAt"`
-	CreatorID       string             `bson:"creatorID"`
-	UpdatedAt       int64              `bson:"updatedAt"`
-	UpdaterID       string             `bson:"updaterID"`
+	ID              primitive.ObjectID   `bson:"_id,omitempty"`
+	Title           string               `bson:"title"`
+	Description     *string              `bson:"description"`
+	StartAt         int64                `bson:"startAt"`
+	EndAt           int64                `bson:"endAt"`
+	RoomReservation *RoomReservation     `bson:"roomReservation"`
+	ParticipantsIDs []primitive.ObjectID `bson:"participantsIDs"`
+	Notes           *string              `bson:"notes"`
+	RemindAt        int64                `bson:"remindAt"`
+	IsDelete        bool                 `bson:"isDelete"`
+	Summary         string               `bson:"summary"`
+	CreatedAt       int64                `bson:"createdAt"`
+	CreatorID       primitive.ObjectID   `bson:"creatorID"`
+	UpdatedAt       int64                `bson:"updatedAt"`
+	UpdaterID       primitive.ObjectID   `bson:"updaterID"`
 }
 
 type RoomReservation struct {
-	RoomID            *string                  `bson:"roomID"`
+	RoomID            primitive.ObjectID       `bson:"roomID"`
 	ReservationStatus domain.ReservationStatus `bson:"reservationStatus"`
 }
 
@@ -52,28 +52,53 @@ func NewMongoEventRepository(client *mongo.Client) domain.EventRepository {
 func (m *mongoEventRepository) Upsert(ctx context.Context, event domain.Event) (*domain.Event, error) {
 	collection := m.eventCollection
 
+	updaterID, err := primitive.ObjectIDFromHex(event.UpdaterID)
+	if err != nil {
+		log.Printf("Invalid ID format: %v", err)
+		return nil, err
+	}
+
+	participantsIDs := make([]primitive.ObjectID, len(event.ParticipantsIDs))
+	for i, participantsID := range event.ParticipantsIDs {
+		objParticipantsID, err := primitive.ObjectIDFromHex(participantsID)
+		if err != nil {
+			log.Printf("Invalid ID format: %v", err)
+			return nil, err
+		}
+		participantsIDs[i] = objParticipantsID
+	}
+	var roomReservation *RoomReservation
+	if event.RoomReservation != nil {
+		roomID, err := primitive.ObjectIDFromHex(*event.RoomReservation.RoomID)
+		if err != nil {
+			log.Printf("Invalid ID format: %v", err)
+			return nil, err
+		}
+		roomReservation = &RoomReservation{
+			RoomID:            roomID,
+			ReservationStatus: event.RoomReservation.ReservationStatus,
+		}
+	}
+
 	if event.ID == nil { // Insert new event
 		currentTime := time.Now().Unix()
+
 		newEvent := Event{
 			Title:           event.Title,
 			Description:     event.Description,
 			StartAt:         event.StartAt,
 			EndAt:           event.EndAt,
-			ParticipantsIDs: event.ParticipantsIDs,
+			ParticipantsIDs: participantsIDs,
+			RoomReservation: roomReservation,
 			Notes:           event.Notes,
 			RemindAt:        event.RemindAt,
 			IsDelete:        false,
 			CreatedAt:       currentTime,
-			CreatorID:       event.UpdaterID,
+			CreatorID:       updaterID,
 			UpdatedAt:       currentTime,
-			UpdaterID:       event.UpdaterID,
+			UpdaterID:       updaterID,
 		}
-		if event.RoomReservation != nil {
-			newEvent.RoomReservation = &RoomReservation{
-				RoomID:            event.RoomReservation.RoomID,
-				ReservationStatus: event.RoomReservation.ReservationStatus,
-			}
-		}
+
 		result, err := collection.InsertOne(ctx, newEvent)
 		if err != nil {
 			log.Printf("Failed to insert new event: %v", err)
@@ -98,12 +123,12 @@ func (m *mongoEventRepository) Upsert(ctx context.Context, event domain.Event) (
 				"description":     event.Description,
 				"startAt":         event.StartAt,
 				"endAt":           event.EndAt,
-				"roomReservation": event.RoomReservation,
-				"participantsIDs": event.ParticipantsIDs,
+				"roomReservation": roomReservation,
+				"participantsIDs": participantsIDs,
 				"notes":           event.Notes,
 				"remindAt":        event.RemindAt,
 				"updatedAt":       time.Now().Unix(),
-				"updaterID":       event.UpdaterID,
+				"updaterID":       updaterID,
 			},
 		}
 
@@ -170,8 +195,8 @@ func (m *mongoEventRepository) GetByUsers(ctx context.Context, ids []string, sta
 	result := make(map[string][]domain.Event)
 	for _, event := range events {
 		for _, participantID := range event.ParticipantsIDs {
-			if _, exists := idSet[participantID]; exists {
-				result[participantID] = append(result[participantID], *ToDomainEvent(event))
+			if _, exists := idSet[participantID.Hex()]; exists {
+				result[participantID.Hex()] = append(result[participantID.Hex()], *ToDomainEvent(event))
 			}
 		}
 	}
@@ -212,8 +237,13 @@ func (m *mongoEventRepository) UpdateSummary(ctx context.Context, id string, sum
 }
 
 func (m *mongoEventRepository) CheckAvailableRoom(ctx context.Context, roomID string, startAt, endAt int64) (bool, error) {
+	objRoomID, err := primitive.ObjectIDFromHex(roomID)
+	if err != nil {
+		log.Printf("Invalid ID format: %v", err)
+		return false, err
+	}
 	filter := bson.M{
-		"roomReservation.roomID":            roomID,
+		"roomReservation.roomID":            objRoomID,
 		"roomReservation.reservationStatus": domain.ReservationStatus_Confirmed,
 		"$or": []bson.M{
 			{"startAt": bson.M{"$lt": endAt, "$gte": startAt}},
@@ -228,14 +258,28 @@ func (m *mongoEventRepository) CheckAvailableRoom(ctx context.Context, roomID st
 	return res == nil, nil
 }
 
-func (m *mongoEventRepository) GetAll(ctx context.Context, roomIDs []string, startAt, endAt int64) ([]domain.Event, error) {
+func (m *mongoEventRepository) GetAllWithRoomConfirmed(ctx context.Context, roomIDs []string, startAt, endAt int64) ([]domain.Event, error) {
 	filter := bson.M{
-		"roomReservation.roomID": bson.M{"$in": roomIDs},
+		"roomReservation.reservationStatus": domain.ReservationStatus_Confirmed,
 		"$or": []bson.M{
-			{"startAt": bson.M{"$lt": endAt, "$gte": startAt}},
-			{"endAt": bson.M{"$gt": startAt, "$lte": endAt}},
+			{"startAt": bson.M{"$lte": endAt, "$gte": startAt}},
+			{"endAt": bson.M{"$gte": startAt, "$lte": endAt}},
 		},
 		"isDelete": false,
+	}
+	if roomIDs != nil {
+		objRoomIDs := make([]primitive.ObjectID, len(roomIDs))
+		for i, roomID := range roomIDs {
+			objRoomID, err := primitive.ObjectIDFromHex(roomID)
+			if err != nil {
+				log.Printf("Invalid ID format: %v", err)
+				return nil, err
+			}
+			objRoomIDs[i] = objRoomID
+		}
+		filter["roomReservation.roomID"] = bson.M{"$in": objRoomIDs}
+	} else {
+		filter["roomReservation.roomID"] = bson.M{"$ne": nil}
 	}
 	events, err := m.findAllByFilter(ctx, m.eventCollection, filter)
 	if err != nil {
@@ -249,6 +293,10 @@ func (m *mongoEventRepository) GetAll(ctx context.Context, roomIDs []string, sta
 }
 
 func ToDomainEvent(event *Event) *domain.Event {
+	participantsIDs := make([]string, len(event.ParticipantsIDs))
+	for i, participantsID := range event.ParticipantsIDs {
+		participantsIDs[i] = participantsID.Hex()
+	}
 	domainRoom := domain.Event{
 		ID:              common.ToPtr(event.ID.Hex()),
 		Title:           event.Title,
@@ -256,14 +304,14 @@ func ToDomainEvent(event *Event) *domain.Event {
 		StartAt:         event.StartAt,
 		EndAt:           event.EndAt,
 		RoomReservation: ToDomainRoomReservation(event.RoomReservation),
-		ParticipantsIDs: event.ParticipantsIDs,
+		ParticipantsIDs: participantsIDs,
 		Notes:           event.Notes,
 		RemindAt:        event.RemindAt,
 		IsDelete:        event.IsDelete,
 		CreatedAt:       event.CreatedAt,
-		CreatorID:       event.CreatorID,
+		CreatorID:       event.CreatorID.Hex(),
 		UpdatedAt:       event.UpdatedAt,
-		UpdaterID:       event.UpdaterID,
+		UpdaterID:       event.UpdaterID.Hex(),
 	}
 	return &domainRoom
 }
@@ -273,7 +321,7 @@ func ToDomainRoomReservation(roomReservation *RoomReservation) *domain.RoomReser
 		return nil
 	}
 	domainRoom := domain.RoomReservation{
-		RoomID:            roomReservation.RoomID,
+		RoomID:            common.ToPtr(roomReservation.RoomID.Hex()),
 		ReservationStatus: roomReservation.ReservationStatus,
 	}
 	return &domainRoom

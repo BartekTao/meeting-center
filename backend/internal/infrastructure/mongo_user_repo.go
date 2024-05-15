@@ -108,7 +108,7 @@ func (r *mongoUserRepo) QueryPaginated(ctx context.Context, skip int, limit int)
 		ctx,
 		r.userCollection,
 		skip, limit, bson.M{},
-		bson.D{{Key: "CreatedAt", Value: 1}},
+		bson.D{{Key: "createdAt", Value: 1}},
 	)
 	if err != nil {
 		log.Println(err)
