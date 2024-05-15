@@ -14,7 +14,6 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/BartekTao/nycu-meeting-room-api/internal/app"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
 	gqlparser "github.com/vektah/gqlparser/v2"
@@ -80,14 +79,14 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Event                     func(childComplexity int, id string) int
-		PaginatedAvailableRoom    func(childComplexity int, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) int
-		PaginatedRoomWithSchedule func(childComplexity int, ids []string, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) int
-		PaginatedRooms            func(childComplexity int, first *int, after *string) int
-		PaginatedUsers            func(childComplexity int, first *int, after *string) int
-		Room                      func(childComplexity int, id string) int
-		User                      func(childComplexity int, id string) int
-		UserEvents                func(childComplexity int, userIDs []string, startAt int64, endAt int64) int
+		Event                   func(childComplexity int, id string) int
+		PaginatedAvailableRooms func(childComplexity int, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) int
+		PaginatedRoomSchedules  func(childComplexity int, ids []string, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) int
+		PaginatedRooms          func(childComplexity int, first *int, after *string) int
+		PaginatedUsers          func(childComplexity int, first *int, after *string) int
+		Room                    func(childComplexity int, id string) int
+		User                    func(childComplexity int, id string) int
+		UserEvents              func(childComplexity int, userIDs []string, startAt int64, endAt int64) int
 	}
 
 	Room struct {
@@ -175,8 +174,8 @@ type MutationResolver interface {
 type QueryResolver interface {
 	PaginatedRooms(ctx context.Context, first *int, after *string) (*model.RoomConnection, error)
 	Room(ctx context.Context, id string) (*domain.Room, error)
-	PaginatedRoomWithSchedule(ctx context.Context, ids []string, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) (*model.RoomScheduleConnection, error)
-	PaginatedAvailableRoom(ctx context.Context, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) (*model.RoomConnection, error)
+	PaginatedRoomSchedules(ctx context.Context, ids []string, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) (*model.RoomScheduleConnection, error)
+	PaginatedAvailableRooms(ctx context.Context, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) (*model.RoomConnection, error)
 	Event(ctx context.Context, id string) (*domain.Event, error)
 	UserEvents(ctx context.Context, userIDs []string, startAt int64, endAt int64) ([]*model.UserEvent, error)
 	User(ctx context.Context, id string) (*domain.User, error)
@@ -372,29 +371,29 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Event(childComplexity, args["id"].(string)), true
 
-	case "Query.paginatedAvailableRoom":
-		if e.complexity.Query.PaginatedAvailableRoom == nil {
+	case "Query.paginatedAvailableRooms":
+		if e.complexity.Query.PaginatedAvailableRooms == nil {
 			break
 		}
 
-		args, err := ec.field_Query_paginatedAvailableRoom_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_paginatedAvailableRooms_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.PaginatedAvailableRoom(childComplexity, args["startAt"].(int64), args["endAt"].(int64), args["rules"].([]domain.Rule), args["equipments"].([]domain.Equipment), args["first"].(*int), args["after"].(*string)), true
+		return e.complexity.Query.PaginatedAvailableRooms(childComplexity, args["startAt"].(int64), args["endAt"].(int64), args["rules"].([]domain.Rule), args["equipments"].([]domain.Equipment), args["first"].(*int), args["after"].(*string)), true
 
-	case "Query.paginatedRoomWithSchedule":
-		if e.complexity.Query.PaginatedRoomWithSchedule == nil {
+	case "Query.paginatedRoomSchedules":
+		if e.complexity.Query.PaginatedRoomSchedules == nil {
 			break
 		}
 
-		args, err := ec.field_Query_paginatedRoomWithSchedule_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_paginatedRoomSchedules_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.PaginatedRoomWithSchedule(childComplexity, args["ids"].([]string), args["startAt"].(int64), args["endAt"].(int64), args["rules"].([]domain.Rule), args["equipments"].([]domain.Equipment), args["first"].(*int), args["after"].(*string)), true
+		return e.complexity.Query.PaginatedRoomSchedules(childComplexity, args["ids"].([]string), args["startAt"].(int64), args["endAt"].(int64), args["rules"].([]domain.Rule), args["equipments"].([]domain.Equipment), args["first"].(*int), args["after"].(*string)), true
 
 	case "Query.paginatedRooms":
 		if e.complexity.Query.PaginatedRooms == nil {
@@ -929,7 +928,7 @@ func (ec *executionContext) field_Query_event_args(ctx context.Context, rawArgs 
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_paginatedAvailableRoom_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_paginatedAvailableRooms_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 int64
@@ -989,7 +988,7 @@ func (ec *executionContext) field_Query_paginatedAvailableRoom_args(ctx context.
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_paginatedRoomWithSchedule_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_paginatedRoomSchedules_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 []string
@@ -2277,8 +2276,8 @@ func (ec *executionContext) fieldContext_Query_room(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_paginatedRoomWithSchedule(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_paginatedRoomWithSchedule(ctx, field)
+func (ec *executionContext) _Query_paginatedRoomSchedules(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_paginatedRoomSchedules(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2291,7 +2290,7 @@ func (ec *executionContext) _Query_paginatedRoomWithSchedule(ctx context.Context
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().PaginatedRoomWithSchedule(rctx, fc.Args["ids"].([]string), fc.Args["startAt"].(int64), fc.Args["endAt"].(int64), fc.Args["rules"].([]domain.Rule), fc.Args["equipments"].([]domain.Equipment), fc.Args["first"].(*int), fc.Args["after"].(*string))
+		return ec.resolvers.Query().PaginatedRoomSchedules(rctx, fc.Args["ids"].([]string), fc.Args["startAt"].(int64), fc.Args["endAt"].(int64), fc.Args["rules"].([]domain.Rule), fc.Args["equipments"].([]domain.Equipment), fc.Args["first"].(*int), fc.Args["after"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2305,7 +2304,7 @@ func (ec *executionContext) _Query_paginatedRoomWithSchedule(ctx context.Context
 	return ec.marshalORoomScheduleConnection2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoomScheduleConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_paginatedRoomWithSchedule(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_paginatedRoomSchedules(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -2328,15 +2327,15 @@ func (ec *executionContext) fieldContext_Query_paginatedRoomWithSchedule(ctx con
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_paginatedRoomWithSchedule_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_paginatedRoomSchedules_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_paginatedAvailableRoom(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_paginatedAvailableRoom(ctx, field)
+func (ec *executionContext) _Query_paginatedAvailableRooms(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_paginatedAvailableRooms(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2349,7 +2348,7 @@ func (ec *executionContext) _Query_paginatedAvailableRoom(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().PaginatedAvailableRoom(rctx, fc.Args["startAt"].(int64), fc.Args["endAt"].(int64), fc.Args["rules"].([]domain.Rule), fc.Args["equipments"].([]domain.Equipment), fc.Args["first"].(*int), fc.Args["after"].(*string))
+		return ec.resolvers.Query().PaginatedAvailableRooms(rctx, fc.Args["startAt"].(int64), fc.Args["endAt"].(int64), fc.Args["rules"].([]domain.Rule), fc.Args["equipments"].([]domain.Equipment), fc.Args["first"].(*int), fc.Args["after"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2363,7 +2362,7 @@ func (ec *executionContext) _Query_paginatedAvailableRoom(ctx context.Context, f
 	return ec.marshalORoomConnection2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐRoomConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_paginatedAvailableRoom(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_paginatedAvailableRooms(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -2386,7 +2385,7 @@ func (ec *executionContext) fieldContext_Query_paginatedAvailableRoom(ctx contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_paginatedAvailableRoom_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_paginatedAvailableRooms_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3338,7 +3337,7 @@ func (ec *executionContext) fieldContext_RoomReservation_status(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _RoomSchedule_room(ctx context.Context, field graphql.CollectedField, obj *app.QueryPaginatedRoomScheduleResult) (ret graphql.Marshaler) {
+func (ec *executionContext) _RoomSchedule_room(ctx context.Context, field graphql.CollectedField, obj *domain.RoomSchedule) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_RoomSchedule_room(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -3393,7 +3392,7 @@ func (ec *executionContext) fieldContext_RoomSchedule_room(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _RoomSchedule_schedules(ctx context.Context, field graphql.CollectedField, obj *app.QueryPaginatedRoomScheduleResult) (ret graphql.Marshaler) {
+func (ec *executionContext) _RoomSchedule_schedules(ctx context.Context, field graphql.CollectedField, obj *domain.RoomSchedule) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_RoomSchedule_schedules(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -3414,14 +3413,11 @@ func (ec *executionContext) _RoomSchedule_schedules(ctx context.Context, field g
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.([]app.Schedule)
+	res := resTmp.([]domain.Schedule)
 	fc.Result = res
-	return ec.marshalNSchedule2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋappᚐScheduleᚄ(ctx, field.Selections, res)
+	return ec.marshalOSchedule2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐScheduleᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_RoomSchedule_schedules(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3563,9 +3559,9 @@ func (ec *executionContext) _RoomScheduleEdge_node(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*app.QueryPaginatedRoomScheduleResult)
+	res := resTmp.(*domain.RoomSchedule)
 	fc.Result = res
-	return ec.marshalORoomSchedule2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋappᚐQueryPaginatedRoomScheduleResult(ctx, field.Selections, res)
+	return ec.marshalORoomSchedule2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐRoomSchedule(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_RoomScheduleEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3631,7 +3627,7 @@ func (ec *executionContext) fieldContext_RoomScheduleEdge_cursor(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _Schedule_startAt(ctx context.Context, field graphql.CollectedField, obj *app.Schedule) (ret graphql.Marshaler) {
+func (ec *executionContext) _Schedule_startAt(ctx context.Context, field graphql.CollectedField, obj *domain.Schedule) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Schedule_startAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -3675,7 +3671,7 @@ func (ec *executionContext) fieldContext_Schedule_startAt(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _Schedule_endAt(ctx context.Context, field graphql.CollectedField, obj *app.Schedule) (ret graphql.Marshaler) {
+func (ec *executionContext) _Schedule_endAt(ctx context.Context, field graphql.CollectedField, obj *domain.Schedule) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Schedule_endAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -6565,7 +6561,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "paginatedRoomWithSchedule":
+		case "paginatedRoomSchedules":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -6574,7 +6570,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_paginatedRoomWithSchedule(ctx, field)
+				res = ec._Query_paginatedRoomSchedules(ctx, field)
 				return res
 			}
 
@@ -6584,7 +6580,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "paginatedAvailableRoom":
+		case "paginatedAvailableRooms":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -6593,7 +6589,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_paginatedAvailableRoom(ctx, field)
+				res = ec._Query_paginatedAvailableRooms(ctx, field)
 				return res
 			}
 
@@ -6958,7 +6954,7 @@ func (ec *executionContext) _RoomReservation(ctx context.Context, sel ast.Select
 
 var roomScheduleImplementors = []string{"RoomSchedule"}
 
-func (ec *executionContext) _RoomSchedule(ctx context.Context, sel ast.SelectionSet, obj *app.QueryPaginatedRoomScheduleResult) graphql.Marshaler {
+func (ec *executionContext) _RoomSchedule(ctx context.Context, sel ast.SelectionSet, obj *domain.RoomSchedule) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, roomScheduleImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -6971,9 +6967,6 @@ func (ec *executionContext) _RoomSchedule(ctx context.Context, sel ast.Selection
 			out.Values[i] = ec._RoomSchedule_room(ctx, field, obj)
 		case "schedules":
 			out.Values[i] = ec._RoomSchedule_schedules(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7081,7 +7074,7 @@ func (ec *executionContext) _RoomScheduleEdge(ctx context.Context, sel ast.Selec
 
 var scheduleImplementors = []string{"Schedule"}
 
-func (ec *executionContext) _Schedule(ctx context.Context, sel ast.SelectionSet, obj *app.Schedule) graphql.Marshaler {
+func (ec *executionContext) _Schedule(ctx context.Context, sel ast.SelectionSet, obj *domain.Schedule) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, scheduleImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -7837,52 +7830,8 @@ func (ec *executionContext) marshalNRule2githubᚗcomᚋBartekTaoᚋnycuᚑmeeti
 	return res
 }
 
-func (ec *executionContext) marshalNSchedule2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋappᚐSchedule(ctx context.Context, sel ast.SelectionSet, v app.Schedule) graphql.Marshaler {
+func (ec *executionContext) marshalNSchedule2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐSchedule(ctx context.Context, sel ast.SelectionSet, v domain.Schedule) graphql.Marshaler {
 	return ec._Schedule(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNSchedule2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋappᚐScheduleᚄ(ctx context.Context, sel ast.SelectionSet, v []app.Schedule) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSchedule2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋappᚐSchedule(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -8528,7 +8477,7 @@ func (ec *executionContext) marshalORoomReservation2ᚖgithubᚗcomᚋBartekTao�
 	return ec._RoomReservation(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalORoomSchedule2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋappᚐQueryPaginatedRoomScheduleResult(ctx context.Context, sel ast.SelectionSet, v *app.QueryPaginatedRoomScheduleResult) graphql.Marshaler {
+func (ec *executionContext) marshalORoomSchedule2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐRoomSchedule(ctx context.Context, sel ast.SelectionSet, v *domain.RoomSchedule) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -8638,6 +8587,53 @@ func (ec *executionContext) marshalORule2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑme
 				defer wg.Done()
 			}
 			ret[i] = ec.marshalNRule2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐRule(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalOSchedule2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐScheduleᚄ(ctx context.Context, sel ast.SelectionSet, v []domain.Schedule) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSchedule2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐSchedule(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

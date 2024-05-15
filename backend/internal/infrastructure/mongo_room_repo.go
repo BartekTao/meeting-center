@@ -194,6 +194,62 @@ func (m *mongoRoomRepository) GetByFilter(
 	return res, nil
 }
 
+func (m *mongoRoomRepository) QueryPaginatedAvailable(ctx context.Context, startAt, endAt int64, skip int, limit int) ([]domain.Room, error) {
+	pipeline := mongo.Pipeline{
+		{
+			{Key: "$lookup", Value: bson.D{
+				{Key: "from", Value: "events"},
+				{Key: "let", Value: bson.D{{Key: "roomId", Value: "$_id"}}},
+				{Key: "pipeline", Value: mongo.Pipeline{
+					{
+						{Key: "$match", Value: bson.D{
+							{Key: "$expr", Value: bson.D{
+								{Key: "$and", Value: bson.A{
+									bson.D{{Key: "$eq", Value: bson.A{"$roomReservation.roomID", "$$roomId"}}},
+									bson.D{{Key: "$lt", Value: bson.A{"$startAt", endAt}}},
+									bson.D{{Key: "$gt", Value: bson.A{"$endAt", startAt}}},
+									bson.D{{Key: "$ne", Value: bson.A{"$roomReservation.reservationStatus", domain.ReservationStatus_Canceled}}},
+								}},
+							}},
+						}},
+					},
+				}},
+				{Key: "as", Value: "reservations"},
+			}},
+		},
+		{
+			{Key: "$match", Value: bson.D{
+				{Key: "reservations", Value: bson.D{{Key: "$size", Value: 0}}},
+				{Key: "isDelete", Value: false},
+			}},
+		},
+		{
+			{Key: "$skip", Value: skip},
+		},
+		{
+			{Key: "$limit", Value: limit},
+		},
+	}
+
+	cursor, err := m.roomCollection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var rooms []Room
+	if err = cursor.All(ctx, &rooms); err != nil {
+		return nil, err
+	}
+
+	res := make([]domain.Room, len(rooms))
+	for i, room := range rooms {
+		res[i] = *ToDomainRoom(&room)
+	}
+
+	return res, nil
+}
+
 func ToDomainRoom(room *Room) *domain.Room {
 	domainRoom := domain.Room{
 		ID:         common.ToPtr(room.ID.Hex()),

@@ -6,7 +6,6 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/BartekTao/nycu-meeting-room-api/internal/app"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/common"
@@ -86,8 +85,8 @@ func (r *queryResolver) Room(ctx context.Context, id string) (*domain.Room, erro
 	return room, nil
 }
 
-// PaginatedRoomWithSchedule is the resolver for the paginatedRoomWithSchedule field.
-func (r *queryResolver) PaginatedRoomWithSchedule(ctx context.Context, ids []string, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) (*model.RoomScheduleConnection, error) {
+// PaginatedRoomSchedules is the resolver for the paginatedRoomSchedules field.
+func (r *queryResolver) PaginatedRoomSchedules(ctx context.Context, ids []string, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) (*model.RoomScheduleConnection, error) {
 	skip, err := common.DecodeCursor(after)
 	if err != nil {
 		return nil, err
@@ -128,9 +127,42 @@ func (r *queryResolver) PaginatedRoomWithSchedule(ctx context.Context, ids []str
 	}, nil
 }
 
-// PaginatedAvailableRoom is the resolver for the paginatedAvailableRoom field.
-func (r *queryResolver) PaginatedAvailableRoom(ctx context.Context, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) (*model.RoomConnection, error) {
-	panic(fmt.Errorf("not implemented: PaginatedAvailableRoom - paginatedAvailableRoom"))
+// PaginatedAvailableRooms is the resolver for the paginatedAvailableRooms field.
+func (r *queryResolver) PaginatedAvailableRooms(ctx context.Context, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) (*model.RoomConnection, error) {
+	skip, err := common.DecodeCursor(after)
+	if err != nil {
+		return nil, err
+	}
+	rooms, err := r.roomService.QueryPaginatedAvailable(
+		ctx,
+		equipments,
+		rules,
+		startAt, endAt,
+		*skip, *first,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(rooms) == 0 {
+		return nil, nil
+	}
+
+	edges := make([]*model.RoomEdge, len(rooms))
+	for idx, room := range rooms {
+		edges[idx] = &model.RoomEdge{
+			Node:   &room,
+			Cursor: common.EncodeCursor(idx + 1 + *skip),
+		}
+	}
+
+	return &model.RoomConnection{
+		Edges: edges,
+		PageInfo: &model.PageInfo{
+			StartCursor: &edges[0].Cursor,
+			EndCursor:   &edges[len(edges)-1].Cursor,
+		},
+	}, nil
 }
 
 // Mutation returns graph.MutationResolver implementation.

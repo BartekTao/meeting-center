@@ -41,11 +41,7 @@ func (r *mongoRoomScheduleRepository) QueryPaginated(
 	skip int, limit int,
 ) ([]domain.RoomSchedule, error) {
 	matchStage := bson.M{
-		"schedules.roomReservation.reservationStatus": domain.ReservationStatus_Confirmed,
-		"$or": []bson.M{
-			{"schedules.startAt": bson.M{"$lte": endAt, "$gte": startAt}},
-			{"schedules.endAt": bson.M{"$lte": endAt, "$gte": startAt}},
-		},
+		"isDelete": false,
 	}
 
 	if len(roomIDs) > 0 {
@@ -68,84 +64,60 @@ func (r *mongoRoomScheduleRepository) QueryPaginated(
 		matchStage["rules"] = bson.M{"$all": rules}
 	}
 
-	// Lookup stage
-	lookupStage := bson.M{
-		"$lookup": bson.M{
-			"from":         "events",
-			"localField":   "_id",
-			"foreignField": "roomReservation.roomID",
-			"as":           "schedules",
+	pipeline := mongo.Pipeline{
+		{
+			{Key: "$lookup", Value: bson.D{
+				{Key: "from", Value: "events"},
+				{Key: "let", Value: bson.D{{Key: "roomId", Value: "$_id"}}},
+				{Key: "pipeline", Value: mongo.Pipeline{
+					{
+						{Key: "$match", Value: bson.D{
+							{Key: "$expr", Value: bson.D{
+								{Key: "$and", Value: bson.A{
+									bson.D{{Key: "$eq", Value: bson.A{"$roomReservation.roomID", "$$roomId"}}},
+									bson.D{{Key: "$lt", Value: bson.A{"$startAt", endAt}}},
+									bson.D{{Key: "$gt", Value: bson.A{"$endAt", startAt}}},
+									bson.D{{Key: "$ne", Value: bson.A{"$roomReservation.reservationStatus", domain.ReservationStatus_Canceled}}},
+								}},
+							}},
+						}},
+					},
+					{
+						{Key: "$project", Value: bson.D{
+							{Key: "startAt", Value: 1},
+							{Key: "endAt", Value: 1},
+						}},
+					},
+				}},
+				{Key: "as", Value: "schedules"},
+			}},
 		},
-	}
-
-	// Unwind stage
-	unwindStage := bson.M{
-		"$unwind": bson.M{
-			"path":                       "$schedules",
-			"preserveNullAndEmptyArrays": true,
+		{
+			{Key: "$match", Value: matchStage},
 		},
-	}
-
-	// Group stage
-	groupStage := bson.M{
-		"$group": bson.M{
-			"_id": "$_id",
-			"room": bson.M{
-				"$first": "$$ROOT",
-			},
-			"schedules": bson.M{
-				"$push": bson.M{
-					"startAt": "$schedules.startAt",
-					"endAt":   "$schedules.endAt",
-				},
-			},
+		{
+			{Key: "$project", Value: bson.D{
+				{Key: "room", Value: bson.D{
+					{Key: "_id", Value: "$_id"},
+					{Key: "name", Value: "$name"},
+					{Key: "capacity", Value: "$capacity"},
+					{Key: "equipments", Value: "$equipments"},
+					{Key: "rules", Value: "$rules"},
+					{Key: "isDelete", Value: "$isDelete"},
+					{Key: "createdAt", Value: "$createdAt"},
+					{Key: "creatorID", Value: "$creatorID"},
+					{Key: "updatedAt", Value: "$updatedAt"},
+					{Key: "updaterID", Value: "$updaterID"},
+				}},
+				{Key: "schedules", Value: 1},
+			}},
 		},
-	}
-
-	// Project stage
-	projectStage := bson.M{
-		"$project": bson.M{
-			"_id": 0,
-			"room": bson.M{
-				"_id":        "$room._id",
-				"name":       "$room.name",
-				"capacity":   "$room.capacity",
-				"equipments": "$room.equipments",
-				"rules":      "$room.rules",
-				"isDelete":   "$room.isDelete",
-				"createdAt":  "$room.createdAt",
-				"creatorID":  "$room.creatorID",
-				"updatedAt":  "$room.updatedAt",
-				"updaterID":  "$room.updaterID",
-			},
-			"schedules": 1,
+		{
+			{Key: "$skip", Value: skip},
 		},
-	}
-
-	// Sort stage
-	sortStage := bson.M{
-		"$sort": bson.M{"room.name": 1},
-	}
-
-	// Pagination stages
-	skipStage := bson.M{
-		"$skip": skip,
-	}
-
-	limitStage := bson.M{
-		"$limit": limit,
-	}
-
-	// Build pipeline
-	pipeline := []bson.M{
-		lookupStage,
-		unwindStage,
-		{"$match": matchStage},
-		groupStage,
-		projectStage,
-		sortStage,
-		skipStage,
-		limitStage,
+		{
+			{Key: "$limit", Value: limit},
+		},
 	}
 
 	cursor, err := r.roomScheduleCollection.Aggregate(ctx, pipeline)
@@ -154,17 +126,17 @@ func (r *mongoRoomScheduleRepository) QueryPaginated(
 	}
 	defer cursor.Close(ctx)
 
-	var results []RoomSchedule
-	if err := cursor.All(ctx, &results); err != nil {
+	var roomSchedules []RoomSchedule
+	if err = cursor.All(ctx, &roomSchedules); err != nil {
 		return nil, err
 	}
 
-	domainRoomSchedules := make([]domain.RoomSchedule, len(results))
-	for i, domainRoomSchedule := range results {
-		domainRoomSchedules[i] = *ToDomainRoomSchedule(&domainRoomSchedule)
+	res := make([]domain.RoomSchedule, len(roomSchedules))
+	for i, roomSchedule := range roomSchedules {
+		res[i] = *ToDomainRoomSchedule(&roomSchedule)
 	}
 
-	return domainRoomSchedules, nil
+	return res, nil
 }
 
 func ToDomainRoomSchedule(roomSchedule *RoomSchedule) *domain.RoomSchedule {

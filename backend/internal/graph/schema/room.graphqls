@@ -13,7 +13,7 @@ scalar Int64
 type Query {
   paginatedRooms(first: Int = 20, after: String): RoomConnection
   room(id: ID!): Room!
-  paginatedRoomWithSchedule(
+  paginatedRoomSchedules(
     ids: [String!],
     startAt: Int64!, 
     endAt: Int64!, 
@@ -22,7 +22,7 @@ type Query {
     first: Int = 20, 
     after: String,
     ): RoomScheduleConnection
-  paginatedAvailableRoom(
+  paginatedAvailableRooms(
     startAt: Int64!, 
     endAt: Int64!, 
     rules: [Rule!],
@@ -56,12 +56,12 @@ type RoomScheduleEdge {
   cursor: String!
 }
 
-type RoomSchedule @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/app.QueryPaginatedRoomScheduleResult") {
+type RoomSchedule @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.RoomSchedule") {
   room: Room
-  schedules: [Schedule!]!
+  schedules: [Schedule!]
 }
 
-type Schedule @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/app.Schedule") {
+type Schedule @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.Schedule") {
   startAt: Int64!
   endAt: Int64!
 }

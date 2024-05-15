@@ -38,6 +38,7 @@ type RoomRepository interface {
 	Delete(ctx context.Context, id string) (*Room, error)
 	GetByID(ctx context.Context, id string) (*Room, error)
 	QueryPaginated(ctx context.Context, skip int, limit int) ([]Room, error)
+	QueryPaginatedAvailable(ctx context.Context, startAt, endAt int64, skip int, limit int) ([]Room, error)
 	GetByFilter(
 		ctx context.Context,
 		ids []string,

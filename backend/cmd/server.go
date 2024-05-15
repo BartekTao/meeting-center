@@ -125,9 +125,11 @@ func newHTTPHandler(mongoClient *mongo.Client, rsClient *goredislib.Client) http
 	locker := lock.NewRedsyncLocker(rs)
 	roomRepo := infra.NewMongoRoomRepository(mongoClient)
 	eventRepo := infra.NewMongoEventRepository(mongoClient)
+	roomScheduleRepo := infra.NewRoomScheduleRepository(mongoClient)
+
 	graphqlServer := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: resolvers.NewResolver(
-			app.NewRoomService(roomRepo, eventRepo),
+			app.NewRoomService(roomRepo, roomScheduleRepo),
 			app.NewEventService(eventRepo, locker),
 			app.NewUserService(userRepo),
 		),

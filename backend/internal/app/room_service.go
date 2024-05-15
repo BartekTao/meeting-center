@@ -15,16 +15,6 @@ type UpsertRoomRequest struct {
 	UpdaterID  string             `json:"updaterID"`
 }
 
-type QueryPaginatedRoomScheduleResult struct {
-	Room      domain.Room `json:"room"`
-	Schedules []Schedule  `json:"schedules"`
-}
-
-type Schedule struct {
-	StartAt int64 `json:"startAt"`
-	EndAt   int64 `json:"endAt"`
-}
-
 type RoomService interface {
 	Upsert(ctx context.Context, req UpsertRoomRequest) (*domain.Room, error)
 	Delete(ctx context.Context, id string) (*domain.Room, error)
@@ -36,16 +26,22 @@ type RoomService interface {
 		equipments []domain.Equipment, rules []domain.Rule,
 		startAt, endAt int64,
 		skip int, limit int,
-	) ([]QueryPaginatedRoomScheduleResult, error)
+	) ([]domain.RoomSchedule, error)
+	QueryPaginatedAvailable(
+		ctx context.Context,
+		equipments []domain.Equipment, rules []domain.Rule,
+		startAt, endAt int64,
+		skip int, limit int,
+	) ([]domain.Room, error)
 }
 
 type roomService struct {
-	roomRepository domain.RoomRepository
-	eventRepo      domain.EventRepository
+	roomRepository   domain.RoomRepository
+	roomScheduleRepo domain.RoomScheduleRepo
 }
 
-func NewRoomService(roomRepository domain.RoomRepository, eventRepo domain.EventRepository) RoomService {
-	return &roomService{roomRepository: roomRepository, eventRepo: eventRepo}
+func NewRoomService(roomRepository domain.RoomRepository, roomScheduleRepo domain.RoomScheduleRepo) RoomService {
+	return &roomService{roomRepository: roomRepository, roomScheduleRepo: roomScheduleRepo}
 }
 
 func (s *roomService) Upsert(ctx context.Context, req UpsertRoomRequest) (*domain.Room, error) {
@@ -93,59 +89,21 @@ func (s roomService) QueryPaginatedRoomSchedule(
 	equipments []domain.Equipment, rules []domain.Rule,
 	startAt, endAt int64,
 	skip int, limit int,
-) ([]QueryPaginatedRoomScheduleResult, error) {
-	var rooms []domain.Room
-	var err error
-	if len(roomIDs) == 0 {
-		rooms, err = s.roomRepository.GetByFilter(ctx, nil, equipments, rules, skip, limit)
-		if err != nil {
-			return nil, err
-		}
-		roomIDs = make([]string, len(rooms))
-		for i, room := range rooms {
-			roomIDs[i] = *room.ID
-		}
-	} else {
-		rooms, err = s.roomRepository.GetByFilter(ctx, roomIDs, nil, nil, skip, limit)
-		if err != nil {
-			return nil, err
-		}
-	}
+) ([]domain.RoomSchedule, error) {
+	return s.roomScheduleRepo.QueryPaginated(
+		ctx,
+		roomIDs,
+		equipments, rules,
+		startAt, endAt,
+		skip, limit,
+	)
+}
 
-	roomMap := make(map[string]domain.Room)
-	for _, room := range rooms {
-		roomMap[*room.ID] = room
-	}
-
-	events, err := s.eventRepo.GetAllWithRoomConfirmed(ctx, roomIDs, startAt, endAt)
-	if err != nil {
-		return nil, err
-	}
-
-	scheduleMap := make(map[string][]Schedule)
-	for _, event := range events {
-		reservationRoomID := *event.RoomReservation.RoomID
-		schedule := Schedule{StartAt: event.StartAt, EndAt: event.EndAt}
-		if schedules, ok := scheduleMap[reservationRoomID]; ok {
-			scheduleMap[reservationRoomID] = append(schedules, schedule)
-		} else {
-			scheduleMap[reservationRoomID] = []Schedule{schedule}
-		}
-	}
-
-	res := make([]QueryPaginatedRoomScheduleResult, len(rooms))
-	for i, room := range rooms {
-		if schedules, ok := scheduleMap[*room.ID]; ok {
-			res[i] = QueryPaginatedRoomScheduleResult{
-				Room:      room,
-				Schedules: schedules,
-			}
-		} else {
-			res[i] = QueryPaginatedRoomScheduleResult{
-				Room: room,
-			}
-		}
-	}
-
-	return res, nil
+func (s roomService) QueryPaginatedAvailable(
+	ctx context.Context,
+	equipments []domain.Equipment, rules []domain.Rule,
+	startAt, endAt int64,
+	skip int, limit int,
+) ([]domain.Room, error) {
+	return s.roomRepository.QueryPaginatedAvailable(ctx, startAt, endAt, skip, limit)
 }
