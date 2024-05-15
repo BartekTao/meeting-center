@@ -1,0 +1,25 @@
+extend type Query {
+  user(id: ID!): User!
+  paginatedUsers(first: Int = 20, after: String): UserConnection
+}
+
+type User @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.User") {
+  id: ID!
+  sub: String
+  name: String      
+  givenName: String 
+  familyName: String
+  picture: String    
+  email: String  
+}
+
+type UserConnection {
+  edges: [UserEdge]
+  pageInfo: PageInfo!
+}
+
+type UserEdge {
+  node: User
+  cursor: String!
+}
+
