@@ -18,7 +18,7 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=nycu
       - MONGO_INITDB_ROOT_PASSWORD=nycu
     volumes:
-      - mongo-data:/data/db
+      - mongo-data-v2:/data/db
   db-client:
     image: mongo-express
     restart: always
@@ -38,4 +38,4 @@ services:
     restart: always
 
 volumes:
-  mongo-data:
+  mongo-data-v2:
