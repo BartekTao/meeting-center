@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"reflect"
@@ -13,64 +14,66 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	infra "github.com/BartekTao/nycu-meeting-room-api/internal/infrastructure"
 )
 
-var testMongoClient *mongo.Client
-var pool *dockertest.Pool
-var resource *dockertest.Resource
-
-// SetupTestMongoDB starts an in-memory MongoDB container for testing.
-func SetupTestMongoDB(t *testing.T) *mongo.Client {
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		t.Fatalf("Could not connect to Docker: %s", err)
-	}
-
-	resource, err = pool.RunWithOptions(&dockertest.RunOptions{
-		Repository: "mongo",
-		Tag:        "latest",
-		Env: []string{
-			"MONGO_INITDB_DATABASE=testdb",
-		},
-	}, func(config *docker.HostConfig) {
-		config.AutoRemove = true
-	})
-	if err != nil {
-		t.Fatalf("Could not start MongoDB container: %s", err)
-	}
-
-	// Wait for MongoDB to start up
-	if err := pool.Retry(func() error {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		uri := fmt.Sprintf("mongodb://localhost:%s", resource.GetPort("27017/tcp"))
-		client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
-		if err != nil {
-			return err
-		}
-
-		// Ping MongoDB to ensure it's ready
-		err = client.Ping(ctx, nil)
-		if err != nil {
-			return err
-		}
-
-		testMongoClient = client
-		return nil
-	}); err != nil {
-		t.Fatalf("Could not connect to MongoDB container: %s", err)
-	}
-
-	return testMongoClient
+type MockEventRepository struct {
+	infra.BaseRepository[infra.Event]
+	client          *mongo.Client
+	eventCollection *mongo.Collection
 }
 
-// TeardownTestMongoDB stops and removes the in-memory MongoDB container.
-func TeardownTestMongoDB(t *testing.T) {
-	if err := pool.Purge(resource); err != nil {
-		log.Fatalf("Could not purge Docker resource: %s", err)
+func NewTestEventRepository(client *mongo.Client) domain.EventRepository {
+	return MockEventRepository{
+		client:          client,
+		eventCollection: client.Database("meetingCenter").Collection("events"),
 	}
+}
+
+func (m *MockEventRepository) Upsert(ctx context.Context, event domain.Event) (*domain.Event, error) {
+	if event.ID == "" {
+		return nil, errors.New("event ID cannot be empty")
+	}
+	// Store or update the event in the repository
+	m.Events[event.ID] = event
+	return &event, nil
+}
+
+// Implement the Delete method of the EventRepository interface
+func (m *MockEventRepository) Delete(ctx context.Context, id string) (*domain.Event, error) {
+	dummy := domain.Event{}
+	return &dummy, nil
+}
+
+// Implement the UpdateSummary method of the EventRepository interface
+func (m *MockEventRepository) UpdateSummary(ctx context.Context, id string, summary string, updaterID string) (bool, error) {
+	return true, nil
+}
+
+// Implement the GetByID method of the EventRepository interface
+func (m *MockEventRepository) GetByID(ctx context.Context, id string) (*domain.Event, error) {
+	dummy := domain.Event{}
+	return &dummy, nil
+}
+
+// Implement the GetByUsers method of the EventRepository interface
+func (m *MockEventRepository) GetByUsers(ctx context.Context, ids []string, startAt, endAt int64) (map[string][]domain.Event, error) {
+	dummyUserEvents := make(map[string][]domain.Event)
+	return dummyUserEvents, nil
+}
+
+// Implement the CheckAvailableRoom method of the EventRepository interface
+func (m *MockEventRepository) CheckAvailableRoom(ctx context.Context, roomID string, startAt, endAt int64) (bool, error) {
+	// Implement logic to check room availability for a given time range
+	// For testing purposes, return a mock result (always true for now)
+	return true, nil
+}
+
+// Implement the GetAllWithRoomConfirmed method of the EventRepository interface
+func (m *MockEventRepository) GetAllWithRoomConfirmed(ctx context.Context, roomIDs []string, startAt, endAt int64) ([]domain.Event, error) {
+	var dummyEvents []domain.Event
+	return dummyEvents, nil
 }
 
 func Test_eventService_Upsert(t *testing.T) {
@@ -190,7 +193,7 @@ func Test_eventService_Upsert(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.s.Upsert(tt.args.ctx, tt.args.req)
+			got, err := tt.s.Upsert(tt.args[0].ctx, tt.args[0].req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("eventService.Upsert() error = %v, wantErr %v", err, tt.wantErr)
 				return
