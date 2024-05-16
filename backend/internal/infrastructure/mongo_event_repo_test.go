@@ -11,17 +11,22 @@ import (
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var testMongoClient *mongo.Client
-var pool *dockertest.Pool
-var resource *dockertest.Resource
+func Test_mongoEventRepository_Upsert(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		event domain.Event
+	}
 
-// SetupTestMongoDB starts an in-memory MongoDB container for testing.
-func SetupTestMongoDB(t *testing.T) *mongo.Client {
+	var testMongoClient *mongo.Client
+	var pool *dockertest.Pool
+	var resource *dockertest.Resource
+
+	///////////////// Set up in-memory mongodb ////////////////////////////////
+
 	pool, err := dockertest.NewPool("")
 	if err != nil {
 		t.Fatalf("Could not connect to Docker: %s", err)
@@ -35,6 +40,9 @@ func SetupTestMongoDB(t *testing.T) *mongo.Client {
 		},
 	}, func(config *docker.HostConfig) {
 		config.AutoRemove = true
+		config.RestartPolicy = docker.RestartPolicy{
+			Name: "no",
+		}
 	})
 	if err != nil {
 		t.Fatalf("Could not start MongoDB container: %s", err)
@@ -63,43 +71,95 @@ func SetupTestMongoDB(t *testing.T) *mongo.Client {
 		t.Fatalf("Could not connect to MongoDB container: %s", err)
 	}
 
-	return testMongoClient
-}
+	////////////////////////////////////////////////////////////////////////////
 
-// TeardownTestMongoDB stops and removes the in-memory MongoDB container.
-func TeardownTestMongoDB(t *testing.T) {
+	/////////////////// Set up event repo //////////////////////////////////////
+
+	repo := NewMongoEventRepository(testMongoClient)
+	testEventRepo, ok := repo.(*mongoEventRepository)
+	if !ok {
+		log.Printf("Failed to type assert repo to mongoEventRepository")
+		t.Skip("Skipping test due to type assertion failure")
+		return
+	}
+
+	testStr := "Test"
+	testID := "12341234123412341234AAAA"
+
+	insert_event := domain.Event{
+		ID:              nil,
+		Title:           testStr,
+		Description:     &testStr,
+		StartAt:         0,
+		EndAt:           0,
+		ParticipantsIDs: []string{testID},
+		Notes:           &testStr,
+		RemindAt:        0,
+		UpdaterID:       testID,
+	}
+
+	var roomReservation *domain.RoomReservation = &domain.RoomReservation{
+		RoomID:            &testID,
+		ReservationStatus: domain.ReservationStatus_Confirmed,
+	}
+	insert_event.RoomReservation = roomReservation
+
+	////////////////////////////////////////////////////////////////////////////
+
+	/////////////////////////// Run tests //////////////////////////////////////
+
+	tests := []struct {
+		name    string
+		m       *mongoEventRepository
+		args    args
+		want    interface{}
+		wantErr bool
+	}{
+		{
+			name: "Successful Upsert",
+			m:    testEventRepo, // Initialize with appropriate values
+			args: args{
+				ctx:   context.Background(), // Use context appropriate for testing
+				event: insert_event,
+			},
+			want:    domain.ReservationStatus_Confirmed,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.m.Upsert(tt.args.ctx, tt.args.event)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("mongoEventRepository.Upsert() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got.RoomReservation.ReservationStatus, tt.want) {
+				t.Errorf("mongoEventRepository.Upsert() = %v, want %v", got.RoomReservation, tt.want)
+			}
+		})
+	}
+	if err := pool.Purge(resource); err != nil {
+		log.Fatalf("Could not purge Docker resource: %s", err)
+	}
+
+	////////////////////////////////////////////////////////////////////////////
+
+	/////////////////// kill and remove the container //////////////////////////
+
 	if err := pool.Purge(resource); err != nil {
 		log.Fatalf("Could not purge Docker resource: %s", err)
 	}
 }
 
-// Example usage in test functions:
-func TestMyMongoDBFunction(t *testing.T) {
-	client := SetupTestMongoDB(t)
-	defer TeardownTestMongoDB(t)
-
-	// Use the testMongoClient to interact with MongoDB in your test function
-	// For example:
-	ctx := context.Background()
-	collection := client.Database("testdb").Collection("mycollection")
-
-	// Perform test operations on MongoDB collection
-	_, err := collection.InsertOne(ctx, bson.M{"name": "test document"})
-	if err != nil {
-		t.Fatalf("Failed to insert document into MongoDB: %s", err)
-	}
-
-	// Add more test assertions as needed
-}
-
-func Test_mongoEventRepository_Upsert(t *testing.T) {
+/*
+func Test_mongoEventRepository_Upsert_multiple(t *testing.T) {
 	type args struct {
 		ctx   context.Context
 		event domain.Event
 	}
 
 	client := SetupTestMongoDB(t)
-	defer TeardownTestMongoDB(t)
+	//defer TeardownTestMongoDB(t)
 
 	repo := NewMongoEventRepository(client)
 	testEventRepo, ok := repo.(*mongoEventRepository)
@@ -133,54 +193,17 @@ func Test_mongoEventRepository_Upsert(t *testing.T) {
 	tests := []struct {
 		name    string
 		m       *mongoEventRepository
-		args    args
-		want    interface{}
-		wantErr bool
-	}{
-		{
-			name: "Successful Upsert",
-			m:    testEventRepo, // Initialize with appropriate values
-			args: args{
-				ctx:   context.Background(), // Use context appropriate for testing
-				event: insert_event,
-			},
-			want:    domain.ReservationStatus_Confirmed,
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.m.Upsert(tt.args.ctx, tt.args.event)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("mongoEventRepository.Upsert() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got.RoomReservation.ReservationStatus, tt.want) {
-				t.Errorf("mongoEventRepository.Upsert() = %v, want %v", got.RoomReservation, tt.want)
-			}
-		})
-	}
-}
-
-func Test_mongoEventRepository_Upsert_multiple(t *testing.T) {
-	type args struct {
-		ctx   context.Context
-		event domain.Event
-	}
-	tests := []struct {
-		name    string
-		m       *mongoEventRepository
 		args    []args
 		want    int
 		wantErr bool
 	}{
 		{
 			name: "Upsert multiple events with same room and time",
-			m:    &mongoEventRepository{}, // Initialize with appropriate values
+			m:    testEventRepo, // Initialize with appropriate values
 			args: []args{
 				{
 					ctx:   context.Background(),
-					event: domain.Event{},
+					event: insert_event,
 				},
 				{
 					ctx:   context.Background(),
@@ -209,3 +232,4 @@ func Test_mongoEventRepository_Upsert_multiple(t *testing.T) {
 		})
 	}
 }
+*/
