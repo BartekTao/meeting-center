@@ -15,6 +15,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	infra "github.com/BartekTao/nycu-meeting-room-api/internal/infrastructure"
+	"github.com/BartekTao/nycu-meeting-room-api/pkg/lock"
+	"github.com/go-redsync/redsync/v4"
+	"github.com/go-redsync/redsync/v4/redis/goredis/v9"
 )
 
 func Test_eventService_Upsert(t *testing.T) {
@@ -101,15 +104,14 @@ func Test_eventService_Upsert(t *testing.T) {
 			Addr: fmt.Sprintf("localhost:%s", redisResource.GetPort("6379/tcp")),
 		})
 
-		return testRedisClient.Ping().Err()
+		return testRedisClient.Ping(context.Background()).Err()
 	}); err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	// When you're done, kill and remove the container
-	if err = redisPool.Purge(redisResource); err != nil {
-		log.Fatalf("Could not purge redisResource: %s", err)
-	}
+	pool := goredis.NewPool(testRedisClient)
+	rs := redsync.New(pool)
+	locker := lock.NewRedsyncLocker(rs)
 
 	////////////////////////////////////////////////////////////////////////////
 

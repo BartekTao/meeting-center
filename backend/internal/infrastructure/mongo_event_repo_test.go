@@ -138,9 +138,6 @@ func Test_mongoEventRepository_Upsert(t *testing.T) {
 			}
 		})
 	}
-	if err := pool.Purge(resource); err != nil {
-		log.Fatalf("Could not purge Docker resource: %s", err)
-	}
 
 	////////////////////////////////////////////////////////////////////////////
 
