@@ -11,6 +11,7 @@ import (
 
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
+	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -82,18 +83,18 @@ func Test_eventService_Upsert(t *testing.T) {
 		req UpsertEventRequest
 	}
 
-	var testMongoClient *mongo.Client
-	var pool *dockertest.Pool
-	var resource *dockertest.Resource
-
 	///////////////// Set up in-memory mongodb ////////////////////////////////
 
-	pool, err := dockertest.NewPool("")
+	var testMongoClient *mongo.Client
+	var mongoPool *dockertest.Pool
+	var mongoResource *dockertest.Resource
+
+	mongoPool, err := dockertest.NewPool("")
 	if err != nil {
 		t.Fatalf("Could not connect to Docker: %s", err)
 	}
 
-	resource, err = pool.RunWithOptions(&dockertest.RunOptions{
+	mongoResource, err = mongoPool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "mongo",
 		Tag:        "latest",
 		Env: []string{
@@ -110,11 +111,11 @@ func Test_eventService_Upsert(t *testing.T) {
 	}
 
 	// Wait for MongoDB to start up
-	if err := pool.Retry(func() error {
+	if err := mongoPool.Retry(func() error {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		uri := fmt.Sprintf("mongodb://localhost:%s", resource.GetPort("27017/tcp"))
+		uri := fmt.Sprintf("mongodb://localhost:%s", mongoResource.GetPort("27017/tcp"))
 		client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 		if err != nil {
 			return err
@@ -131,6 +132,14 @@ func Test_eventService_Upsert(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("Could not connect to MongoDB container: %s", err)
 	}
+
+	////////////////////////////////////////////////////////////////////////////
+
+	////////////////////// Set up dummy locker /////////////////////////////////
+
+	var testRedisClient *redis.Client
+	var redisPool *dockertest.Pool
+	var redisResource *dockertest.Resource
 
 	////////////////////////////////////////////////////////////////////////////
 
