@@ -326,3 +326,20 @@ func ToDomainRoomReservation(roomReservation *RoomReservation) *domain.RoomReser
 	}
 	return &domainRoom
 }
+
+type MockEventRepository struct {
+	mongoEventRepository
+	client          *mongo.Client
+	eventCollection *mongo.Collection
+}
+
+func (m *MockEventRepository) CheckAvailableRoom(ctx context.Context, roomID string, startAt, endAt int64) (bool, error) {
+	return true, nil
+}
+
+func NewMockEventRepository(client *mongo.Client) domain.EventRepository {
+	return &MockEventRepository{
+		client:          client,
+		eventCollection: client.Database("meetingCenter").Collection("events"),
+	}
+}

@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"reflect"
@@ -15,67 +14,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	infra "github.com/BartekTao/nycu-meeting-room-api/internal/infrastructure"
 )
-
-type MockEventRepository struct {
-	infra.BaseRepository[infra.Event]
-	client          *mongo.Client
-	eventCollection *mongo.Collection
-}
-
-func NewTestEventRepository(client *mongo.Client) domain.EventRepository {
-	return MockEventRepository{
-		client:          client,
-		eventCollection: client.Database("meetingCenter").Collection("events"),
-	}
-}
-
-func (m *MockEventRepository) Upsert(ctx context.Context, event domain.Event) (*domain.Event, error) {
-	if event.ID == "" {
-		return nil, errors.New("event ID cannot be empty")
-	}
-	// Store or update the event in the repository
-	m.Events[event.ID] = event
-	return &event, nil
-}
-
-// Implement the Delete method of the EventRepository interface
-func (m *MockEventRepository) Delete(ctx context.Context, id string) (*domain.Event, error) {
-	dummy := domain.Event{}
-	return &dummy, nil
-}
-
-// Implement the UpdateSummary method of the EventRepository interface
-func (m *MockEventRepository) UpdateSummary(ctx context.Context, id string, summary string, updaterID string) (bool, error) {
-	return true, nil
-}
-
-// Implement the GetByID method of the EventRepository interface
-func (m *MockEventRepository) GetByID(ctx context.Context, id string) (*domain.Event, error) {
-	dummy := domain.Event{}
-	return &dummy, nil
-}
-
-// Implement the GetByUsers method of the EventRepository interface
-func (m *MockEventRepository) GetByUsers(ctx context.Context, ids []string, startAt, endAt int64) (map[string][]domain.Event, error) {
-	dummyUserEvents := make(map[string][]domain.Event)
-	return dummyUserEvents, nil
-}
-
-// Implement the CheckAvailableRoom method of the EventRepository interface
-func (m *MockEventRepository) CheckAvailableRoom(ctx context.Context, roomID string, startAt, endAt int64) (bool, error) {
-	// Implement logic to check room availability for a given time range
-	// For testing purposes, return a mock result (always true for now)
-	return true, nil
-}
-
-// Implement the GetAllWithRoomConfirmed method of the EventRepository interface
-func (m *MockEventRepository) GetAllWithRoomConfirmed(ctx context.Context, roomIDs []string, startAt, endAt int64) ([]domain.Event, error) {
-	var dummyEvents []domain.Event
-	return dummyEvents, nil
-}
 
 func Test_eventService_Upsert(t *testing.T) {
 	type args struct {
@@ -141,7 +81,7 @@ func Test_eventService_Upsert(t *testing.T) {
 	var redisPool *dockertest.Pool
 	var redisResource *dockertest.Resource
 
-	redisPool, err := dockertest.NewPool("")
+	redisPool, err = dockertest.NewPool("")
 	if err != nil {
 		log.Fatalf("Could not construct redisPool: %s", err)
 	}
@@ -151,7 +91,7 @@ func Test_eventService_Upsert(t *testing.T) {
 		log.Fatalf("Could not connect to Docker: %s", err)
 	}
 
-	redisResource, err := redisPool.Run("redis", "3.2", nil)
+	redisResource, err = redisPool.Run("redis", "3.2", nil)
 	if err != nil {
 		log.Fatalf("Could not start redisResource: %s", err)
 	}
@@ -175,7 +115,7 @@ func Test_eventService_Upsert(t *testing.T) {
 
 	/////////////////// Set up event service ///////////////////////////////////
 
-	testEventRepo := infra.NewMongoEventRepository(testMongoClient)
+	testEventRepo := infra.NewMockEventRepository(testMongoClient)
 	service := NewEventService(testEventRepo, locker)
 	testEventService, ok := service.(*eventService)
 	if !ok {
