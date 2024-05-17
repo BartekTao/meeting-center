@@ -141,6 +141,36 @@ func Test_eventService_Upsert(t *testing.T) {
 	var redisPool *dockertest.Pool
 	var redisResource *dockertest.Resource
 
+	redisPool, err := dockertest.NewPool("")
+	if err != nil {
+		log.Fatalf("Could not construct redisPool: %s", err)
+	}
+
+	err = redisPool.Client.Ping()
+	if err != nil {
+		log.Fatalf("Could not connect to Docker: %s", err)
+	}
+
+	redisResource, err := redisPool.Run("redis", "3.2", nil)
+	if err != nil {
+		log.Fatalf("Could not start redisResource: %s", err)
+	}
+
+	if err = redisPool.Retry(func() error {
+		testRedisClient = redis.NewClient(&redis.Options{
+			Addr: fmt.Sprintf("localhost:%s", redisResource.GetPort("6379/tcp")),
+		})
+
+		return testRedisClient.Ping().Err()
+	}); err != nil {
+		log.Fatalf("Could not connect to docker: %s", err)
+	}
+
+	// When you're done, kill and remove the container
+	if err = redisPool.Purge(redisResource); err != nil {
+		log.Fatalf("Could not purge redisResource: %s", err)
+	}
+
 	////////////////////////////////////////////////////////////////////////////
 
 	/////////////////// Set up event service ///////////////////////////////////
