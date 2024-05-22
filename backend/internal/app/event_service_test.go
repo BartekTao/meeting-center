@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	"github.com/redis/go-redis/v9"
+	goredislib "github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	infra "github.com/BartekTao/nycu-meeting-room-api/internal/infrastructure"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/lock"
 	"github.com/go-redsync/redsync/v4"
@@ -79,37 +81,47 @@ func Test_eventService_Upsert(t *testing.T) {
 	////////////////////////////////////////////////////////////////////////////
 
 	////////////////////// Set up dummy locker /////////////////////////////////
+	/*
+		var testRedisClient *redis.Client
+		var redisPool *dockertest.Pool
+		var redisResource *dockertest.Resource
 
-	var testRedisClient *redis.Client
-	var redisPool *dockertest.Pool
-	var redisResource *dockertest.Resource
+		redisPool, err = dockertest.NewPool("")
+		if err != nil {
+			log.Fatalf("Could not construct redisPool: %s", err)
+		}
 
-	redisPool, err = dockertest.NewPool("")
-	if err != nil {
-		log.Fatalf("Could not construct redisPool: %s", err)
-	}
+		err = redisPool.Client.Ping()
+		if err != nil {
+			log.Fatalf("Could not connect to Docker: %s", err)
+		}
 
-	err = redisPool.Client.Ping()
-	if err != nil {
-		log.Fatalf("Could not connect to Docker: %s", err)
-	}
+		redisResource, err = redisPool.Run("redis", "3.2", nil)
+		if err != nil {
+			log.Fatalf("Could not start redisResource: %s", err)
+		}
 
-	redisResource, err = redisPool.Run("redis", "3.2", nil)
-	if err != nil {
-		log.Fatalf("Could not start redisResource: %s", err)
-	}
+		if err = redisPool.Retry(func() error {
+			testRedisClient = redis.NewClient(&redis.Options{
+				Addr: fmt.Sprintf("localhost:%s", redisResource.GetPort("6379/tcp")),
+			})
 
-	if err = redisPool.Retry(func() error {
-		testRedisClient = redis.NewClient(&redis.Options{
-			Addr: fmt.Sprintf("localhost:%s", redisResource.GetPort("6379/tcp")),
-		})
+			return testRedisClient.Ping(context.Background()).Err()
+		}); err != nil {
+			log.Fatalf("Could not connect to docker: %s", err)
+		}
 
-		return testRedisClient.Ping(context.Background()).Err()
-	}); err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
-	}
+		pool := goredis.NewPool(testRedisClient)
+		rs := redsync.New(pool)
+		locker := lock.NewRedsyncLocker(rs)
+	*/
 
-	pool := goredis.NewPool(testRedisClient)
+	rsClient := goredislib.NewClient(&goredislib.Options{
+		Addr: "localhost:6379",
+	})
+	defer rsClient.Close()
+
+	pool := goredis.NewPool(rsClient)
 	rs := redsync.New(pool)
 	locker := lock.NewRedsyncLocker(rs)
 
@@ -147,7 +159,7 @@ func Test_eventService_Upsert(t *testing.T) {
 		name    string
 		s       *eventService
 		args    []args
-		want    int
+		want    interface{}
 		wantErr bool
 	}{
 		{
@@ -174,14 +186,52 @@ func Test_eventService_Upsert(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.s.Upsert(tt.args[0].ctx, tt.args[0].req)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("eventService.Upsert() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			var wg sync.WaitGroup
+			numRequests := 1
+			wg.Add(numRequests)
+			results := make(chan domain.ReservationStatus, numRequests)
+
+			for i := 0; i < numRequests; i++ {
+				// Start a goroutine for each upsert request
+				go func(id int) {
+					defer wg.Done()
+
+					// Call the upsert function with your data
+					got, err := tt.s.Upsert(tt.args[id].ctx, tt.args[id].req)
+					if (err != nil) != tt.wantErr {
+						t.Errorf("eventService.Upsert() error = %v, wantErr %v", err, tt.wantErr)
+						return
+					}
+					results <- got.RoomReservation.ReservationStatus
+				}(i)
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("eventService.Upsert() = %v, want %v", got, tt.want)
+
+			wg.Wait()
+			close(results)
+
+			successCount := 0
+			for result := range results {
+				if result == "CONFIRMED" {
+					successCount++
+				}
+			}
+
+			if !reflect.DeepEqual(successCount, tt.want) {
+				t.Errorf("Successful upserts = %v, want %v", successCount, tt.want)
 			}
 		})
 	}
+
+	////////////////////////////////////////////////////////////////////////////
+	/*
+
+	 */
+	/////////////////// kill and remove the container //////////////////////////
+
+	if err := mongoPool.Purge(mongoResource); err != nil {
+		log.Fatalf("Could not purge Docker resource: %s", err)
+	}
+	//if err := redisPool.Purge(redisResource); err != nil {
+	//	log.Fatalf("Could not purge Docker resource: %s", err)
+	//}
 }
