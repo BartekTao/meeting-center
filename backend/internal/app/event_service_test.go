@@ -9,17 +9,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-redis/redis"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
-	goredislib "github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	infra "github.com/BartekTao/nycu-meeting-room-api/internal/infrastructure"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/lock"
-	"github.com/go-redsync/redsync/v4"
-	"github.com/go-redsync/redsync/v4/redis/goredis/v9"
 )
 
 func Test_eventService_Upsert(t *testing.T) {
@@ -81,49 +79,48 @@ func Test_eventService_Upsert(t *testing.T) {
 	////////////////////////////////////////////////////////////////////////////
 
 	////////////////////// Set up dummy locker /////////////////////////////////
+
+	var testRedisClient *redis.Client
+	var redisPool *dockertest.Pool
+	var redisResource *dockertest.Resource
+
+	redisPool, err = dockertest.NewPool("")
+	if err != nil {
+		log.Fatalf("Could not construct redisPool: %s", err)
+	}
+
+	err = redisPool.Client.Ping()
+	if err != nil {
+		log.Fatalf("Could not connect to Docker: %s", err)
+	}
+
+	redisResource, err = redisPool.Run("redis", "3.2", nil)
+	if err != nil {
+		log.Fatalf("Could not start redisResource: %s", err)
+	}
+
+	if err = redisPool.Retry(func() error {
+		testRedisClient = redis.NewClient(&redis.Options{
+			Addr: fmt.Sprintf("localhost:%s", redisResource.GetPort("6379/tcp")),
+		})
+
+		return testRedisClient.Ping(context.Background()).Err()
+	}); err != nil {
+		log.Fatalf("Could not connect to docker: %s", err)
+	}
+
+	locker := lock.NewRedsyncLocker(testRedisClient)
+
 	/*
-		var testRedisClient *redis.Client
-		var redisPool *dockertest.Pool
-		var redisResource *dockertest.Resource
+		rsClient := goredislib.NewClient(&goredislib.Options{
+			Addr: "localhost:6379",
+		})
+		defer rsClient.Close()
 
-		redisPool, err = dockertest.NewPool("")
-		if err != nil {
-			log.Fatalf("Could not construct redisPool: %s", err)
-		}
-
-		err = redisPool.Client.Ping()
-		if err != nil {
-			log.Fatalf("Could not connect to Docker: %s", err)
-		}
-
-		redisResource, err = redisPool.Run("redis", "3.2", nil)
-		if err != nil {
-			log.Fatalf("Could not start redisResource: %s", err)
-		}
-
-		if err = redisPool.Retry(func() error {
-			testRedisClient = redis.NewClient(&redis.Options{
-				Addr: fmt.Sprintf("localhost:%s", redisResource.GetPort("6379/tcp")),
-			})
-
-			return testRedisClient.Ping(context.Background()).Err()
-		}); err != nil {
-			log.Fatalf("Could not connect to docker: %s", err)
-		}
-
-		pool := goredis.NewPool(testRedisClient)
+		pool := goredis.NewPool(rsClient)
 		rs := redsync.New(pool)
 		locker := lock.NewRedsyncLocker(rs)
 	*/
-
-	rsClient := goredislib.NewClient(&goredislib.Options{
-		Addr: "localhost:6379",
-	})
-	defer rsClient.Close()
-
-	pool := goredis.NewPool(rsClient)
-	rs := redsync.New(pool)
-	locker := lock.NewRedsyncLocker(rs)
 
 	////////////////////////////////////////////////////////////////////////////
 
