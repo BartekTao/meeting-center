@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
+	"github.com/go-redsync/redsync/v4"
+	"github.com/go-redsync/redsync/v4/redis/goredis"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -104,12 +106,14 @@ func Test_eventService_Upsert(t *testing.T) {
 			Addr: fmt.Sprintf("localhost:%s", redisResource.GetPort("6379/tcp")),
 		})
 
-		return testRedisClient.Ping(context.Background()).Err()
+		return testRedisClient.Ping().Err()
 	}); err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	locker := lock.NewRedsyncLocker(testRedisClient)
+	pool := goredis.NewPool(testRedisClient)
+	rs := redsync.New(pool)
+	locker := lock.NewRedsyncLocker(rs)
 
 	/*
 		rsClient := goredislib.NewClient(&goredislib.Options{
