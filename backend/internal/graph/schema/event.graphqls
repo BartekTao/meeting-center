@@ -24,7 +24,7 @@ type Event @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/
 }
 
 type RoomReservation @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.RoomReservation") {
-  room: Room! @goField(forceResolver: true)
+  room: Room @goField(forceResolver: true)
   status: ReservationStatus
 }
 
