@@ -6,7 +6,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build --o /app ./cmd/api/server.go
+RUN go build --o /app ./cmd/cronjob/reminder.go
 
 FROM alpine:3.19
 WORKDIR /app

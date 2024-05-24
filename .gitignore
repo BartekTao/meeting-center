@@ -23,6 +23,7 @@
 go.work
 
 meeting-room-api
+reminder-cronjob
 backend/.env
 
 .DS_Store
