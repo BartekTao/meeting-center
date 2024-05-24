@@ -44,6 +44,7 @@ type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
 	RoomReservation() RoomReservationResolver
+	RoomSchedule() RoomScheduleResolver
 	UserEvent() UserEventResolver
 }
 
@@ -128,11 +129,6 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
-	Schedule struct {
-		EndAt   func(childComplexity int) int
-		StartAt func(childComplexity int) int
-	}
-
 	User struct {
 		Email      func(childComplexity int) int
 		FamilyName func(childComplexity int) int
@@ -184,6 +180,9 @@ type QueryResolver interface {
 type RoomReservationResolver interface {
 	Room(ctx context.Context, obj *domain.RoomReservation) (*domain.Room, error)
 	Status(ctx context.Context, obj *domain.RoomReservation) (*domain.ReservationStatus, error)
+}
+type RoomScheduleResolver interface {
+	Schedules(ctx context.Context, obj *domain.RoomSchedule) ([]domain.Event, error)
 }
 type UserEventResolver interface {
 	User(ctx context.Context, obj *model.UserEvent) (*domain.User, error)
@@ -580,20 +579,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.RoomScheduleEdge.Node(childComplexity), true
-
-	case "Schedule.endAt":
-		if e.complexity.Schedule.EndAt == nil {
-			break
-		}
-
-		return e.complexity.Schedule.EndAt(childComplexity), true
-
-	case "Schedule.startAt":
-		if e.complexity.Schedule.StartAt == nil {
-			break
-		}
-
-		return e.complexity.Schedule.StartAt(childComplexity), true
 
 	case "User.email":
 		if e.complexity.User.Email == nil {
@@ -3403,7 +3388,7 @@ func (ec *executionContext) _RoomSchedule_schedules(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Schedules, nil
+		return ec.resolvers.RoomSchedule().Schedules(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3412,25 +3397,43 @@ func (ec *executionContext) _RoomSchedule_schedules(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]domain.Schedule)
+	res := resTmp.([]domain.Event)
 	fc.Result = res
-	return ec.marshalOSchedule2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐScheduleᚄ(ctx, field.Selections, res)
+	return ec.marshalOEvent2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐEventᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_RoomSchedule_schedules(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "RoomSchedule",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "id":
+				return ec.fieldContext_Event_id(ctx, field)
+			case "title":
+				return ec.fieldContext_Event_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Event_description(ctx, field)
 			case "startAt":
-				return ec.fieldContext_Schedule_startAt(ctx, field)
+				return ec.fieldContext_Event_startAt(ctx, field)
 			case "endAt":
-				return ec.fieldContext_Schedule_endAt(ctx, field)
+				return ec.fieldContext_Event_endAt(ctx, field)
+			case "roomReservation":
+				return ec.fieldContext_Event_roomReservation(ctx, field)
+			case "participants":
+				return ec.fieldContext_Event_participants(ctx, field)
+			case "notes":
+				return ec.fieldContext_Event_notes(ctx, field)
+			case "remindAt":
+				return ec.fieldContext_Event_remindAt(ctx, field)
+			case "creator":
+				return ec.fieldContext_Event_creator(ctx, field)
+			case "isDelete":
+				return ec.fieldContext_Event_isDelete(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Schedule", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
 	}
 	return fc, nil
@@ -3619,94 +3622,6 @@ func (ec *executionContext) fieldContext_RoomScheduleEdge_cursor(ctx context.Con
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Schedule_startAt(ctx context.Context, field graphql.CollectedField, obj *domain.Schedule) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Schedule_startAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.StartAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int64)
-	fc.Result = res
-	return ec.marshalNInt642int64(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Schedule_startAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Schedule",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int64 does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Schedule_endAt(ctx context.Context, field graphql.CollectedField, obj *domain.Schedule) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Schedule_endAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.EndAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int64)
-	fc.Result = res
-	return ec.marshalNInt642int64(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Schedule_endAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Schedule",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int64 does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6960,7 +6875,38 @@ func (ec *executionContext) _RoomSchedule(ctx context.Context, sel ast.Selection
 		case "room":
 			out.Values[i] = ec._RoomSchedule_room(ctx, field, obj)
 		case "schedules":
-			out.Values[i] = ec._RoomSchedule_schedules(ctx, field, obj)
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._RoomSchedule_schedules(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7040,50 +6986,6 @@ func (ec *executionContext) _RoomScheduleEdge(ctx context.Context, sel ast.Selec
 			out.Values[i] = ec._RoomScheduleEdge_node(ctx, field, obj)
 		case "cursor":
 			out.Values[i] = ec._RoomScheduleEdge_cursor(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var scheduleImplementors = []string{"Schedule"}
-
-func (ec *executionContext) _Schedule(ctx context.Context, sel ast.SelectionSet, obj *domain.Schedule) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, scheduleImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Schedule")
-		case "startAt":
-			out.Values[i] = ec._Schedule_startAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "endAt":
-			out.Values[i] = ec._Schedule_endAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -7822,10 +7724,6 @@ func (ec *executionContext) marshalNRule2githubᚗcomᚋBartekTaoᚋnycuᚑmeeti
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalNSchedule2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐSchedule(ctx context.Context, sel ast.SelectionSet, v domain.Schedule) graphql.Marshaler {
-	return ec._Schedule(ctx, sel, &v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -8581,53 +8479,6 @@ func (ec *executionContext) marshalORule2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑme
 				defer wg.Done()
 			}
 			ret[i] = ec.marshalNRule2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐRule(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalOSchedule2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐScheduleᚄ(ctx context.Context, sel ast.SelectionSet, v []domain.Schedule) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSchedule2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐSchedule(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

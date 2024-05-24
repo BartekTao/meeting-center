@@ -11,13 +11,8 @@ import (
 )
 
 type RoomSchedule struct {
-	Room      Room       `bson:"room"`
-	Schedules []Schedule `bson:"schedules"`
-}
-
-type Schedule struct {
-	StartAt int64 `bson:"startAt"`
-	EndAt   int64 `bson:"endAt"`
+	Room      Room    `bson:"room"`
+	Schedules []Event `bson:"schedules"`
 }
 
 type mongoRoomScheduleRepository struct {
@@ -82,12 +77,6 @@ func (r *mongoRoomScheduleRepository) QueryPaginated(
 							}},
 						}},
 					},
-					{
-						{Key: "$project", Value: bson.D{
-							{Key: "startAt", Value: 1},
-							{Key: "endAt", Value: 1},
-						}},
-					},
 				}},
 				{Key: "as", Value: "schedules"},
 			}},
@@ -142,10 +131,10 @@ func (r *mongoRoomScheduleRepository) QueryPaginated(
 func ToDomainRoomSchedule(roomSchedule *RoomSchedule) *domain.RoomSchedule {
 	domainRoomSchedule := domain.RoomSchedule{
 		Room:      *ToDomainRoom(&roomSchedule.Room),
-		Schedules: make([]domain.Schedule, len(roomSchedule.Schedules)),
+		Schedules: make([]domain.Event, len(roomSchedule.Schedules)),
 	}
 	for i, schedule := range roomSchedule.Schedules {
-		domainRoomSchedule.Schedules[i] = domain.Schedule{
+		domainRoomSchedule.Schedules[i] = domain.Event{
 			StartAt: schedule.StartAt,
 			EndAt:   schedule.EndAt,
 		}

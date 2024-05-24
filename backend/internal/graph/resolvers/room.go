@@ -165,11 +165,22 @@ func (r *queryResolver) PaginatedAvailableRooms(ctx context.Context, startAt int
 	}, nil
 }
 
+// Schedules is the resolver for the schedules field.
+func (r *roomScheduleResolver) Schedules(ctx context.Context, obj *domain.RoomSchedule) ([]domain.Event, error) {
+	return obj.Schedules, nil
+}
+
 // Mutation returns graph.MutationResolver implementation.
 func (r *Resolver) Mutation() graph.MutationResolver { return &mutationResolver{r} }
 
 // Query returns graph.QueryResolver implementation.
 func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+// RoomSchedule returns graph.RoomScheduleResolver implementation.
+func (r *Resolver) RoomSchedule() graph.RoomScheduleResolver { return &roomScheduleResolver{r} }
+
+type (
+	mutationResolver     struct{ *Resolver }
+	queryResolver        struct{ *Resolver }
+	roomScheduleResolver struct{ *Resolver }
+)
