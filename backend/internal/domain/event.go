@@ -41,4 +41,5 @@ type EventRepository interface {
 	GetByUsers(ctx context.Context, ids []string, startAt, endAt int64) (map[string][]Event, error)
 	CheckAvailableRoom(ctx context.Context, roomID string, startAt, endAt int64) (bool, error)
 	GetAllWithRoomConfirmed(ctx context.Context, roomIDs []string, startAt, endAt int64) ([]Event, error)
+	GetRemindEvents(ctx context.Context, checkAt int64) ([]Event, error)
 }
