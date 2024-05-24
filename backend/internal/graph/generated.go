@@ -3259,14 +3259,11 @@ func (ec *executionContext) _RoomReservation_room(ctx context.Context, field gra
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*domain.Room)
 	fc.Result = res
-	return ec.marshalNRoom2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐRoom(ctx, field.Selections, res)
+	return ec.marshalORoom2ᚖgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐRoom(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_RoomReservation_room(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6870,9 +6867,6 @@ func (ec *executionContext) _RoomReservation(ctx context.Context, sel ast.Select
 					}
 				}()
 				res = ec._RoomReservation_room(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 

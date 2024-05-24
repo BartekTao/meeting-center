@@ -67,8 +67,13 @@ func (r *BaseRepository[T]) getByID(ctx context.Context, collection *mongo.Colle
 	var result T
 	err = collection.FindOne(ctx, filter).Decode(&result)
 	if err != nil {
-		log.Printf("Failed to decode document: %v", err)
-		return nil, err
+		if err == mongo.ErrNoDocuments {
+			log.Println("No document was found")
+			return nil, nil
+		} else {
+			log.Printf("Failed to decode document: %v", err)
+			return nil, err
+		}
 	}
 	return &result, nil
 }

@@ -2,12 +2,12 @@ package infra
 
 import (
 	"context"
-	"errors"
 	"log"
 	"time"
 
 	"github.com/BartekTao/nycu-meeting-room-api/internal/common"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -63,7 +63,7 @@ func (m *mongoEventRepository) Upsert(ctx context.Context, event domain.Event) (
 		objParticipantsID, err := primitive.ObjectIDFromHex(participantsID)
 		if err != nil {
 			log.Printf("Invalid ID format: %v", err)
-			return nil, err
+			return nil, errors.WithStack(err)
 		}
 		participantsIDs[i] = objParticipantsID
 	}
