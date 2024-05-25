@@ -21,6 +21,7 @@ import (
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/auth"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/lock"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/middleware"
+	"github.com/BartekTao/nycu-meeting-room-api/pkg/notification"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/otelwrapper"
 	"github.com/go-redsync/redsync/v4"
 	"github.com/go-redsync/redsync/v4/redis/goredis/v9"
@@ -119,6 +120,10 @@ func newHTTPHandler(mongoClient *mongo.Client, rsClient *goredislib.Client) http
 
 	userRepo := infra.NewMongoUserRepo(mongoClient)
 	authHandler := auth.NewGoogleOAuthHandler(userRepo)
+	mailHandler, err := notification.NewGmailHandler()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 
 	mux.HandleFunc("/auth/google/login", authHandler.Login)
 	mux.HandleFunc("/auth/google/callback", authHandler.Callback)
@@ -134,7 +139,7 @@ func newHTTPHandler(mongoClient *mongo.Client, rsClient *goredislib.Client) http
 	graphqlServer := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: resolvers.NewResolver(
 			app.NewRoomService(roomRepo, roomScheduleRepo),
-			app.NewEventService(eventRepo, locker),
+			app.NewEventService(eventRepo, locker, userRepo, mailHandler),
 			app.NewUserService(userRepo),
 		),
 	}))

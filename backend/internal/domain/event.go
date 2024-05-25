@@ -20,6 +20,7 @@ type Event struct {
 	RoomReservation *RoomReservation `json:"roomReservation"`
 	ParticipantsIDs []string         `json:"participantsIDs"`
 	Notes           *string          `json:"notes"`
+	Summary         *string          `json:"summary"`
 	RemindAt        int64            `json:"remindAt"`
 	IsDelete        bool             `json:"isDelete"`
 	CreatedAt       int64            `json:"createdAt"`

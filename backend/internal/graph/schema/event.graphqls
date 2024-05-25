@@ -19,6 +19,7 @@ type Event @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/
   participants: [User!]! @goField(forceResolver: true)
   notes: String
   remindAt: Int64!
+  summary: String
   creator: User! @goField(forceResolver: true)
   isDelete: Boolean
 }

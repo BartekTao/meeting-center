@@ -24,7 +24,7 @@ type Event struct {
 	Notes           *string              `bson:"notes"`
 	RemindAt        int64                `bson:"remindAt"`
 	IsDelete        bool                 `bson:"isDelete"`
-	Summary         string               `bson:"summary"`
+	Summary         *string              `bson:"summary"`
 	CreatedAt       int64                `bson:"createdAt"`
 	CreatorID       primitive.ObjectID   `bson:"creatorID"`
 	UpdatedAt       int64                `bson:"updatedAt"`
@@ -323,6 +323,7 @@ func ToDomainEvent(event *Event) *domain.Event {
 		RoomReservation: ToDomainRoomReservation(event.RoomReservation),
 		ParticipantsIDs: participantsIDs,
 		Notes:           event.Notes,
+		Summary:         event.Summary,
 		RemindAt:        event.RemindAt,
 		IsDelete:        event.IsDelete,
 		CreatedAt:       event.CreatedAt,

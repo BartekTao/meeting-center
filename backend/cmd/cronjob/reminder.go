@@ -56,7 +56,6 @@ func main() {
 			}
 		}
 
-		subject := "Meeting Reminder - " + event.Title
 		startTime := time.UnixMilli(event.StartAt)
 		loc, err := time.LoadLocation("Asia/Taipei")
 		if err != nil {
@@ -65,7 +64,7 @@ func main() {
 		}
 		startTime = startTime.In(loc)
 		formattedTime := startTime.Format("2006-01-02 15:04:05 -0700")
-
+		subject := fmt.Sprintf("Reminder: %s - %s", event.Title, formattedTime)
 		content := fmt.Sprintf("The meeting will start at %s", formattedTime)
 
 		err = mailHandler.Send(recipientEmails, subject, content)

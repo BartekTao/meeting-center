@@ -44,7 +44,6 @@ type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
 	RoomReservation() RoomReservationResolver
-	RoomSchedule() RoomScheduleResolver
 	UserEvent() UserEventResolver
 }
 
@@ -63,6 +62,7 @@ type ComplexityRoot struct {
 		RemindAt        func(childComplexity int) int
 		RoomReservation func(childComplexity int) int
 		StartAt         func(childComplexity int) int
+		Summary         func(childComplexity int) int
 		Title           func(childComplexity int) int
 	}
 
@@ -181,9 +181,6 @@ type RoomReservationResolver interface {
 	Room(ctx context.Context, obj *domain.RoomReservation) (*domain.Room, error)
 	Status(ctx context.Context, obj *domain.RoomReservation) (*domain.ReservationStatus, error)
 }
-type RoomScheduleResolver interface {
-	Schedules(ctx context.Context, obj *domain.RoomSchedule) ([]domain.Event, error)
-}
 type UserEventResolver interface {
 	User(ctx context.Context, obj *model.UserEvent) (*domain.User, error)
 }
@@ -276,6 +273,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Event.StartAt(childComplexity), true
+
+	case "Event.summary":
+		if e.complexity.Event.Summary == nil {
+			break
+		}
+
+		return e.complexity.Event.Summary(childComplexity), true
 
 	case "Event.title":
 		if e.complexity.Event.Title == nil {
@@ -1600,6 +1604,47 @@ func (ec *executionContext) fieldContext_Event_remindAt(ctx context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Event_summary(ctx context.Context, field graphql.CollectedField, obj *domain.Event) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Event_summary(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Summary, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Event_summary(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Event",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Event_creator(ctx context.Context, field graphql.CollectedField, obj *domain.Event) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Event_creator(ctx, field)
 	if err != nil {
@@ -1896,6 +1941,8 @@ func (ec *executionContext) fieldContext_Mutation_upsertEvent(ctx context.Contex
 				return ec.fieldContext_Event_notes(ctx, field)
 			case "remindAt":
 				return ec.fieldContext_Event_remindAt(ctx, field)
+			case "summary":
+				return ec.fieldContext_Event_summary(ctx, field)
 			case "creator":
 				return ec.fieldContext_Event_creator(ctx, field)
 			case "isDelete":
@@ -1975,6 +2022,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteEvent(ctx context.Contex
 				return ec.fieldContext_Event_notes(ctx, field)
 			case "remindAt":
 				return ec.fieldContext_Event_remindAt(ctx, field)
+			case "summary":
+				return ec.fieldContext_Event_summary(ctx, field)
 			case "creator":
 				return ec.fieldContext_Event_creator(ctx, field)
 			case "isDelete":
@@ -2431,6 +2480,8 @@ func (ec *executionContext) fieldContext_Query_event(ctx context.Context, field 
 				return ec.fieldContext_Event_notes(ctx, field)
 			case "remindAt":
 				return ec.fieldContext_Event_remindAt(ctx, field)
+			case "summary":
+				return ec.fieldContext_Event_summary(ctx, field)
 			case "creator":
 				return ec.fieldContext_Event_creator(ctx, field)
 			case "isDelete":
@@ -3388,7 +3439,7 @@ func (ec *executionContext) _RoomSchedule_schedules(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.RoomSchedule().Schedules(rctx, obj)
+		return obj.Schedules, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3406,8 +3457,8 @@ func (ec *executionContext) fieldContext_RoomSchedule_schedules(ctx context.Cont
 	fc = &graphql.FieldContext{
 		Object:     "RoomSchedule",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -3428,6 +3479,8 @@ func (ec *executionContext) fieldContext_RoomSchedule_schedules(ctx context.Cont
 				return ec.fieldContext_Event_notes(ctx, field)
 			case "remindAt":
 				return ec.fieldContext_Event_remindAt(ctx, field)
+			case "summary":
+				return ec.fieldContext_Event_summary(ctx, field)
 			case "creator":
 				return ec.fieldContext_Event_creator(ctx, field)
 			case "isDelete":
@@ -4229,6 +4282,8 @@ func (ec *executionContext) fieldContext_UserEvent_events(ctx context.Context, f
 				return ec.fieldContext_Event_notes(ctx, field)
 			case "remindAt":
 				return ec.fieldContext_Event_remindAt(ctx, field)
+			case "summary":
+				return ec.fieldContext_Event_summary(ctx, field)
 			case "creator":
 				return ec.fieldContext_Event_creator(ctx, field)
 			case "isDelete":
@@ -6237,6 +6292,8 @@ func (ec *executionContext) _Event(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "summary":
+			out.Values[i] = ec._Event_summary(ctx, field, obj)
 		case "creator":
 			field := field
 
@@ -6875,38 +6932,7 @@ func (ec *executionContext) _RoomSchedule(ctx context.Context, sel ast.Selection
 		case "room":
 			out.Values[i] = ec._RoomSchedule_room(ctx, field, obj)
 		case "schedules":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._RoomSchedule_schedules(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			out.Values[i] = ec._RoomSchedule_schedules(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
