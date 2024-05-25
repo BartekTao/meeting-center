@@ -188,7 +188,7 @@ func Test_eventService_Upsert(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var wg sync.WaitGroup
-			numRequests := 1
+			numRequests := 3
 			wg.Add(numRequests)
 			results := make(chan domain.ReservationStatus, numRequests)
 
@@ -232,7 +232,7 @@ func Test_eventService_Upsert(t *testing.T) {
 	if err := mongoPool.Purge(mongoResource); err != nil {
 		log.Fatalf("Could not purge Docker resource: %s", err)
 	}
-	//if err := redisPool.Purge(redisResource); err != nil {
-	//	log.Fatalf("Could not purge Docker resource: %s", err)
-	//}
+	if err := redisPool.Purge(redisResource); err != nil {
+		log.Fatalf("Could not purge Docker resource: %s", err)
+	}
 }
