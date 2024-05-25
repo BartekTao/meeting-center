@@ -62,8 +62,12 @@ func run() (err error) {
 	mongoClient := infra.SetUpMongoDB()
 	defer infra.ShutdownMongoDB(mongoClient)
 
+	redisUri := os.Getenv("REDIS_URI")
+	if redisUri == "" {
+		log.Fatal("You must set the REDIS_URI environment variable")
+	}
 	client := goredislib.NewClient(&goredislib.Options{
-		Addr: "localhost:6379",
+		Addr: redisUri,
 	})
 	defer client.Close()
 
