@@ -11,7 +11,9 @@ import (
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
+	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -88,45 +90,49 @@ func Test_mongoRoomScheduleRepository_QueryPaginated(t *testing.T) {
 
 	////////////////// Setup room reservation mongodb data ////////////////////////////////////////////////
 
+	testIDs := []string{"12341234123412341234AAAA", "12341234123412341234BBBB", "12341234123412341234CCCC"}
 	for i := 0; i <= 2; i++ {
-		reservations := []bson.M{}
-		if i%2 == 0 {
-			reservations = append(reservations, bson.M{
-				"roomReservation": bson.M{"roomID": primitive.NewObjectID().Hex(), "reservationStatus": domain.ReservationStatus_Confirmed},
-				"startAt":         time.Now().Add(-1 * time.Hour).Unix(),
-				"endAt":           time.Now().Add(1 * time.Hour).Unix(),
-			})
-		}
+
+		ID, _ := primitive.ObjectIDFromHex(testIDs[i])
 		room := bson.M{
-			"_id":          primitive.NewObjectID(),
-			"name":         fmt.Sprintf("room%d", i),
-			"capacity":     20,
-			"isDelete":     false,
-			"reservations": reservations,
+			"_id":        ID,
+			"name":       fmt.Sprintf("room%d", i),
+			"capacity":   20,
+			"equipments": []domain.Equipment{domain.EQUIPMENT_TABLE, domain.EQUIPMENT_CAMERA},
+			"rules":      []domain.Rule{domain.RULE_NO_FOOD, domain.RULE_NO_DRINK},
+			"isDelete":   false,
 		}
-		schedules := []Schedule{
-			bson.M{
-				"startAt": 100,
-				"endAt": 200,
-			},
-			bson.M{
-				"startAt": 400,
-				"endAt": 500,
-			},
-			bson.M{
-				"startAt": 700,
-				"endAt": 800,
-			},
+		var schedules []Schedule
+		if i%2 == 0 {
+			schedules = []Schedule{
+				Schedule{
+					StartAt: 100,
+					EndAt:   200,
+				},
+				Schedule{
+					StartAt: 400,
+					EndAt:   600,
+				},
+			}
+		} else {
+			schedules = []Schedule{
+				Schedule{
+					StartAt: 700,
+					EndAt:   1000,
+				},
+			}
 		}
 		roomSchedule := bson.M{
-			"room": room,
-			"schedules": schedules, 
+			"room":      room,
+			"schedules": schedules,
 		}
 		_, err := testRoomScheduleRepo.roomScheduleCollection.InsertOne(context.TODO(), roomSchedule)
 		require.NoError(t, err)
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
+
+	////////////////////////// Run test ////////////////////////////////////////////////////
 
 	tests := []struct {
 		name    string
@@ -139,14 +145,14 @@ func Test_mongoRoomScheduleRepository_QueryPaginated(t *testing.T) {
 			name: "Successful Upsert",
 			r:    testRoomScheduleRepo, // Initialize with appropriate values
 			args: args{
-				ctx:   context.Background(), // Use context appropriate for testing
-				roomIDs: ,
-				equipments: ,
-				rules: , 
-				startAt: ,
-				endAt: ,
-				skip: ,
-				limit: ,
+				ctx:        context.Background(), // Use context appropriate for testing
+				roomIDs:    []string{"12341234123412341234AAAA", "12341234123412341234BBBB", "12341234123412341234CCCC"},
+				equipments: []domain.Equipment{domain.EQUIPMENT_TABLE},
+				rules:      []domain.Rule{domain.RULE_NO_FOOD},
+				startAt:    400,
+				endAt:      500,
+				skip:       0,
+				limit:      0,
 			},
 			want:    domain.ReservationStatus_Confirmed,
 			wantErr: false,
