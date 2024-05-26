@@ -52,7 +52,13 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AttachedFile struct {
+		Name func(childComplexity int) int
+		Url  func(childComplexity int) int
+	}
+
 	Event struct {
+		AttachedFile    func(childComplexity int) int
 		Creator         func(childComplexity int) int
 		Description     func(childComplexity int) int
 		EndAt           func(childComplexity int) int
@@ -206,6 +212,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AttachedFile.name":
+		if e.complexity.AttachedFile.Name == nil {
+			break
+		}
+
+		return e.complexity.AttachedFile.Name(childComplexity), true
+
+	case "AttachedFile.url":
+		if e.complexity.AttachedFile.Url == nil {
+			break
+		}
+
+		return e.complexity.AttachedFile.Url(childComplexity), true
+
+	case "Event.attachedFile":
+		if e.complexity.Event.AttachedFile == nil {
+			break
+		}
+
+		return e.complexity.Event.AttachedFile(childComplexity), true
 
 	case "Event.creator":
 		if e.complexity.Event.Creator == nil {
@@ -698,7 +725,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
-		ec.unmarshalInputAttachedFile,
+		ec.unmarshalInputAttachedFileInput,
 		ec.unmarshalInputUpsertEventInput,
 		ec.unmarshalInputUpsertRoomInput,
 	)
@@ -1225,6 +1252,94 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AttachedFile_url(ctx context.Context, field graphql.CollectedField, obj *domain.File) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AttachedFile_url(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Url, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AttachedFile_url(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AttachedFile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AttachedFile_name(ctx context.Context, field graphql.CollectedField, obj *domain.File) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AttachedFile_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AttachedFile_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AttachedFile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _Event_id(ctx context.Context, field graphql.CollectedField, obj *domain.Event) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Event_id(ctx, field)
@@ -1777,6 +1892,53 @@ func (ec *executionContext) fieldContext_Event_isDelete(ctx context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Event_attachedFile(ctx context.Context, field graphql.CollectedField, obj *domain.Event) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Event_attachedFile(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AttachedFile, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(domain.File)
+	fc.Result = res
+	return ec.marshalOAttachedFile2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐFile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Event_attachedFile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Event",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "url":
+				return ec.fieldContext_AttachedFile_url(ctx, field)
+			case "name":
+				return ec.fieldContext_AttachedFile_name(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AttachedFile", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_upsertRoom(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_upsertRoom(ctx, field)
 	if err != nil {
@@ -1978,6 +2140,8 @@ func (ec *executionContext) fieldContext_Mutation_upsertEvent(ctx context.Contex
 				return ec.fieldContext_Event_creator(ctx, field)
 			case "isDelete":
 				return ec.fieldContext_Event_isDelete(ctx, field)
+			case "attachedFile":
+				return ec.fieldContext_Event_attachedFile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -2059,6 +2223,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteEvent(ctx context.Contex
 				return ec.fieldContext_Event_creator(ctx, field)
 			case "isDelete":
 				return ec.fieldContext_Event_isDelete(ctx, field)
+			case "attachedFile":
+				return ec.fieldContext_Event_attachedFile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -2572,6 +2738,8 @@ func (ec *executionContext) fieldContext_Query_event(ctx context.Context, field 
 				return ec.fieldContext_Event_creator(ctx, field)
 			case "isDelete":
 				return ec.fieldContext_Event_isDelete(ctx, field)
+			case "attachedFile":
+				return ec.fieldContext_Event_attachedFile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -3571,6 +3739,8 @@ func (ec *executionContext) fieldContext_RoomSchedule_schedules(ctx context.Cont
 				return ec.fieldContext_Event_creator(ctx, field)
 			case "isDelete":
 				return ec.fieldContext_Event_isDelete(ctx, field)
+			case "attachedFile":
+				return ec.fieldContext_Event_attachedFile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -4374,6 +4544,8 @@ func (ec *executionContext) fieldContext_UserEvent_events(ctx context.Context, f
 				return ec.fieldContext_Event_creator(ctx, field)
 			case "isDelete":
 				return ec.fieldContext_Event_isDelete(ctx, field)
+			case "attachedFile":
+				return ec.fieldContext_Event_attachedFile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -6154,7 +6326,7 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputAttachedFile(ctx context.Context, obj interface{}) (domain.File, error) {
+func (ec *executionContext) unmarshalInputAttachedFileInput(ctx context.Context, obj interface{}) (domain.File, error) {
 	var it domain.File
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
@@ -6267,7 +6439,7 @@ func (ec *executionContext) unmarshalInputUpsertEventInput(ctx context.Context, 
 			it.RemindAt = data
 		case "attachedFile":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachedFile"))
-			data, err := ec.unmarshalOAttachedFile2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐFile(ctx, v)
+			data, err := ec.unmarshalOAttachedFileInput2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐFile(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6340,6 +6512,50 @@ func (ec *executionContext) unmarshalInputUpsertRoomInput(ctx context.Context, o
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var attachedFileImplementors = []string{"AttachedFile"}
+
+func (ec *executionContext) _AttachedFile(ctx context.Context, sel ast.SelectionSet, obj *domain.File) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, attachedFileImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AttachedFile")
+		case "url":
+			out.Values[i] = ec._AttachedFile_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._AttachedFile_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
 
 var eventImplementors = []string{"Event"}
 
@@ -6459,6 +6675,8 @@ func (ec *executionContext) _Event(ctx context.Context, sel ast.SelectionSet, ob
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "isDelete":
 			out.Values[i] = ec._Event_isDelete(ctx, field, obj)
+		case "attachedFile":
+			out.Values[i] = ec._Event_attachedFile(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8237,8 +8455,12 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) unmarshalOAttachedFile2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐFile(ctx context.Context, v interface{}) (domain.File, error) {
-	res, err := ec.unmarshalInputAttachedFile(ctx, v)
+func (ec *executionContext) marshalOAttachedFile2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐFile(ctx context.Context, sel ast.SelectionSet, v domain.File) graphql.Marshaler {
+	return ec._AttachedFile(ctx, sel, &v)
+}
+
+func (ec *executionContext) unmarshalOAttachedFileInput2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐFile(ctx context.Context, v interface{}) (domain.File, error) {
+	res, err := ec.unmarshalInputAttachedFileInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
