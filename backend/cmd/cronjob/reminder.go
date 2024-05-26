@@ -57,7 +57,7 @@ func main() {
 		}
 
 		startTime := time.UnixMilli(event.StartAt)
-		loc, err := time.LoadLocation("Asia/Taipei")
+		loc, err := time.LoadLocation("Local")
 		if err != nil {
 			log.Printf("Error loading location: %v\n", err)
 			continue
