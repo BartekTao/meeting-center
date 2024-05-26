@@ -19,6 +19,12 @@ spec:
             - containerPort: 16686
             - containerPort: 4317
             - containerPort: 4318
+          env:
+            - name: COLLECTOR_OTLP_ENABLED
+              valueFrom:
+                secretKeyRef:
+                  name: my-secret
+                  key: COLLECTOR_OTLP_ENABLED
 ---
 apiVersion: v1
 kind: Service
