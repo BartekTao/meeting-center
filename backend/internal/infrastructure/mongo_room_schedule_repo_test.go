@@ -154,7 +154,7 @@ func Test_mongoRoomScheduleRepository_QueryPaginated(t *testing.T) {
 		name    string
 		r       *mongoRoomScheduleRepository
 		args    args
-		want    int
+		want    []int
 		wantErr bool
 	}{
 		{
@@ -170,18 +170,25 @@ func Test_mongoRoomScheduleRepository_QueryPaginated(t *testing.T) {
 				skip:       0,
 				limit:      5,
 			},
-			want:    2,
+			want:    []int{3, 2},
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			counts := []int{}
+			eventCount := 0
 			got, err := tt.r.QueryPaginated(tt.args.ctx, tt.args.roomIDs, tt.args.equipments, tt.args.rules, tt.args.startAt, tt.args.endAt, tt.args.skip, tt.args.limit)
+			for _, roomSchedule := range got {
+				eventCount += len(roomSchedule.Schedules)
+			}
+			counts = append(counts, len(got))
+			counts = append(counts, eventCount)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("mongoRoomScheduleRepository.QueryPaginated() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(len(got), tt.want) {
+			if !reflect.DeepEqual(counts, tt.want) {
 				t.Errorf("mongoRoomScheduleRepository.QueryPaginated() = %v, want %v", got, tt.want)
 			}
 		})
