@@ -133,7 +133,7 @@ func (s *eventService) Upsert(ctx context.Context, req UpsertEventRequest) (*dom
 func (s *eventService) sendEmail(ctx context.Context, res *domain.Event, mailPrefix string, content string) error {
 	users, err := s.userRepo.GetByIDs(ctx, res.ParticipantsIDs)
 	if err != nil {
-		log.Printf("Error loading location: %v\n", err)
+		log.Printf("Error getting userEmail: %v\n", err)
 		return err
 	}
 	userEmails := make([]string, len(users))
@@ -141,7 +141,7 @@ func (s *eventService) sendEmail(ctx context.Context, res *domain.Event, mailPre
 		userEmails[i] = user.Email
 	}
 	startTime := time.UnixMilli(res.StartAt)
-	loc, err := time.LoadLocation("Asia/Taipei")
+	loc, err := time.LoadLocation("Local")
 	if err != nil {
 		log.Printf("Error loading location: %v\n", err)
 		return err
