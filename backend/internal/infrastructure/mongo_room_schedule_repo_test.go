@@ -88,46 +88,62 @@ func Test_mongoRoomScheduleRepository_QueryPaginated(t *testing.T) {
 		return
 	}
 
+	eventRepo := NewMongoEventRepository(testMongoClient)
+	testEventRepo, ok := eventRepo.(*mongoEventRepository)
+	if !ok {
+		log.Printf("Failed to type assert repo to mongoEventRepository")
+		t.Skip("Skipping test due to type assertion failure")
+		return
+	}
+
 	////////////////// Setup room reservation mongodb data ////////////////////////////////////////////////
 
-	testIDs := []string{"12341234123412341234AAAA", "12341234123412341234BBBB", "12341234123412341234CCCC"}
+	testIDs := []primitive.ObjectID{primitive.NewObjectID(), primitive.NewObjectID(), primitive.NewObjectID()}
+	testStr := "test"
 	for i := 0; i <= 2; i++ {
 
-		ID, _ := primitive.ObjectIDFromHex(testIDs[i])
 		room := bson.M{
-			"_id":        ID,
+			"_id":        testIDs[i],
 			"name":       fmt.Sprintf("room%d", i),
 			"capacity":   20,
 			"equipments": []domain.Equipment{domain.EQUIPMENT_TABLE, domain.EQUIPMENT_CAMERA},
 			"rules":      []domain.Rule{domain.RULE_NO_FOOD, domain.RULE_NO_DRINK},
 			"isDelete":   false,
 		}
-		var schedules []Schedule
+		var schedules Event
 		if i%2 == 0 {
-			schedules = []Schedule{
-				Schedule{
-					StartAt: 100,
-					EndAt:   200,
-				},
-				Schedule{
-					StartAt: 400,
-					EndAt:   600,
-				},
+			schedules = Event{
+				ID:              primitive.NewObjectID(),
+				Title:           testStr,
+				Description:     &testStr,
+				StartAt:         200,
+				EndAt:           400,
+				RoomReservation: &RoomReservation{RoomID: testIDs[i], ReservationStatus: domain.ReservationStatus_Confirmed},
+				ParticipantsIDs: []primitive.ObjectID{primitive.NewObjectID()},
+				Notes:           &testStr,
+				RemindAt:        0,
+				IsDelete:        false,
 			}
 		} else {
-			schedules = []Schedule{
-				Schedule{
-					StartAt: 700,
-					EndAt:   1000,
-				},
+			schedules = Event{
+				ID:              primitive.NewObjectID(),
+				Title:           testStr,
+				Description:     &testStr,
+				StartAt:         600,
+				EndAt:           800,
+				RoomReservation: &RoomReservation{RoomID: testIDs[i], ReservationStatus: domain.ReservationStatus_Confirmed},
+				ParticipantsIDs: []primitive.ObjectID{primitive.NewObjectID()},
+				Notes:           &testStr,
+				RemindAt:        0,
+				IsDelete:        false,
 			}
+
 		}
-		roomSchedule := bson.M{
-			"room":      room,
-			"schedules": schedules,
-		}
-		_, err := testRoomScheduleRepo.roomScheduleCollection.InsertOne(context.TODO(), roomSchedule)
-		require.NoError(t, err)
+
+		_, err1 := testRoomScheduleRepo.roomScheduleCollection.InsertOne(context.TODO(), room)
+		require.NoError(t, err1)
+		_, err2 := testEventRepo.eventCollection.InsertOne(context.TODO(), schedules)
+		require.NoError(t, err2)
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
@@ -138,7 +154,7 @@ func Test_mongoRoomScheduleRepository_QueryPaginated(t *testing.T) {
 		name    string
 		r       *mongoRoomScheduleRepository
 		args    args
-		want    []domain.RoomSchedule
+		want    int
 		wantErr bool
 	}{
 		{
@@ -146,15 +162,15 @@ func Test_mongoRoomScheduleRepository_QueryPaginated(t *testing.T) {
 			r:    testRoomScheduleRepo, // Initialize with appropriate values
 			args: args{
 				ctx:        context.Background(), // Use context appropriate for testing
-				roomIDs:    []string{"12341234123412341234AAAA", "12341234123412341234BBBB", "12341234123412341234CCCC"},
+				roomIDs:    []string{testIDs[0].Hex(), testIDs[1].Hex(), testIDs[2].Hex()},
 				equipments: []domain.Equipment{domain.EQUIPMENT_TABLE},
 				rules:      []domain.Rule{domain.RULE_NO_FOOD},
-				startAt:    400,
+				startAt:    0,
 				endAt:      500,
 				skip:       0,
-				limit:      0,
+				limit:      5,
 			},
-			want:    domain.ReservationStatus_Confirmed,
+			want:    2,
 			wantErr: false,
 		},
 	}
@@ -165,9 +181,15 @@ func Test_mongoRoomScheduleRepository_QueryPaginated(t *testing.T) {
 				t.Errorf("mongoRoomScheduleRepository.QueryPaginated() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
+			if !reflect.DeepEqual(len(got), tt.want) {
 				t.Errorf("mongoRoomScheduleRepository.QueryPaginated() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+
+	/////////////////// kill and remove the container //////////////////////////
+
+	if err := pool.Purge(resource); err != nil {
+		log.Fatalf("Could not purge Docker resource: %s", err)
 	}
 }
