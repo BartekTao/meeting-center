@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"time"
 
+	cloudstorage "cloud.google.com/go/storage"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -23,6 +24,7 @@ import (
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/middleware"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/notification"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/otelwrapper"
+	"github.com/BartekTao/nycu-meeting-room-api/pkg/storage"
 	"github.com/go-redsync/redsync/v4"
 	"github.com/go-redsync/redsync/v4/redis/goredis/v9"
 	goredislib "github.com/redis/go-redis/v9"
@@ -31,6 +33,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
+	"google.golang.org/api/option"
 )
 
 const defaultPort = "8080"
@@ -72,13 +75,23 @@ func run() (err error) {
 	})
 	defer client.Close()
 
+	credentials := os.Getenv("GCS_CREDENTIALS_JSON")
+	if credentials == "" {
+		log.Fatal("GCS_CREDENTIALS_JSON environment variable is not set")
+	}
+
+	gcsClient, err := cloudstorage.NewClient(ctx, option.WithCredentialsFile(credentials))
+	if err != nil {
+		log.Fatalf("Failed to create client: %v", err)
+	}
+
 	// Start HTTP server.
 	srv := &http.Server{
 		Addr:         ":8080",
 		BaseContext:  func(_ net.Listener) context.Context { return ctx },
 		ReadTimeout:  time.Second,
 		WriteTimeout: 10 * time.Second,
-		Handler:      newHTTPHandler(mongoClient, client),
+		Handler:      newHTTPHandler(mongoClient, client, gcsClient),
 	}
 	srvErr := make(chan error, 1)
 	go func() {
@@ -101,7 +114,7 @@ func run() (err error) {
 	return
 }
 
-func newHTTPHandler(mongoClient *mongo.Client, rsClient *goredislib.Client) http.Handler {
+func newHTTPHandler(mongoClient *mongo.Client, rsClient *goredislib.Client, gcsClient *cloudstorage.Client) http.Handler {
 	mux := http.NewServeMux()
 
 	c := cors.New(cors.Options{
@@ -135,12 +148,14 @@ func newHTTPHandler(mongoClient *mongo.Client, rsClient *goredislib.Client) http
 	roomRepo := infra.NewMongoRoomRepository(mongoClient)
 	eventRepo := infra.NewMongoEventRepository(mongoClient)
 	roomScheduleRepo := infra.NewRoomScheduleRepository(mongoClient)
+	storageHandler := storage.NewStorageHandler(gcsClient)
 
 	graphqlServer := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: resolvers.NewResolver(
 			app.NewRoomService(roomRepo, roomScheduleRepo),
 			app.NewEventService(eventRepo, locker, userRepo, mailHandler),
 			app.NewUserService(userRepo),
+			storageHandler,
 		),
 	}))
 	graphqlServer.AroundFields(tracer())

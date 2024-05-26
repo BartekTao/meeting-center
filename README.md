@@ -21,6 +21,20 @@
 - open `http://localhost:8080` to see graphQL doc
 - set `{ "Authorization": "Bearer your-token" }` on header to call other api
 
+#### api test
+- open `http://localhost:8080`
+- special case: uploadFile:
+    - `echo "This is a test file" > testfile.txt`
+    - 
+        ```
+        curl -X POST http://localhost:8080/query \
+        -H "Authorization: Bearer $(your-token)" \
+        -F operations='{ "query": "mutation ($file: Upload!) { uploadFile(file: $file) }", "variables": { "file": null } }' \
+        -F map='{ "0": ["variables.file"] }' \
+        -F 0=@testfile.txt
+        ```
+    - see more on https://gqlgen.com/reference/file-upload/
+
 ### start frontend service
 
 #### Project setup

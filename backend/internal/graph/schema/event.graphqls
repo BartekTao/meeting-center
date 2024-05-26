@@ -1,3 +1,5 @@
+scalar Upload
+
 extend type Query {
   event(id: ID!): Event
   userEvents(userIDs: [ID!]!, startAt: Int64!, endAt: Int64!): [UserEvent]
@@ -7,6 +9,7 @@ extend type Mutation {
   upsertEvent(input: UpsertEventInput!): Event!
   deleteEvent(id: ID!): Event!
   updateEventSummary(id: ID!, summary: String!): Boolean!
+  uploadFile(file: Upload!): String!
 }
 
 type Event @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.Event") {

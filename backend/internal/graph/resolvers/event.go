@@ -7,12 +7,14 @@ package resolvers
 import (
 	"context"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/app"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/common"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/middleware"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 // Participants is the resolver for the participants field.
@@ -57,6 +59,14 @@ func (r *mutationResolver) UpdateEventSummary(ctx context.Context, id string, su
 	claims, _ := ctx.Value(middleware.UserCtxKey).(*middleware.MeetingCenterClaims)
 
 	return r.eventService.UpdateSummary(ctx, id, summary, claims.Sub)
+}
+
+// UploadFile is the resolver for the uploadFile field.
+func (r *mutationResolver) UploadFile(ctx context.Context, file graphql.Upload) (string, error) {
+	if file.Size > 3145728 {
+		return "", gqlerror.Errorf("File should not large than 3MB")
+	}
+	return r.storageHandler.UploadFile(file.File, file.Filename)
 }
 
 // Event is the resolver for the event field.
@@ -119,6 +129,8 @@ func (r *Resolver) RoomReservation() graph.RoomReservationResolver {
 // UserEvent returns graph.UserEventResolver implementation.
 func (r *Resolver) UserEvent() graph.UserEventResolver { return &userEventResolver{r} }
 
-type eventResolver struct{ *Resolver }
-type roomReservationResolver struct{ *Resolver }
-type userEventResolver struct{ *Resolver }
+type (
+	eventResolver           struct{ *Resolver }
+	roomReservationResolver struct{ *Resolver }
+	userEventResolver       struct{ *Resolver }
+)
