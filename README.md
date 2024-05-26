@@ -14,6 +14,7 @@
 - `cd backend`
 - copy tmp.env to .env, then set `SENDER_EMAIL`, `SENDER_PASSWORD`, `GOOGLE_OAUTH_CLIENT_SECRET` and `GOOGLE_OAUTH_CLIENT_ID` on .env
 - download GCS credential json file, put it under `backend` folder
+- make sure env-`GCS_CREDENTIALS_JSON` match your credential json path
 - `docker build -f .\deployment\Dockerfile -t meeting-center-api .`
 - `docker-compose -f ./deployment/Docker-compose.yml up -d`
 - remove cli: `docker-compose -f ./deployment/Docker-compose.yml down`
