@@ -86,7 +86,7 @@ require (
 	cloud.google.com/go/storage v1.41.0
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/go-redsync/redsync/v4 v4.13.0
-	github.com/google/uuid v1.6.0 // indirect
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect

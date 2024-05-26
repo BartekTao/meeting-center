@@ -37,18 +37,6 @@ type RoomScheduleEdge struct {
 	Cursor string               `json:"cursor"`
 }
 
-type UpsertEventInput struct {
-	ID              *string  `json:"id,omitempty"`
-	Title           string   `json:"title"`
-	Description     *string  `json:"description,omitempty"`
-	StartAt         int64    `json:"startAt"`
-	EndAt           int64    `json:"endAt"`
-	RoomID          *string  `json:"roomId,omitempty"`
-	ParticipantsIDs []string `json:"participantsIDs,omitempty"`
-	Notes           *string  `json:"notes,omitempty"`
-	RemindAt        int64    `json:"remindAt"`
-}
-
 type UpsertRoomInput struct {
 	ID         *string            `json:"id,omitempty"`
 	Name       string             `json:"name"`

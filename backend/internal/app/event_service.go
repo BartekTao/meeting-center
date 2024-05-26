@@ -12,16 +12,17 @@ import (
 )
 
 type UpsertEventRequest struct {
-	ID              *string  `json:"_id,omitempty"`
-	Title           string   `json:"title"`
-	Description     *string  `json:"description"`
-	StartAt         int64    `json:"startAt"`
-	EndAt           int64    `json:"endAt"`
-	RoomID          *string  `json:"roomId"`
-	ParticipantsIDs []string `json:"participantsIDs"`
-	Notes           *string  `json:"notes"`
-	RemindAt        int64    `json:"remindAt"`
-	UpdaterID       string   `json:"updaterID"`
+	ID              *string     `json:"_id,omitempty"`
+	Title           string      `json:"title"`
+	Description     *string     `json:"description"`
+	StartAt         int64       `json:"startAt"`
+	EndAt           int64       `json:"endAt"`
+	RoomID          *string     `json:"roomId"`
+	ParticipantsIDs []string    `json:"participantsIDs"`
+	Notes           *string     `json:"notes"`
+	RemindAt        int64       `json:"remindAt"`
+	UpdaterID       string      `json:"updaterID"`
+	AttachedFile    domain.File `json:"attachedFile"`
 }
 
 type EventService interface {
@@ -64,6 +65,7 @@ func (s *eventService) Upsert(ctx context.Context, req UpsertEventRequest) (*dom
 		Notes:           req.Notes,
 		RemindAt:        req.RemindAt,
 		UpdaterID:       req.UpdaterID,
+		AttachedFile:    req.AttachedFile,
 	}
 
 	if req.RoomID == nil {

@@ -14,6 +14,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
+	"github.com/BartekTao/nycu-meeting-room-api/internal/app"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
 	gqlparser "github.com/vektah/gqlparser/v2"
@@ -71,7 +72,7 @@ type ComplexityRoot struct {
 		DeleteRoom         func(childComplexity int, id string) int
 		UpdateEventSummary func(childComplexity int, id string, summary string) int
 		UploadFile         func(childComplexity int, file graphql.Upload) int
-		UpsertEvent        func(childComplexity int, input model.UpsertEventInput) int
+		UpsertEvent        func(childComplexity int, input app.UpsertEventRequest) int
 		UpsertRoom         func(childComplexity int, room model.UpsertRoomInput) int
 	}
 
@@ -164,7 +165,7 @@ type EventResolver interface {
 type MutationResolver interface {
 	UpsertRoom(ctx context.Context, room model.UpsertRoomInput) (*domain.Room, error)
 	DeleteRoom(ctx context.Context, id string) (*domain.Room, error)
-	UpsertEvent(ctx context.Context, input model.UpsertEventInput) (*domain.Event, error)
+	UpsertEvent(ctx context.Context, input app.UpsertEventRequest) (*domain.Event, error)
 	DeleteEvent(ctx context.Context, id string) (*domain.Event, error)
 	UpdateEventSummary(ctx context.Context, id string, summary string) (bool, error)
 	UploadFile(ctx context.Context, file graphql.Upload) (string, error)
@@ -348,7 +349,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpsertEvent(childComplexity, args["input"].(model.UpsertEventInput)), true
+		return e.complexity.Mutation.UpsertEvent(childComplexity, args["input"].(app.UpsertEventRequest)), true
 
 	case "Mutation.upsertRoom":
 		if e.complexity.Mutation.UpsertRoom == nil {
@@ -697,6 +698,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputAttachedFile,
 		ec.unmarshalInputUpsertEventInput,
 		ec.unmarshalInputUpsertRoomInput,
 	)
@@ -889,10 +891,10 @@ func (ec *executionContext) field_Mutation_uploadFile_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_upsertEvent_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.UpsertEventInput
+	var arg0 app.UpsertEventRequest
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpsertEventInput2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUpsertEventInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpsertEventInput2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋappᚐUpsertEventRequest(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1927,7 +1929,7 @@ func (ec *executionContext) _Mutation_upsertEvent(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpsertEvent(rctx, fc.Args["input"].(model.UpsertEventInput))
+		return ec.resolvers.Mutation().UpsertEvent(rctx, fc.Args["input"].(app.UpsertEventRequest))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6152,14 +6154,48 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputUpsertEventInput(ctx context.Context, obj interface{}) (model.UpsertEventInput, error) {
-	var it model.UpsertEventInput
+func (ec *executionContext) unmarshalInputAttachedFile(ctx context.Context, obj interface{}) (domain.File, error) {
+	var it domain.File
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "title", "description", "startAt", "endAt", "roomId", "participantsIDs", "notes", "remindAt"}
+	fieldsInOrder := [...]string{"url", "name"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "url":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("url"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Url = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpsertEventInput(ctx context.Context, obj interface{}) (app.UpsertEventRequest, error) {
+	var it app.UpsertEventRequest
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "title", "description", "startAt", "endAt", "roomId", "participantsIDs", "notes", "remindAt", "attachedFile"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -6229,6 +6265,13 @@ func (ec *executionContext) unmarshalInputUpsertEventInput(ctx context.Context, 
 				return it, err
 			}
 			it.RemindAt = data
+		case "attachedFile":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachedFile"))
+			data, err := ec.unmarshalOAttachedFile2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐFile(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AttachedFile = data
 		}
 	}
 
@@ -7873,7 +7916,7 @@ func (ec *executionContext) marshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋg
 	return res
 }
 
-func (ec *executionContext) unmarshalNUpsertEventInput2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUpsertEventInput(ctx context.Context, v interface{}) (model.UpsertEventInput, error) {
+func (ec *executionContext) unmarshalNUpsertEventInput2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋappᚐUpsertEventRequest(ctx context.Context, v interface{}) (app.UpsertEventRequest, error) {
 	res, err := ec.unmarshalInputUpsertEventInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -8192,6 +8235,11 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalOAttachedFile2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐFile(ctx context.Context, v interface{}) (domain.File, error) {
+	res, err := ec.unmarshalInputAttachedFile(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {

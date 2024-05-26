@@ -12,6 +12,11 @@ extend type Mutation {
   uploadFile(file: Upload!): String!
 }
 
+input AttachedFile @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.File") {
+  url: String!
+  name: String!
+}
+
 type Event @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.Event") {
   id: ID!
   title: String!
@@ -42,7 +47,7 @@ type UserEvent {
   events: [Event!]
 }
 
-input UpsertEventInput {
+input UpsertEventInput @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/app.UpsertEventRequest") {
   id: ID
   title: String!
   description: String
@@ -52,4 +57,7 @@ input UpsertEventInput {
   participantsIDs: [ID!]
   notes: String
   remindAt: Int64!
+  attachedFile: AttachedFile
 }
+
+

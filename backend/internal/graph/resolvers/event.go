@@ -28,23 +28,12 @@ func (r *eventResolver) Creator(ctx context.Context, obj *domain.Event) (*domain
 }
 
 // UpsertEvent is the resolver for the upsertEvent field.
-func (r *mutationResolver) UpsertEvent(ctx context.Context, input model.UpsertEventInput) (*domain.Event, error) {
+func (r *mutationResolver) UpsertEvent(ctx context.Context, input app.UpsertEventRequest) (*domain.Event, error) {
 	claims, _ := ctx.Value(middleware.UserCtxKey).(*middleware.MeetingCenterClaims)
 
-	upsertEvent := app.UpsertEventRequest{
-		ID:              input.ID,
-		Title:           input.Title,
-		Description:     input.Description,
-		StartAt:         input.StartAt,
-		EndAt:           input.EndAt,
-		RoomID:          input.RoomID,
-		ParticipantsIDs: input.ParticipantsIDs,
-		Notes:           input.Notes,
-		RemindAt:        input.RemindAt,
-		UpdaterID:       claims.Sub,
-	}
+	input.UpdaterID = claims.Sub
 
-	event, upsert_err := r.eventService.Upsert(ctx, upsertEvent)
+	event, upsert_err := r.eventService.Upsert(ctx, input)
 
 	return event, upsert_err
 }
@@ -129,8 +118,6 @@ func (r *Resolver) RoomReservation() graph.RoomReservationResolver {
 // UserEvent returns graph.UserEventResolver implementation.
 func (r *Resolver) UserEvent() graph.UserEventResolver { return &userEventResolver{r} }
 
-type (
-	eventResolver           struct{ *Resolver }
-	roomReservationResolver struct{ *Resolver }
-	userEventResolver       struct{ *Resolver }
-)
+type eventResolver struct{ *Resolver }
+type roomReservationResolver struct{ *Resolver }
+type userEventResolver struct{ *Resolver }
