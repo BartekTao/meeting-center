@@ -1,6 +1,6 @@
 GO_CMD=go
 
-MAIN_FILE=./cmd/server.go
+MAIN_FILE=./cmd/api/server.go
 
 all:
 	docker-compose -f ./deployment/Docker-compose.yml up -d

@@ -58,12 +58,7 @@ type RoomScheduleEdge {
 
 type RoomSchedule @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.RoomSchedule") {
   room: Room
-  schedules: [Schedule!]
-}
-
-type Schedule @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.Schedule") {
-  startAt: Int64!
-  endAt: Int64!
+  schedules: [Event!]
 }
 
 enum Rule @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.Rule") {

@@ -292,6 +292,23 @@ func (m *mongoEventRepository) GetAllWithRoomConfirmed(ctx context.Context, room
 	return res, nil
 }
 
+func (m *mongoEventRepository) GetRemindEvents(ctx context.Context, checkAt int64) ([]domain.Event, error) {
+	filter := bson.M{
+		"remindAt": checkAt,
+		"isDelete": false,
+	}
+
+	events, err := m.findAllByFilter(ctx, m.eventCollection, filter)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]domain.Event, len(events))
+	for i, event := range events {
+		res[i] = *ToDomainEvent(event)
+	}
+	return res, nil
+}
+
 func ToDomainEvent(event *Event) *domain.Event {
 	participantsIDs := make([]string, len(event.ParticipantsIDs))
 	for i, participantsID := range event.ParticipantsIDs {
