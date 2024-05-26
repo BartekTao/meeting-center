@@ -121,7 +121,10 @@ func (m *mongoRoomRepository) QueryPaginated(ctx context.Context, skip int, limi
 	rooms, err := m.queryPaginated(
 		ctx,
 		m.roomCollection,
-		skip, limit, bson.M{},
+		skip, limit,
+		bson.M{
+			"isDelete": false,
+		},
 		bson.D{{Key: "createdAt", Value: 1}},
 	)
 	if err != nil {
