@@ -24,11 +24,17 @@ type Event struct {
 	Notes           *string              `bson:"notes"`
 	RemindAt        int64                `bson:"remindAt"`
 	IsDelete        bool                 `bson:"isDelete"`
-	Summary         string               `bson:"summary"`
+	Summary         *string              `bson:"summary"`
+	AttachedFile    File                 `bson:"attachedFile"`
 	CreatedAt       int64                `bson:"createdAt"`
 	CreatorID       primitive.ObjectID   `bson:"creatorID"`
 	UpdatedAt       int64                `bson:"updatedAt"`
 	UpdaterID       primitive.ObjectID   `bson:"updaterID"`
+}
+
+type File struct {
+	Url  string `bson:"url"`
+	Name string `bson:"name"`
 }
 
 type RoomReservation struct {
@@ -80,6 +86,8 @@ func (m *mongoEventRepository) Upsert(ctx context.Context, event domain.Event) (
 		}
 	}
 
+	attachedFile := File(event.AttachedFile)
+
 	if event.ID == nil { // Insert new event
 		currentTime := time.Now().Unix()
 
@@ -97,6 +105,7 @@ func (m *mongoEventRepository) Upsert(ctx context.Context, event domain.Event) (
 			CreatorID:       updaterID,
 			UpdatedAt:       currentTime,
 			UpdaterID:       updaterID,
+			AttachedFile:    attachedFile,
 		}
 
 		result, err := collection.InsertOne(ctx, newEvent)
@@ -129,6 +138,7 @@ func (m *mongoEventRepository) Upsert(ctx context.Context, event domain.Event) (
 				"remindAt":        event.RemindAt,
 				"updatedAt":       time.Now().Unix(),
 				"updaterID":       updaterID,
+				"attachedFile":    attachedFile,
 			},
 		}
 
@@ -323,7 +333,9 @@ func ToDomainEvent(event *Event) *domain.Event {
 		RoomReservation: ToDomainRoomReservation(event.RoomReservation),
 		ParticipantsIDs: participantsIDs,
 		Notes:           event.Notes,
+		Summary:         event.Summary,
 		RemindAt:        event.RemindAt,
+		AttachedFile:    domain.File(event.AttachedFile),
 		IsDelete:        event.IsDelete,
 		CreatedAt:       event.CreatedAt,
 		CreatorID:       event.CreatorID.Hex(),

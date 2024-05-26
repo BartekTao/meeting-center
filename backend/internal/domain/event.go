@@ -20,12 +20,19 @@ type Event struct {
 	RoomReservation *RoomReservation `json:"roomReservation"`
 	ParticipantsIDs []string         `json:"participantsIDs"`
 	Notes           *string          `json:"notes"`
+	Summary         *string          `json:"summary"`
 	RemindAt        int64            `json:"remindAt"`
+	AttachedFile    File             `json:"attachedFile"`
 	IsDelete        bool             `json:"isDelete"`
 	CreatedAt       int64            `json:"createdAt"`
 	CreatorID       string           `json:"creatorID"`
 	UpdatedAt       int64            `json:"updatedAt"`
 	UpdaterID       string           `json:"updaterID"`
+}
+
+type File struct {
+	Url  string `json:"url"`
+	Name string `json:"name"`
 }
 
 type RoomReservation struct {

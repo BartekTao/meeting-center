@@ -42,6 +42,8 @@ services:
     image: meeting-center-api
     ports:
       - 8080:8080
+    volumes:
+      - ../nycu-cncf-9ba3d1230fc5.json:/etc/gcp/credentials.json:ro
     env_file:
       - ../.env
     depends_on:
