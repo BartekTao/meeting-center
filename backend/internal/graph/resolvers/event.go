@@ -7,12 +7,14 @@ package resolvers
 import (
 	"context"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/app"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/common"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/middleware"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 // Participants is the resolver for the participants field.
@@ -26,23 +28,12 @@ func (r *eventResolver) Creator(ctx context.Context, obj *domain.Event) (*domain
 }
 
 // UpsertEvent is the resolver for the upsertEvent field.
-func (r *mutationResolver) UpsertEvent(ctx context.Context, input model.UpsertEventInput) (*domain.Event, error) {
+func (r *mutationResolver) UpsertEvent(ctx context.Context, input app.UpsertEventRequest) (*domain.Event, error) {
 	claims, _ := ctx.Value(middleware.UserCtxKey).(*middleware.MeetingCenterClaims)
 
-	upsertEvent := app.UpsertEventRequest{
-		ID:              input.ID,
-		Title:           input.Title,
-		Description:     input.Description,
-		StartAt:         input.StartAt,
-		EndAt:           input.EndAt,
-		RoomID:          input.RoomID,
-		ParticipantsIDs: input.ParticipantsIDs,
-		Notes:           input.Notes,
-		RemindAt:        input.RemindAt,
-		UpdaterID:       claims.Sub,
-	}
+	input.UpdaterID = claims.Sub
 
-	event, upsert_err := r.eventService.Upsert(ctx, upsertEvent)
+	event, upsert_err := r.eventService.Upsert(ctx, input)
 
 	return event, upsert_err
 }
@@ -57,6 +48,14 @@ func (r *mutationResolver) UpdateEventSummary(ctx context.Context, id string, su
 	claims, _ := ctx.Value(middleware.UserCtxKey).(*middleware.MeetingCenterClaims)
 
 	return r.eventService.UpdateSummary(ctx, id, summary, claims.Sub)
+}
+
+// UploadFile is the resolver for the uploadFile field.
+func (r *mutationResolver) UploadFile(ctx context.Context, file graphql.Upload) (string, error) {
+	if file.Size > 3145728 {
+		return "", gqlerror.Errorf("File should not large than 3MB")
+	}
+	return r.storageHandler.UploadFile(file.File, file.Filename)
 }
 
 // Event is the resolver for the event field.

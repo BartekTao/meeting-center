@@ -14,6 +14,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
+	"github.com/BartekTao/nycu-meeting-room-api/internal/app"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/model"
 	gqlparser "github.com/vektah/gqlparser/v2"
@@ -44,7 +45,6 @@ type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
 	RoomReservation() RoomReservationResolver
-	RoomSchedule() RoomScheduleResolver
 	UserEvent() UserEventResolver
 }
 
@@ -52,7 +52,13 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AttachedFile struct {
+		Name func(childComplexity int) int
+		Url  func(childComplexity int) int
+	}
+
 	Event struct {
+		AttachedFile    func(childComplexity int) int
 		Creator         func(childComplexity int) int
 		Description     func(childComplexity int) int
 		EndAt           func(childComplexity int) int
@@ -63,6 +69,7 @@ type ComplexityRoot struct {
 		RemindAt        func(childComplexity int) int
 		RoomReservation func(childComplexity int) int
 		StartAt         func(childComplexity int) int
+		Summary         func(childComplexity int) int
 		Title           func(childComplexity int) int
 	}
 
@@ -70,7 +77,8 @@ type ComplexityRoot struct {
 		DeleteEvent        func(childComplexity int, id string) int
 		DeleteRoom         func(childComplexity int, id string) int
 		UpdateEventSummary func(childComplexity int, id string, summary string) int
-		UpsertEvent        func(childComplexity int, input model.UpsertEventInput) int
+		UploadFile         func(childComplexity int, file graphql.Upload) int
+		UpsertEvent        func(childComplexity int, input app.UpsertEventRequest) int
 		UpsertRoom         func(childComplexity int, room model.UpsertRoomInput) int
 	}
 
@@ -163,9 +171,10 @@ type EventResolver interface {
 type MutationResolver interface {
 	UpsertRoom(ctx context.Context, room model.UpsertRoomInput) (*domain.Room, error)
 	DeleteRoom(ctx context.Context, id string) (*domain.Room, error)
-	UpsertEvent(ctx context.Context, input model.UpsertEventInput) (*domain.Event, error)
+	UpsertEvent(ctx context.Context, input app.UpsertEventRequest) (*domain.Event, error)
 	DeleteEvent(ctx context.Context, id string) (*domain.Event, error)
 	UpdateEventSummary(ctx context.Context, id string, summary string) (bool, error)
+	UploadFile(ctx context.Context, file graphql.Upload) (string, error)
 }
 type QueryResolver interface {
 	PaginatedRooms(ctx context.Context, first *int, after *string) (*model.RoomConnection, error)
@@ -180,9 +189,6 @@ type QueryResolver interface {
 type RoomReservationResolver interface {
 	Room(ctx context.Context, obj *domain.RoomReservation) (*domain.Room, error)
 	Status(ctx context.Context, obj *domain.RoomReservation) (*domain.ReservationStatus, error)
-}
-type RoomScheduleResolver interface {
-	Schedules(ctx context.Context, obj *domain.RoomSchedule) ([]domain.Event, error)
 }
 type UserEventResolver interface {
 	User(ctx context.Context, obj *model.UserEvent) (*domain.User, error)
@@ -206,6 +212,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AttachedFile.name":
+		if e.complexity.AttachedFile.Name == nil {
+			break
+		}
+
+		return e.complexity.AttachedFile.Name(childComplexity), true
+
+	case "AttachedFile.url":
+		if e.complexity.AttachedFile.Url == nil {
+			break
+		}
+
+		return e.complexity.AttachedFile.Url(childComplexity), true
+
+	case "Event.attachedFile":
+		if e.complexity.Event.AttachedFile == nil {
+			break
+		}
+
+		return e.complexity.Event.AttachedFile(childComplexity), true
 
 	case "Event.creator":
 		if e.complexity.Event.Creator == nil {
@@ -277,6 +304,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Event.StartAt(childComplexity), true
 
+	case "Event.summary":
+		if e.complexity.Event.Summary == nil {
+			break
+		}
+
+		return e.complexity.Event.Summary(childComplexity), true
+
 	case "Event.title":
 		if e.complexity.Event.Title == nil {
 			break
@@ -320,6 +354,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateEventSummary(childComplexity, args["id"].(string), args["summary"].(string)), true
 
+	case "Mutation.uploadFile":
+		if e.complexity.Mutation.UploadFile == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_uploadFile_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UploadFile(childComplexity, args["file"].(graphql.Upload)), true
+
 	case "Mutation.upsertEvent":
 		if e.complexity.Mutation.UpsertEvent == nil {
 			break
@@ -330,7 +376,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpsertEvent(childComplexity, args["input"].(model.UpsertEventInput)), true
+		return e.complexity.Mutation.UpsertEvent(childComplexity, args["input"].(app.UpsertEventRequest)), true
 
 	case "Mutation.upsertRoom":
 		if e.complexity.Mutation.UpsertRoom == nil {
@@ -679,6 +725,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputAttachedFileInput,
 		ec.unmarshalInputUpsertEventInput,
 		ec.unmarshalInputUpsertRoomInput,
 	)
@@ -853,13 +900,28 @@ func (ec *executionContext) field_Mutation_updateEventSummary_args(ctx context.C
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_uploadFile_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 graphql.Upload
+	if tmp, ok := rawArgs["file"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("file"))
+		arg0, err = ec.unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["file"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_upsertEvent_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.UpsertEventInput
+	var arg0 app.UpsertEventRequest
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpsertEventInput2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUpsertEventInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpsertEventInput2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋappᚐUpsertEventRequest(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1190,6 +1252,94 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AttachedFile_url(ctx context.Context, field graphql.CollectedField, obj *domain.File) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AttachedFile_url(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Url, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AttachedFile_url(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AttachedFile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AttachedFile_name(ctx context.Context, field graphql.CollectedField, obj *domain.File) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AttachedFile_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AttachedFile_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AttachedFile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _Event_id(ctx context.Context, field graphql.CollectedField, obj *domain.Event) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Event_id(ctx, field)
@@ -1600,6 +1750,47 @@ func (ec *executionContext) fieldContext_Event_remindAt(ctx context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Event_summary(ctx context.Context, field graphql.CollectedField, obj *domain.Event) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Event_summary(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Summary, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Event_summary(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Event",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Event_creator(ctx context.Context, field graphql.CollectedField, obj *domain.Event) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Event_creator(ctx, field)
 	if err != nil {
@@ -1696,6 +1887,53 @@ func (ec *executionContext) fieldContext_Event_isDelete(ctx context.Context, fie
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Event_attachedFile(ctx context.Context, field graphql.CollectedField, obj *domain.Event) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Event_attachedFile(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AttachedFile, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(domain.File)
+	fc.Result = res
+	return ec.marshalOAttachedFile2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐFile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Event_attachedFile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Event",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "url":
+				return ec.fieldContext_AttachedFile_url(ctx, field)
+			case "name":
+				return ec.fieldContext_AttachedFile_name(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AttachedFile", field.Name)
 		},
 	}
 	return fc, nil
@@ -1853,7 +2091,7 @@ func (ec *executionContext) _Mutation_upsertEvent(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpsertEvent(rctx, fc.Args["input"].(model.UpsertEventInput))
+		return ec.resolvers.Mutation().UpsertEvent(rctx, fc.Args["input"].(app.UpsertEventRequest))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1896,10 +2134,14 @@ func (ec *executionContext) fieldContext_Mutation_upsertEvent(ctx context.Contex
 				return ec.fieldContext_Event_notes(ctx, field)
 			case "remindAt":
 				return ec.fieldContext_Event_remindAt(ctx, field)
+			case "summary":
+				return ec.fieldContext_Event_summary(ctx, field)
 			case "creator":
 				return ec.fieldContext_Event_creator(ctx, field)
 			case "isDelete":
 				return ec.fieldContext_Event_isDelete(ctx, field)
+			case "attachedFile":
+				return ec.fieldContext_Event_attachedFile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -1975,10 +2217,14 @@ func (ec *executionContext) fieldContext_Mutation_deleteEvent(ctx context.Contex
 				return ec.fieldContext_Event_notes(ctx, field)
 			case "remindAt":
 				return ec.fieldContext_Event_remindAt(ctx, field)
+			case "summary":
+				return ec.fieldContext_Event_summary(ctx, field)
 			case "creator":
 				return ec.fieldContext_Event_creator(ctx, field)
 			case "isDelete":
 				return ec.fieldContext_Event_isDelete(ctx, field)
+			case "attachedFile":
+				return ec.fieldContext_Event_attachedFile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -2046,6 +2292,61 @@ func (ec *executionContext) fieldContext_Mutation_updateEventSummary(ctx context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateEventSummary_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_uploadFile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_uploadFile(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UploadFile(rctx, fc.Args["file"].(graphql.Upload))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_uploadFile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_uploadFile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -2431,10 +2732,14 @@ func (ec *executionContext) fieldContext_Query_event(ctx context.Context, field 
 				return ec.fieldContext_Event_notes(ctx, field)
 			case "remindAt":
 				return ec.fieldContext_Event_remindAt(ctx, field)
+			case "summary":
+				return ec.fieldContext_Event_summary(ctx, field)
 			case "creator":
 				return ec.fieldContext_Event_creator(ctx, field)
 			case "isDelete":
 				return ec.fieldContext_Event_isDelete(ctx, field)
+			case "attachedFile":
+				return ec.fieldContext_Event_attachedFile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -3388,7 +3693,7 @@ func (ec *executionContext) _RoomSchedule_schedules(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.RoomSchedule().Schedules(rctx, obj)
+		return obj.Schedules, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3406,8 +3711,8 @@ func (ec *executionContext) fieldContext_RoomSchedule_schedules(ctx context.Cont
 	fc = &graphql.FieldContext{
 		Object:     "RoomSchedule",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -3428,10 +3733,14 @@ func (ec *executionContext) fieldContext_RoomSchedule_schedules(ctx context.Cont
 				return ec.fieldContext_Event_notes(ctx, field)
 			case "remindAt":
 				return ec.fieldContext_Event_remindAt(ctx, field)
+			case "summary":
+				return ec.fieldContext_Event_summary(ctx, field)
 			case "creator":
 				return ec.fieldContext_Event_creator(ctx, field)
 			case "isDelete":
 				return ec.fieldContext_Event_isDelete(ctx, field)
+			case "attachedFile":
+				return ec.fieldContext_Event_attachedFile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -4229,10 +4538,14 @@ func (ec *executionContext) fieldContext_UserEvent_events(ctx context.Context, f
 				return ec.fieldContext_Event_notes(ctx, field)
 			case "remindAt":
 				return ec.fieldContext_Event_remindAt(ctx, field)
+			case "summary":
+				return ec.fieldContext_Event_summary(ctx, field)
 			case "creator":
 				return ec.fieldContext_Event_creator(ctx, field)
 			case "isDelete":
 				return ec.fieldContext_Event_isDelete(ctx, field)
+			case "attachedFile":
+				return ec.fieldContext_Event_attachedFile(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Event", field.Name)
 		},
@@ -6013,14 +6326,48 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputUpsertEventInput(ctx context.Context, obj interface{}) (model.UpsertEventInput, error) {
-	var it model.UpsertEventInput
+func (ec *executionContext) unmarshalInputAttachedFileInput(ctx context.Context, obj interface{}) (domain.File, error) {
+	var it domain.File
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "title", "description", "startAt", "endAt", "roomId", "participantsIDs", "notes", "remindAt"}
+	fieldsInOrder := [...]string{"url", "name"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "url":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("url"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Url = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpsertEventInput(ctx context.Context, obj interface{}) (app.UpsertEventRequest, error) {
+	var it app.UpsertEventRequest
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "title", "description", "startAt", "endAt", "roomId", "participantsIDs", "notes", "remindAt", "attachedFile"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -6090,6 +6437,13 @@ func (ec *executionContext) unmarshalInputUpsertEventInput(ctx context.Context, 
 				return it, err
 			}
 			it.RemindAt = data
+		case "attachedFile":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachedFile"))
+			data, err := ec.unmarshalOAttachedFileInput2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐFile(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AttachedFile = data
 		}
 	}
 
@@ -6158,6 +6512,50 @@ func (ec *executionContext) unmarshalInputUpsertRoomInput(ctx context.Context, o
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var attachedFileImplementors = []string{"AttachedFile"}
+
+func (ec *executionContext) _AttachedFile(ctx context.Context, sel ast.SelectionSet, obj *domain.File) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, attachedFileImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AttachedFile")
+		case "url":
+			out.Values[i] = ec._AttachedFile_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._AttachedFile_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
 
 var eventImplementors = []string{"Event"}
 
@@ -6237,6 +6635,8 @@ func (ec *executionContext) _Event(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "summary":
+			out.Values[i] = ec._Event_summary(ctx, field, obj)
 		case "creator":
 			field := field
 
@@ -6275,6 +6675,8 @@ func (ec *executionContext) _Event(ctx context.Context, sel ast.SelectionSet, ob
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "isDelete":
 			out.Values[i] = ec._Event_isDelete(ctx, field, obj)
+		case "attachedFile":
+			out.Values[i] = ec._Event_attachedFile(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6348,6 +6750,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "updateEventSummary":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateEventSummary(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "uploadFile":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_uploadFile(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -6875,38 +7284,7 @@ func (ec *executionContext) _RoomSchedule(ctx context.Context, sel ast.Selection
 		case "room":
 			out.Values[i] = ec._RoomSchedule_room(ctx, field, obj)
 		case "schedules":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._RoomSchedule_schedules(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			out.Values[i] = ec._RoomSchedule_schedules(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7741,7 +8119,22 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNUpsertEventInput2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋgraphᚋmodelᚐUpsertEventInput(ctx context.Context, v interface{}) (model.UpsertEventInput, error) {
+func (ec *executionContext) unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v interface{}) (graphql.Upload, error) {
+	res, err := graphql.UnmarshalUpload(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v graphql.Upload) graphql.Marshaler {
+	res := graphql.MarshalUpload(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNUpsertEventInput2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋappᚐUpsertEventRequest(ctx context.Context, v interface{}) (app.UpsertEventRequest, error) {
 	res, err := ec.unmarshalInputUpsertEventInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -8060,6 +8453,15 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalOAttachedFile2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐFile(ctx context.Context, sel ast.SelectionSet, v domain.File) graphql.Marshaler {
+	return ec._AttachedFile(ctx, sel, &v)
+}
+
+func (ec *executionContext) unmarshalOAttachedFileInput2githubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐFile(ctx context.Context, v interface{}) (domain.File, error) {
+	res, err := ec.unmarshalInputAttachedFileInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {

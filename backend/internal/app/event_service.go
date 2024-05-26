@@ -2,23 +2,27 @@ package app
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"time"
 
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/lock"
+	"github.com/BartekTao/nycu-meeting-room-api/pkg/notification"
 )
 
 type UpsertEventRequest struct {
-	ID              *string  `json:"_id,omitempty"`
-	Title           string   `json:"title"`
-	Description     *string  `json:"description"`
-	StartAt         int64    `json:"startAt"`
-	EndAt           int64    `json:"endAt"`
-	RoomID          *string  `json:"roomId"`
-	ParticipantsIDs []string `json:"participantsIDs"`
-	Notes           *string  `json:"notes"`
-	RemindAt        int64    `json:"remindAt"`
-	UpdaterID       string   `json:"updaterID"`
+	ID              *string     `json:"_id,omitempty"`
+	Title           string      `json:"title"`
+	Description     *string     `json:"description"`
+	StartAt         int64       `json:"startAt"`
+	EndAt           int64       `json:"endAt"`
+	RoomID          *string     `json:"roomId"`
+	ParticipantsIDs []string    `json:"participantsIDs"`
+	Notes           *string     `json:"notes"`
+	RemindAt        int64       `json:"remindAt"`
+	UpdaterID       string      `json:"updaterID"`
+	AttachedFile    domain.File `json:"attachedFile"`
 }
 
 type EventService interface {
@@ -31,13 +35,22 @@ type EventService interface {
 
 type eventService struct {
 	eventRepository domain.EventRepository
+	userRepo        domain.UserRepo
+	mailHandler     notification.MailHandler
 	locker          lock.DistributedLocker
 }
 
-func NewEventService(eventRepository domain.EventRepository, locker lock.DistributedLocker) EventService {
+func NewEventService(
+	eventRepository domain.EventRepository,
+	locker lock.DistributedLocker,
+	userRepo domain.UserRepo,
+	mailHandler notification.MailHandler,
+) EventService {
 	return &eventService{
 		eventRepository: eventRepository,
 		locker:          locker,
+		userRepo:        userRepo,
+		mailHandler:     mailHandler,
 	}
 }
 
@@ -52,10 +65,28 @@ func (s *eventService) Upsert(ctx context.Context, req UpsertEventRequest) (*dom
 		Notes:           req.Notes,
 		RemindAt:        req.RemindAt,
 		UpdaterID:       req.UpdaterID,
+		AttachedFile:    req.AttachedFile,
 	}
 
 	if req.RoomID == nil {
 		res, err := s.eventRepository.Upsert(ctx, event)
+		if err != nil {
+			return nil, err
+		}
+
+		go func(event *domain.Event) {
+			var err error
+			if event.IsDelete {
+				err = s.sendEmail(context.Background(), event, "Canceled", "")
+			} else {
+				err = s.sendEmail(context.Background(), event, "Updated", "")
+			}
+
+			if err != nil {
+				log.Printf("Error sending email: %v\n", err.Error())
+			}
+		}(res)
+
 		return res, err
 	} else {
 		event.RoomReservation = &domain.RoomReservation{
@@ -84,8 +115,41 @@ func (s *eventService) Upsert(ctx context.Context, req UpsertEventRequest) (*dom
 	}
 
 	res, err := s.eventRepository.Upsert(ctx, event)
+	if err != nil {
+		return nil, err
+	}
+
+	// sent invited email
+	go func(event *domain.Event) {
+		err := s.sendEmail(context.Background(), event, "Invited", "")
+		if err != nil {
+			log.Printf("Error sending email: %v\n", err.Error())
+		}
+	}(res)
 
 	return res, err
+}
+
+func (s *eventService) sendEmail(ctx context.Context, res *domain.Event, mailPrefix string, content string) error {
+	users, err := s.userRepo.GetByIDs(ctx, res.ParticipantsIDs)
+	if err != nil {
+		log.Printf("Error loading location: %v\n", err)
+		return err
+	}
+	userEmails := make([]string, len(users))
+	for i, user := range users {
+		userEmails[i] = user.Email
+	}
+	startTime := time.UnixMilli(res.StartAt)
+	loc, err := time.LoadLocation("Asia/Taipei")
+	if err != nil {
+		log.Printf("Error loading location: %v\n", err)
+		return err
+	}
+	startTime = startTime.In(loc)
+	formattedTime := startTime.Format("2006-01-02 15:04:05 -0700")
+	s.mailHandler.Send(userEmails, fmt.Sprintf("%s: %s - %s", mailPrefix, res.Title, formattedTime), content)
+	return nil
 }
 
 func (s *eventService) Delete(ctx context.Context, id string) (*domain.Event, error) {
@@ -124,33 +188,23 @@ func (s *eventService) CheckUserAvailable(ctx context.Context, ids []string, sta
 }
 
 func (s *eventService) UpdateSummary(ctx context.Context, id string, summary string, updaterID string) (bool, error) {
-	return s.eventRepository.UpdateSummary(ctx, id, summary, updaterID)
+	res, err := s.eventRepository.UpdateSummary(ctx, id, summary, updaterID)
+	if err != nil {
+		return false, err
+	}
+
+	go func(eventId string, summary string) {
+		ctx := context.Background()
+		event, err := s.eventRepository.GetByID(ctx, eventId)
+		if err != nil {
+			log.Printf("Error sending email: %v\n", err.Error())
+			return
+		}
+		err = s.sendEmail(ctx, event, "Conclusion", summary)
+		if err != nil {
+			log.Printf("Error sending email: %v\n", err.Error())
+		}
+	}(id, summary)
+
+	return res, nil
 }
-
-// func (s *eventService) PaginatedAvailableRooms(
-// 	ctx context.Context,
-// 	startAt, endAt int64,
-// 	equipments []domain.Equipment, rules []domain.Rule,
-// 	skip, limit int,
-// ) ([]domain.Event, error) {
-// 	rooms, err := s.roomRepository.GetByFilter(ctx, equipments, rules)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	roomIDs := make([]string, len(rooms))
-// 	for i, room := range rooms {
-// 		roomIDs[i] = *room.ID
-// 	}
-// 	events, err := s.eventRepository.GetAll(ctx, roomIDs, startAt, endAt)
-// 	return events, err
-// }
-
-// func (s *eventService) PaginatedRoomStatus(
-// 	ctx context.Context,
-// 	startAt, endAt int64,
-// 	roomIDs []string,
-// 	skip, limit int,
-// ) ([]domain.Event, error) {
-// 	events, err := s.eventRepository.GetAll(ctx, roomIDs, startAt, endAt)
-// 	return events, err
-// }

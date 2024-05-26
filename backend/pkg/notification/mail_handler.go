@@ -25,7 +25,7 @@ func NewGmailHandler() (MailHandler, error) {
 	senderPassword := os.Getenv("SENDER_PASSWORD")
 
 	if senderEmail == "" || senderPassword == "" {
-		return nil, fmt.Errorf("missing required environment variables")
+		return nil, fmt.Errorf("missing required environment variables: SENDER_EMAIL and SENDER_PASSWORD")
 	}
 
 	auth := smtp.PlainAuth("", senderEmail, senderPassword, smtpHost)
