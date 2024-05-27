@@ -23,7 +23,7 @@
     mounted() {
         window.addEventListener('load', () => {
         this.isLoaded = true;
-        });
-    }
+            });
+        }
     };
 </script>

@@ -1,7 +1,4 @@
     <template>
-      <!-- <div>
-          <button @click="createRoom(test_room)">Fetch GraphQL Schema</button>
-      </div> -->
       <div></div>
     </template>
     
@@ -16,6 +13,7 @@
         return {
           rooms: [],
           pageInfo: {},
+          filteredRooms: []
         };
       },
       created() {
@@ -27,7 +25,7 @@
           return {
             headers: {
               ...headers,
-              authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNDkyNzM2Nn0.lrgfdTORvjYPOqDQErfs37kuQp2QCLQbwwfsgpgnM70",
+              authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNjgwMTUxOCwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.-gCelsRRgt8Da11WcioKAHfe-IqxHXfD5FJkoMyHZE8",
             }
           }
         });
@@ -38,19 +36,15 @@
         });
       },
       methods: {
-        generateRandomId() {
-          const randomId = Math.floor(Math.random() * 900000000) + 100000000;
-          return randomId.toString();
-        },
         createRoom(roomInput) {
 
           const CREATE_ROOM_MUTATION = gql`
             mutation myCreate($my_input: UpsertRoomInput!) {
               upsertRoom(room: $my_input) {
                 id
-                roomId
+                name
                 capacity
-                equipment
+                equipments
                 rules
                 isDelete
               }
@@ -61,12 +55,11 @@
             my_input: roomInput
           };
 
-          this.client.mutate({
+          return this.client.mutate({
             mutation: CREATE_ROOM_MUTATION,
             variables
           }).then(response => {
             console.log("Room created or updated successfully:", response.data);
-            // this.$emit('createRoom', response.data);
           }).catch(error => {
             console.error("Error creating or updating room:", error);
           });
@@ -79,16 +72,14 @@
                 edges {
                   node {
                     id
-                    roomId
+                    name
                     capacity
-                    equipment
+                    equipments
                     rules
                     isDelete
                   }
                 }
                 pageInfo {
-                  hasNextPage
-                  hasPreviousPage
                   startCursor
                   endCursor
                 }
@@ -97,21 +88,12 @@
           `;
 
           this.client.query({
-            query: GET_ALL_ROOMS_QUERY
+            query: GET_ALL_ROOMS_QUERY,
+            fetchPolicy: 'no-cache'
           }).then(response => {
-
             this.rooms = response.data.paginatedRooms.edges.map(edge => edge.node);
             this.pageInfo = response.data.paginatedRooms.pageInfo;
-            let new_rooms = this.rooms.map(room => {
-              return {
-                ...room,
-                id: room.id === '' ? this.generateRandomId() : room.id
-              };
-            });
-
-            // console.log("Rooms fetched successfully:", new_rooms);
-            this.$emit('queryAllRooms', new_rooms);
-            console.log(new_rooms);
+            this.$emit('queryAllRooms', this.rooms);
           }).catch(error => {
             console.error("Failed to fetch rooms:", error);
           });
@@ -119,14 +101,14 @@
         },
         deleteRoom(roomId) {
           const DELETE_ROOM_MUTATION = gql`
-            mutation DeleteRoom($id: ID!) {
+            mutation deleteRoom($id: ID!) {
               deleteRoom(id: $id) {
                 id
               }
             }
           `;
-
-          this.client.mutate({
+          // console.log(roomId)
+          return this.client.mutate({
             mutation: DELETE_ROOM_MUTATION,
             variables: {
               id: roomId
@@ -135,6 +117,50 @@
             console.log('Room deleted:', response.data.deleteRoom.id);
           }).catch(error => {
             console.error('Error deleting room:', error);
+          });
+        },
+        fetchAvailableRooms() {
+          const GET_AVAILABLE_ROOMS = gql`
+            query getAvailableRooms($startAt: Int64!, $endAt: Int64!, $rules: [Rule!], $equipments: [Equipment!], $first: Int = 20, $after: String) {
+              paginatedAvailableRooms(startAt: $startAt, endAt: $endAt, rules: $rules, equipments: $equipments, first: $first, after: $after) {
+                edges {
+                  node {
+                    id
+                    name
+                    capacity
+                    equipments
+                    rules
+                    isDelete
+                  }
+                  cursor
+                }
+                pageInfo {
+                  endCursor
+                }
+              }
+            }
+          `;
+
+          const variables = {
+            startAt: 1625077800,
+            endAt: 1625081400,
+            rules: [],
+            equipments: [],
+            first: 20,
+            after: null
+          };
+
+          this.client.query({
+            query: GET_AVAILABLE_ROOMS,
+            variables
+          }).then(response => {
+            this.rooms = response.data.paginatedAvailableRooms.edges.map(edge => edge.node);
+            this.pageInfo = response.data.paginatedAvailableRooms.pageInfo;
+            this.filteredRooms = this.rooms.filter(room => !room.isDelete);
+            console.log('Available rooms:', this.filteredRooms);
+            this.$emit('queryAllRooms', this.rooms);
+          }).catch(error => {
+            console.error('Error fetching available rooms:', error);
           });
         }
       }

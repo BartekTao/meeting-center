@@ -43,7 +43,7 @@
                 </div>
                 <div class="col-lg-3">                        
                   <fieldset>
-                    <button class="main-button" @click.prevent="queryData"><i class="fa fa-search"></i> 查詢</button>
+                    <button class="main-button" @click.prevent="fetchAvailableRooms"><i class="fa fa-search"></i> 查詢</button>
                   </fieldset>
                 </div>
               </div>
@@ -83,17 +83,7 @@
       };
     },
     methods: {
-      queryData() {
-        alert(JSON.stringify({
-          number_of_people: this.selectedNumberOfPeople,
-          date: this.currentDate,
-          start_period: this.selectedStartPeriod,
-          end_period: this.selectedEndPeriod,
-          time_period: this.selectedTimePeriod,
-          must_eat: this.mustEat,
-          has_projector: this.hasProjector,
-          has_whiteboard: this.hasWhiteBoard,
-        }, null, 2));
+      fetchAvailableRooms() {
       },
       changeClickSpan(key) {
         this[key] = !this[key];

@@ -5,7 +5,7 @@
       <div class="row mb-2">
         <label for="name" class="col-sm-2 col-form-label">會議名稱：</label>
         <div class="col-sm-9">
-          <input type="text" id="name" name="name" class="form-control" v-model="localFormInfo.roomId" required>
+          <input type="text" id="name" name="name" class="form-control" v-model="localFormInfo.name" required>
         </div>
       </div>
 
@@ -54,8 +54,6 @@
       </div>
       <div class="row mb-2">
         <div class="col-sm-12 d-flex justify-content-center">
-          <!-- <button type="submit" class="btn btn-primary margin-right-2cm" >編輯</button>
-          <button type="button" class="btn btn-secondary" >取消</button> -->
           <button type="submit" class="btn btn-primary margin-right-2cm" @click.prevent="submitForm">編輯</button>
           <button type="button" class="btn btn-secondary" @click="closeForm">取消</button>
         </div>
@@ -69,9 +67,9 @@ import CommWithGql from '@/components/CommWithGql.vue'
 
 export default {
     components: {
-      CommWithGql
+      CommWithGql,
     },
-  emits: ['close-form', 'updateInfo'],
+  emits: ['close-form', 'updateInfo', 'update-all-rooms'],
   props: ['roomInfo', 'formDisplay'],
   data() {
     return {
@@ -84,62 +82,62 @@ export default {
     },
     canDrink: {
       get() {
-        return !this.localFormInfo.rules.includes('no drinks');
+        return !this.localFormInfo.rules.includes('NO_DRINK');
       },
       set(value) {
-        const index = this.localFormInfo.rules.indexOf('no drinks');
+        const index = this.localFormInfo.rules.indexOf('NO_DRINK');
         if (value && index !== -1) {
           this.localFormInfo.rules.splice(index, 1);
         } else if (!value && index === -1) {
-          this.localFormInfo.rules.push('no drinks');
+          this.localFormInfo.rules.push('NO_DRINK');
         }
       }
     },
     canFood: {
       get() {
-        return !this.localFormInfo.rules.includes('no food');
+        return !this.localFormInfo.rules.includes('NO_FOOD');
       },
       set(value) {
-        const index = this.localFormInfo.rules.indexOf('no food');
+        const index = this.localFormInfo.rules.indexOf('NO_FOOD');
         if (value && index !== -1) {
           this.localFormInfo.rules.splice(index, 1);
         } else if (!value && index === -1) {
-          this.localFormInfo.rules.push('no food');
+          this.localFormInfo.rules.push('NO_FOOD');
         }
       }
     },
     hasBigTable: {
       get() {
-        return this.localFormInfo.equipment.includes('big table');
+        return this.localFormInfo.equipments.includes('TABLE');
       },
       set(value) {
-        const index = this.localFormInfo.equipment.indexOf('big table');
+        const index = this.localFormInfo.equipments.indexOf('TABLE');
         if (!value && index !== -1) {
-          this.localFormInfo.equipment.splice(index, 1);
+          this.localFormInfo.equipments.splice(index, 1);
         } else if (value && index === -1) {
-          this.localFormInfo.equipment.push('big table');
+          this.localFormInfo.equipments.push('TABLE');
         }
       }
     },
     hasProjector: {
       get() {
-        return this.localFormInfo.equipment.includes('projector');
+        return this.localFormInfo.equipments.includes('PROJECTOR');
       },
       set(value) {
-        const index = this.localFormInfo.equipment.indexOf('projector');
+        const index = this.localFormInfo.equipments.indexOf('PROJECTOR');
         if (!value && index !== -1) {
-          this.localFormInfo.equipment.splice(index, 1);
+          this.localFormInfo.equipments.splice(index, 1);
         } else if (value && index === -1) {
-          this.localFormInfo.equipment.push('projector');
+          this.localFormInfo.equipments.push('PROJECTOR');
         }
       }
     }
   },
   methods: {
     submitForm() {
-      console.log(this.localFormInfo)
-      this.$refs.commWithGql.createRoom(this.localFormInfo);
-      this.$refs.commWithGql.queryAllRooms();
+      this.$refs.commWithGql.createRoom(this.localFormInfo)
+      this.$emit('update-all-rooms');
+      // this.updateAllRooms();
       this.closeForm();
     },
     closeForm() {
@@ -148,6 +146,9 @@ export default {
     updateValue(field, value) {
       this.$emit('update-info', { field, value });
     },
+    // updateAllRooms() {
+    //   this.$emit('update-all-rooms');
+    // }
   }
 };
 </script>

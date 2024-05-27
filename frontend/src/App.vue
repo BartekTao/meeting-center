@@ -1,5 +1,5 @@
 <template>
-  <js-preloader></js-preloader>
+  <!-- <js-preloader></js-preloader> -->
   <background-header></background-header>
 
   <router-view></router-view>
@@ -20,7 +20,7 @@
 <script>
 
 import BackgroundHeader from '@/components/BackgroundHeader.vue';
-import JsPreloader from '@/components/JsPreloader.vue';
+// import JsPreloader from '@/components/JsPreloader.vue';
 
 export default {
   name: 'App',
@@ -31,31 +31,8 @@ export default {
   },
   components: {
     BackgroundHeader,
-    JsPreloader,
+    // JsPreloader,
   },
-  // mounted() {
-  //   this.fetchBooks();
-  // },
-  // methods: {
-  //   fetchBooks() {
-  //     const httpLink = createHttpLink({
-  //       uri: 'http://localhost:4000/' // 替换为您的 GraphQL API URI
-  //     });
-
-  //     const client = new ApolloClient({
-  //       link: httpLink,
-  //       cache: new InMemoryCache()
-  //     });
-
-  //     client.query({
-  //       query: BOOKS_QUERY
-  //     }).then(result => {
-  //       console.log(result.data);
-  //     }).catch(error => {
-  //       console.error("Error fetching the books:", error);
-  //     });
-  //   }
-  // }
 }
 
 

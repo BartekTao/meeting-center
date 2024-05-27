@@ -16,7 +16,7 @@
             <div class="row mb-2 comment-text">
                 <label for="content" class="col-sm-2">會議結論：</label>
                 <div class="col-sm-9">
-                    <textarea id="content" name="content" class="form-control" maxlength="500" v-model="formInfo.content"></textarea>
+                    <textarea id="content" name="content" class="form-control" maxlength="500" v-model="formInfo.content"  style="height: 200px;"></textarea>
                 </div>
             </div>
 
