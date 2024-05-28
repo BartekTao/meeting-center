@@ -73,6 +73,7 @@ func (r *mongoRoomScheduleRepository) QueryPaginated(
 									bson.D{{Key: "$lt", Value: bson.A{"$startAt", endAt}}},
 									bson.D{{Key: "$gt", Value: bson.A{"$endAt", startAt}}},
 									bson.D{{Key: "$ne", Value: bson.A{"$roomReservation.reservationStatus", domain.ReservationStatus_Canceled}}},
+									bson.D{{Key: "$eq", Value: bson.A{"$isDelete", false}}},
 								}},
 							}},
 						}},
@@ -134,10 +135,7 @@ func ToDomainRoomSchedule(roomSchedule *RoomSchedule) *domain.RoomSchedule {
 		Schedules: make([]domain.Event, len(roomSchedule.Schedules)),
 	}
 	for i, schedule := range roomSchedule.Schedules {
-		domainRoomSchedule.Schedules[i] = domain.Event{
-			StartAt: schedule.StartAt,
-			EndAt:   schedule.EndAt,
-		}
+		domainRoomSchedule.Schedules[i] = *ToDomainEvent(&schedule)
 	}
 	return &domainRoomSchedule
 }

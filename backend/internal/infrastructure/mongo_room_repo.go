@@ -197,7 +197,38 @@ func (m *mongoRoomRepository) GetByFilter(
 	return res, nil
 }
 
-func (m *mongoRoomRepository) QueryPaginatedAvailable(ctx context.Context, startAt, endAt int64, skip int, limit int) ([]domain.Room, error) {
+func (m *mongoRoomRepository) QueryPaginatedAvailable(
+	ctx context.Context,
+	ids []string,
+	equipments []domain.Equipment, rules []domain.Rule,
+	startAt, endAt int64,
+	skip int, limit int,
+) ([]domain.Room, error) {
+	filter := bson.M{
+		"isDelete":     false,
+		"reservations": bson.D{{Key: "$size", Value: 0}}, // in pipeline field
+	}
+
+	if len(ids) > 0 {
+		objIDs := make([]primitive.ObjectID, len(ids))
+		for i, id := range ids {
+			if objID, err := primitive.ObjectIDFromHex(id); err != nil {
+				log.Printf("Invalid ID format: %v", err)
+				return nil, err
+			} else {
+				objIDs[i] = objID
+			}
+		}
+		filter["_id"] = bson.M{"$all": objIDs}
+	}
+
+	if len(equipments) > 0 {
+		filter["equipments"] = bson.M{"$all": equipments}
+	}
+	if len(rules) > 0 {
+		filter["rules"] = bson.M{"$all": rules}
+	}
+
 	pipeline := mongo.Pipeline{
 		{
 			{Key: "$lookup", Value: bson.D{
@@ -212,6 +243,7 @@ func (m *mongoRoomRepository) QueryPaginatedAvailable(ctx context.Context, start
 									bson.D{{Key: "$lt", Value: bson.A{"$startAt", endAt}}},
 									bson.D{{Key: "$gt", Value: bson.A{"$endAt", startAt}}},
 									bson.D{{Key: "$ne", Value: bson.A{"$roomReservation.reservationStatus", domain.ReservationStatus_Canceled}}},
+									bson.D{{Key: "$eq", Value: bson.A{"$isDelete", false}}},
 								}},
 							}},
 						}},
@@ -221,10 +253,7 @@ func (m *mongoRoomRepository) QueryPaginatedAvailable(ctx context.Context, start
 			}},
 		},
 		{
-			{Key: "$match", Value: bson.D{
-				{Key: "reservations", Value: bson.D{{Key: "$size", Value: 0}}},
-				{Key: "isDelete", Value: false},
-			}},
+			{Key: "$match", Value: filter},
 		},
 		{
 			{Key: "$skip", Value: skip},
