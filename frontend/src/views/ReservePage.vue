@@ -1,8 +1,10 @@
 <template>
-  <ReserveBar/>
-  <ReserveList  @showDiv="showDiv" @hideDiv="hideDiv" :openForm="openForm" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction"/>
+  <ReserveBar @updateAllRooms="updateAllRooms"/>
+  <ReserveList  @showDiv="showDiv" @hideDiv="hideDiv" :openForm="openForm" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction" :roomItems="roomItems"/>
   <ReserveForm  @showDiv="showDiv" @hideDiv="hideDiv" :formDisplay="formDisplay" :roomInfo="roomInfo" :userName="userName" @close-form="closeForm"/>
   <EventInfo ref="eventInfo"/>
+  <comm-with-gql @fetch-available-rooms="fetchAvailableRooms" ref="commWithGql"></comm-with-gql>
+  <js-preloader ref="jsPreloader"></js-preloader>
 </template>
 
 <script>
@@ -10,6 +12,8 @@ import ReserveBar from '@/components/ReserveBar.vue'
 import ReserveList from '@/components/ReserveList.vue';
 import ReserveForm from '@/components/ReserveForm.vue';
 import EventInfo from '@/components/EventInfo.vue';
+import CommWithGql from '@/components/CommWithGql.vue'
+import JsPreloader from '@/components/JsPreloader.vue';
 
 export default {
   name: 'ReservePage',
@@ -17,10 +21,14 @@ export default {
     ReserveBar,
     ReserveList,
     ReserveForm,
-    EventInfo
+    EventInfo,
+    CommWithGql,
+    JsPreloader
   },
   data() {
     return {
+      startTimeStamp: '',
+      endTimeStamp: '',
       bookingAction: true,
       editAction: false,
       editCommentAction: false,
@@ -36,7 +44,8 @@ export default {
         position: 'absolute',
         maxWidth: '18rem',
         zIndex: 1000,
-      }
+      },
+      roomItems: [],
     };
   },
   methods: {
@@ -54,8 +63,31 @@ export default {
     },
     hideDiv() {
       this.$refs.eventInfo.hideDiv();
-    }
-  }
+    },
+    fetchAvailable(availables) {
+      this.startTimeStamp = availables; // endTimeStamp
+    },
+    fetchAvailableRooms(rooms) {
+      this.roomItems = rooms
+    },
+    updateAllRooms(variables) {
+      this.loadPreLoader(1000).then(() => {
+        this.$refs.commWithGql.fetchAvailableRooms(variables);
+      });
+    },
+    loadPreLoader(duration) {
+      this.$refs.jsPreloader.isLoaded = false;
+      return new Promise(resolve => {
+        setTimeout(() => {
+          this.$refs.jsPreloader.isLoaded = true;
+          resolve();
+        }, duration);
+      });
+    },
+  },
+  // mounted() {
+  //   this.updateAllRooms();
+  // }
 }
 </script>
 

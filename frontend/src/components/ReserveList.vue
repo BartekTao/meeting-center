@@ -14,7 +14,7 @@
             <div class="">
               <div class="item">
                 <div class="row">
-                  <ReserveBlock v-for="item in room_list" :key="item.name" :item="item" @showDiv="$emit('showDiv', $event)" @hideDiv="$emit('hideDiv')" @openForm="openForm" @openCommentForm="openCommentForm" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction"/>
+                  <ReserveBlock v-for="item in roomItems" :key="item.name" :item="item" @showDiv="$emit('showDiv', $event)" @hideDiv="$emit('hideDiv')" @openForm="openForm" @openCommentForm="openCommentForm" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction"/>
                 </div>
               </div>
             </div>
@@ -63,7 +63,7 @@
     components: {
       ReserveBlock
     },
-    props: ['openForm', 'openCommentForm', 'bookingAction', 'editAction', 'deleteAction', 'editCommentAction']
+    props: ['openForm', 'openCommentForm', 'bookingAction', 'editAction', 'deleteAction', 'editCommentAction', 'roomItems']
   }
   </script>
   

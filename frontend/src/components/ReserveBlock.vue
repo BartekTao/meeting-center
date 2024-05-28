@@ -6,9 +6,9 @@
           <a><img :src="image_url" :alt="item.name"></a>
         </div>
         <div class="right-content align-self-center">
-          <a><h4>會議室名稱：{{ item.roomId }}</h4></a>
+          <a><h4>會議室名稱：{{ item.name }}</h4></a>
           <!-- <div>{{ showReservator }}</div> -->
-          <ItemPeriod 
+          <!-- <ItemPeriod 
             period-name="早上："
             :reservator-list="item.reservatorList.slice(0, 6)"
             :info-progress-width="250"
@@ -25,14 +25,14 @@
             @update-show-reservator="updateShowReservator"
             @showDiv="$emit('showDiv', $event)"
             @hideDiv="$emit('hideDiv')"
-          />
+          /> -->
           <div style="height: 20px;"></div>
           <ul class="info" style="padding-left: 0rem;">
             <li>人數限制：{{ item.capacity }}</li>  
-            <li>有大桌子：{{ item.equipment.includes('big table') ? '是' : '否' }}</li>
-            <li>有投影機：{{ item.equipment.includes('projector') ? '是' : '否' }}</li>
-            <li>可否進食：{{ item.rules.includes('no food') ? '否' : '是' }}</li>
-            <li>可否喝水：{{ item.rules.includes('no drinks') ? '否' : '是' }}</li>
+            <li>有大桌子：{{ item.equipments.includes('TABLE') ? '是' : '否' }}</li>
+            <li>有投影機：{{ item.equipments.includes('PROJECTOR') ? '是' : '否' }}</li>
+            <li>可否進食：{{ item.rules.includes('NO_FOOD') ? '否' : '是' }}</li>
+            <li>可否喝水：{{ item.rules.includes('NO_DRINK') ? '否' : '是' }}</li>
           </ul><br>
 
           <div class="flex-container">
@@ -56,7 +56,7 @@
   </template>
   
   <script>
-  import ItemPeriod from './ItemPeriod.vue';
+  // import ItemPeriod from './ItemPeriod.vue';
 
   export default {
     name: 'ReserveBlock',
@@ -79,9 +79,9 @@
         showReservator: '',
         };
     },
-    components: {
-        ItemPeriod
-    }
+    // components: {
+    //     ItemPeriod
+    // }
   }
   </script>
   

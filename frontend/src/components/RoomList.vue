@@ -59,7 +59,6 @@
         docImage: require('@/assets/images/google-docs.png'),
         deleteImage: require('@/assets/images/delete.png'),
         image_url: require('../assets/images/listing-01.jpg'),
-        test_items: [],
       }
     },
     emits: ['open-form', 'delete-item', 'update-all-rooms'],
@@ -70,12 +69,8 @@
       },
       deleteRoom(targetIndex) {
         this.$refs.commWithGql.deleteRoom(targetIndex)
-        // this.updateAllRooms();
         this.$emit('update-all-rooms');
       },
-      // updateAllRooms() {
-      //   this.$emit('update-all-rooms');
-      // }
     },
   };
   </script>

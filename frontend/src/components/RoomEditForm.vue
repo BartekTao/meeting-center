@@ -146,9 +146,6 @@ export default {
     updateValue(field, value) {
       this.$emit('update-info', { field, value });
     },
-    // updateAllRooms() {
-    //   this.$emit('update-all-rooms');
-    // }
   }
 };
 </script>

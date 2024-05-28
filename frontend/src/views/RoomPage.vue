@@ -3,7 +3,6 @@
       <head-page pageContent="後台管理"></head-page>
       <room-list @open-form="openForm" @update-all-rooms="updateAllRooms" :testItems="testItems"></room-list>
       <room-edit-form :formDisplay="formDisplay" :roomInfo="roomInfo" @close-form="closeForm" @update-info="handleUpdate" @update-all-rooms="updateAllRooms"></room-edit-form>
-      <!-- <comm-with-gql ref="commWithGql"></comm-with-gql> -->
       <comm-with-gql @query-all-rooms="queryAllRooms" ref="commWithGql"></comm-with-gql>
       <js-preloader ref="jsPreloader"></js-preloader>
     </div>
@@ -26,10 +25,6 @@
     },
     mounted() {
       this.updateAllRooms();
-
-      // this.$nextTick(() => {
-      //   this.updateAllRooms();
-      // });
     },
     data() {
       return {
@@ -38,8 +33,8 @@
         init_room: {
             name: "test",
             capacity: 10,
-            equipments: [],
-            rules: ["NO_FOOD", "NO_DRINK" ]
+            equipments: ["TABLE", "PROJECTOR"],
+            rules: []
         },
         testItems: [],
       };
