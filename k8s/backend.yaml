@@ -124,16 +124,15 @@ spec:
                   name: my-secret
                   key: universe_domain
             - name: GCS_CREDENTIALS_JSON
-              value: /etc/gcp/credentials.json
+              value: /etc/gcp/nycu-cncf-9ba3d1230fc5.json
           volumeMounts:
             - name: gcp-credentials
-              mountPath: /etc/gcp/credentials.json
+              mountPath: /etc/gcp
               readOnly: true
       volumes:
         - name: gcp-credentials
-          hostPath:
-            path: ../backend/nycu-cncf-9ba3d1230fc5.json
-            type: File
+          secret:
+            secretName: gcp-credentials-secret
           # livenessProbe:
           #   httpGet:
           #     path: /ping
