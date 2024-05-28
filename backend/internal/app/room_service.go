@@ -29,6 +29,7 @@ type RoomService interface {
 	) ([]domain.RoomSchedule, error)
 	QueryPaginatedAvailable(
 		ctx context.Context,
+		ids []string,
 		equipments []domain.Equipment, rules []domain.Rule,
 		startAt, endAt int64,
 		skip int, limit int,
@@ -101,9 +102,15 @@ func (s roomService) QueryPaginatedRoomSchedule(
 
 func (s roomService) QueryPaginatedAvailable(
 	ctx context.Context,
+	ids []string,
 	equipments []domain.Equipment, rules []domain.Rule,
 	startAt, endAt int64,
 	skip int, limit int,
 ) ([]domain.Room, error) {
-	return s.roomRepository.QueryPaginatedAvailable(ctx, startAt, endAt, skip, limit)
+	return s.roomRepository.QueryPaginatedAvailable(
+		ctx,
+		ids,
+		equipments, rules,
+		startAt, endAt,
+		skip, limit)
 }

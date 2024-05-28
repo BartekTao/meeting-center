@@ -23,6 +23,7 @@ type Query {
     after: String,
     ): RoomScheduleConnection
   paginatedAvailableRooms(
+    ids: [String!],
     startAt: Int64!, 
     endAt: Int64!, 
     rules: [Rule!],
