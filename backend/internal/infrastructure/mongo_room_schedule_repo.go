@@ -73,6 +73,7 @@ func (r *mongoRoomScheduleRepository) QueryPaginated(
 									bson.D{{Key: "$lt", Value: bson.A{"$startAt", endAt}}},
 									bson.D{{Key: "$gt", Value: bson.A{"$endAt", startAt}}},
 									bson.D{{Key: "$ne", Value: bson.A{"$roomReservation.reservationStatus", domain.ReservationStatus_Canceled}}},
+									bson.D{{Key: "$ne", Value: bson.A{"$isDelete", false}}},
 								}},
 							}},
 						}},
