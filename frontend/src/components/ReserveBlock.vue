@@ -33,6 +33,7 @@
             <li>有投影機：{{ item.equipments.includes('PROJECTOR') ? '是' : '否' }}</li>
             <li>可否進食：{{ item.rules.includes('NO_FOOD') ? '否' : '是' }}</li>
             <li>可否喝水：{{ item.rules.includes('NO_DRINK') ? '否' : '是' }}</li>
+            <!-- <li>schedules：{{ item.schedules }}</li> -->
           </ul><br>
 
           <div class="flex-container">

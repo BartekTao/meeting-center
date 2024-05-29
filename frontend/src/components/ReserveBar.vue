@@ -81,6 +81,7 @@
         TABLE: false,
         first_data: null,
         variables : {
+          dayTime: '',
           startAt: 1625077800,
           endAt: 1625081400,
           rules: [],
@@ -92,7 +93,7 @@
     },
     methods: {
       updateAllRooms() {
-        const dayTime = this.getCurrentDate();
+        const dayTime = this.currentDate
         
         const startTime = dayTime+'-'+this.selectedStartPeriod + ':00';
         const startTimeStamp = this.transferToTimestamp(startTime);
@@ -107,6 +108,7 @@
         if (this.TABLE && !this.variables.equipments.includes('TABLE')) {
           this.variables.equipments.push('TABLE');}
 
+        this.variables.dayTime = dayTime;
         this.variables.startAt = startTimeStamp;
         this.variables.endAt = endTimeStamp;
         this.$emit('updateAllRooms', this.variables);

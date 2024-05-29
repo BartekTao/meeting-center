@@ -18,6 +18,7 @@
           endOfDayTimestamp: null,
           ids: [],
           edges: [],
+          users: [],
         };
       },
       created() {
@@ -29,7 +30,7 @@
           return {
             headers: {
               ...headers,
-              authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNjkwODY4OCwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.fQ_yHLfcu3U4RfN6HkS5zBeHg1G8JnSfZA_ajmsv7NM",
+              authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNjk5NTIwNiwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.ZV9ZaG8CCS9u7o2V920ch0B2vrz4VxQ68Bk2qJq0rT8",
             }
           }
         });
@@ -61,6 +62,58 @@
 
           return this.client.mutate({
             mutation: CREATE_ROOM_MUTATION,
+            variables
+          }).then(response => {
+            console.log("Room created or updated successfully:", response.data);
+          }).catch(error => {
+            console.error("Error creating or updating room:", error);
+          });
+        },
+        createEvent(eventInput) {
+
+          const CREATE_EVENT_MUTATION = gql`
+            mutation createEvent($input: UpsertEventInput!) {
+              upsertEvent(input: $input) {
+                id
+                title
+                description
+                startAt
+                endAt
+                roomReservation {
+                  room {
+                    id
+                    name
+                    capacity
+                    equipments
+                    rules
+                    isDelete
+                  }
+                  status
+                }
+                participants {
+                  id
+                  name
+                  email
+                }
+                notes
+                remindAt
+                creator {
+                  id
+                  name
+                  email
+                }
+                isDelete
+              }
+            }
+          `;
+
+
+          const variables = {
+            input: eventInput
+          };
+
+          return this.client.mutate({
+            mutation: CREATE_EVENT_MUTATION,
             variables
           }).then(response => {
             console.log("Room created or updated successfully:", response.data);
@@ -124,6 +177,7 @@
           });
         },
         fetchAvailableRooms(variables) {
+
           const GET_AVAILABLE_ROOMS = gql`
             query getAvailableRooms($startAt: Int64!, $endAt: Int64!, $rules: [Rule!], $equipments: [Equipment!], $first: Int = 20, $after: String) {
               paginatedAvailableRooms(startAt: $startAt, endAt: $endAt, rules: $rules, equipments: $equipments, first: $first, after: $after) {
@@ -145,24 +199,18 @@
             }
           `;
           
-          // console.log(variables.startAt);
           this.calculateStartOfDay(variables.startAt);
-          // console.log(this.startOfDayTimestamp);
           this.calculateEndOfDay(variables.endAt);
-          console.log(variables);
+          
           this.client.query({
             query: GET_AVAILABLE_ROOMS,
             variables
           }).then(response => {
             this.rooms = response.data.paginatedAvailableRooms.edges.map(edge => edge.node);
-            this.$emit('fetchAvailableRooms', this.rooms);
             this.ids = this.rooms.map(room => room.id);
-            // const schedules = this.queryRoomSchedules(this.ids, this.startOfDayTimestamp, this.endOfDayTimestamp)
-            // console.log(this.rooms);
             
           this.queryRoomSchedules(this.ids, this.startOfDayTimestamp, this.endOfDayTimestamp)
             .then(response => {
-              console.log(response)
               const edges = response.data.paginatedRoomSchedules.edges;
               this.rooms = edges.map(edge => {
                 return {
@@ -170,9 +218,8 @@
                   schedules: edge.node.schedules
                 };
               });
+              this.$emit('fetchAvailableRooms', this.rooms);
               this.pageInfo = response.data.paginatedRoomSchedules.pageInfo;
-              // console.log("Room schedules set in state:", response.data.paginatedRoomSchedules.edges[0].node.schedules);
-              // console.log("Room schedules set in state:", this.rooms);
             })
             .catch(error => {
               this.error = error;
@@ -242,9 +289,7 @@
             query: GET_ROOM_SCHEDULES,
             variables: defaultVariables,
           }).then(response => {
-            // console.log(response); 
-            // console.log(response.data.paginatedRoomSchedules.edges[0].node.schedules); 
-            return response // .data.paginatedRoomSchedules.edges
+            return response
           }).catch(error => {
             this.error = error;
             console.error("Failed to fetch room schedules:", error);
@@ -269,6 +314,36 @@
           const endOfDay = new Date(year, month, day, 23, 59, 59, 999);
 
           this.endOfDayTimestamp = endOfDay.getTime();
+        },
+        queryUsers() {
+
+          const GET_PAGINATED_USERS = gql`
+            query getPaginatedUsers($first: Int = 20, $after: String) {
+              paginatedUsers(first: $first, after: $after) {
+                edges {
+                  node {
+                    id
+                    name
+                  }
+                }
+              }
+            }
+          `;
+
+          const variables = {
+            first: 20,
+            after: null
+          };
+
+          this.client.query({
+            query: GET_PAGINATED_USERS,
+            variables
+          }).then(response => {
+            this.users = response.data.paginatedUsers.edges.map(edge => edge.node);
+            this.$emit('queryUsers', this.users);
+          }).catch(error => {
+            console.error('Error fetching users:', error);
+          });
         }
       },
     }

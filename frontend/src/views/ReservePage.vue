@@ -1,9 +1,9 @@
 <template>
   <ReserveBar @updateAllRooms="updateAllRooms"/>
   <ReserveList  @showDiv="showDiv" @hideDiv="hideDiv" :openForm="openForm" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction" :roomItems="roomItems"/>
-  <ReserveForm  @showDiv="showDiv" @hideDiv="hideDiv" :formDisplay="formDisplay" :roomInfo="roomInfo" :userName="userName" @close-form="closeForm"/>
+  <ReserveForm  @showDiv="showDiv" @hideDiv="hideDiv" :formDisplay="formDisplay" :formInfo="formInfo" @close-form="closeForm" @update-form="updateForm"/>
   <EventInfo ref="eventInfo"/>
-  <comm-with-gql @fetch-available-rooms="fetchAvailableRooms" ref="commWithGql"></comm-with-gql>
+  <comm-with-gql @fetch-available-rooms="fetchAvailableRooms" @query-users="queryUsers" ref="commWithGql"></comm-with-gql>
   <js-preloader ref="jsPreloader"></js-preloader>
 </template>
 
@@ -34,11 +34,36 @@ export default {
       editCommentAction: false,
       deleteAction: false,
       formDisplay: false,
-      roomInfo: {
-          reservatorList: [],
-          roomName: '',
+      oneHourInMilliseconds: 3600000,
+      users: [],
+
+      eventInput: {
+        title: "Team Meeting",
+        description: "",
+        startAt: 1716825600000,
+        endAt: 1716831999999,
+        roomId: "6655178de1dfe965fa4b1951",
+        participantsIDs: ["6645ece136e2a0f035961bdd"],
+        notes: "Bring all relevant documents",
+        remindAt: 1625074200
+            },
+
+      formInfo: {
+        title: '',
+        roomId: '',
+        roomName: '',
+        userId: ['6645ece136e2a0f035961bdd'],
+        userName: ['Ivan Lee'],
+        namesString: 'Ivan Lee',
+        eventId: '',
+        dayTime: '',
+        start_time: '10:00',
+        end_time: '12:00',
+        notes: 'test content',
+        fileName: '',
+        fileUrl: '',
+        reservatorList: ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ],
       },
-      userName: "Ray",
       showDivStyle: {
         display: 'none',
         position: 'absolute',
@@ -51,9 +76,30 @@ export default {
   methods: {
     openForm(item) {
       this.formDisplay = true;
-      this.roomInfo.id = item.id;
-      this.roomInfo.roomName = item.roomId;
-      this.roomInfo.reservatorList = item.reservatorList;
+      this.formInfo.roomId = item.id;
+      this.formInfo.roomName = item.name;
+    },
+    updateForm(formInfo) {
+      this.eventInput.title = formInfo.title;
+
+      const startTime = this.dayTime+'-'+formInfo.start_time + ':00';
+      this.eventInput.startAt = this.transferToTimestamp(startTime);
+
+      const endTime = this.dayTime+'-'+formInfo.end_time + ':00';
+      this.eventInput.endAt = this.transferToTimestamp(endTime);
+
+      this.eventInput.roomId = this.formInfo.roomId;
+      const namesArray = formInfo.namesString.split(',');
+      const idsArray = namesArray.map(name => {
+        const user = this.users.find(user => user.name === name);
+        return user ? user.id : null;
+      });
+      this.eventInput.participantsIDs = idsArray
+      
+      this.eventInput.notes = formInfo.notes;
+      this.eventInput.remindAt = this.eventInput.startAt + this.oneHourInMilliseconds
+
+      this.$refs.commWithGql.createEvent(this.eventInput);
     },
     closeForm() {
       this.formDisplay = false;
@@ -70,7 +116,12 @@ export default {
     fetchAvailableRooms(rooms) {
       this.roomItems = rooms
     },
+    queryUsers(users) {
+      this.users = users
+    },
     updateAllRooms(variables) {
+      // this.$refs.commWithGql.queryUsers();
+      this.dayTime = variables.dayTime;
       this.loadPreLoader(1000).then(() => {
         this.$refs.commWithGql.fetchAvailableRooms(variables);
       });
@@ -84,10 +135,16 @@ export default {
         }, duration);
       });
     },
+    transferToTimestamp(time) {
+      const formattedTime_ = time.replace(/(\d{4})-(\d{2})-(\d{2})-(\d{1,2}):(\d{2}):(\d{2})/, '$1-$2-$3T$4:$5:$6');
+      const formattedTime = formattedTime_.replace(/T(\d):/, 'T0$1:');
+      const date = new Date(formattedTime);
+      return date.getTime();
+    },
   },
-  // mounted() {
-  //   this.updateAllRooms();
-  // }
+  mounted() {
+    this.$refs.commWithGql.queryUsers();
+  }
 }
 </script>
 
