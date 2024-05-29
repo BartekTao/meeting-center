@@ -29,12 +29,17 @@
     },
     methods: {
       showDiv(data) {
-        this.showDivStyle.display = 'block';
         this.showDivStyle.left = data.event.pageX + 'px';
         this.showDivStyle.top = data.event.pageY + 'px';
-        this.reservator = data.unit;
-        this.start_time = this.time_period[data.index];
-        this.end_time = this.time_period[data.index + 1];
+        this.reservator = data.unit.name;
+        if (data.unit.name) {
+          this.showDivStyle.display = 'block';
+          this.start_time = `${data.unit.startHours}:${data.unit.startMinutes.toString().padStart(2, '0')}`;
+          this.end_time = `${data.unit.endHours}:${data.unit.endMinutes.toString().padStart(2, '0')}`;
+        }
+
+        // this.start_time = `${data.unit.startHours}:${data.unit.startMinutes.toString().padStart(2, '0')}`;
+        // this.end_time = `${data.unit.endHours}:${data.unit.endMinutes}`;
       },
       hideDiv() {
         this.showDivStyle.display = 'none';

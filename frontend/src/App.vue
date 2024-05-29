@@ -1,5 +1,4 @@
 <template>
-  <!-- <js-preloader></js-preloader> -->
   <background-header></background-header>
 
   <router-view></router-view>
@@ -20,7 +19,6 @@
 <script>
 
 import BackgroundHeader from '@/components/BackgroundHeader.vue';
-// import JsPreloader from '@/components/JsPreloader.vue';
 
 export default {
   name: 'App',
@@ -31,7 +29,6 @@ export default {
   },
   components: {
     BackgroundHeader,
-    // JsPreloader,
   },
 }
 

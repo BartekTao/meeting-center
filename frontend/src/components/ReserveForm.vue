@@ -3,13 +3,13 @@
         <form id="submitForm">
             <div class="row mb-4">
                 <div class="col-sm-12">
-                    <h3 class="text-center">會議室名稱：{{ localFormInfo.roomName }}</h3>
+                    <h3 class="text-center">會議室名稱：{{ roomName }}</h3>
                 </div>
             </div>
             <div class="row mb-2">
                 <ItemPeriod 
                     period-name="早上："
-                    :reservator-list="localFormInfo.reservatorList.slice(0, 6)"
+                    :reservator-list="schedulesList.slice(0, 6)"
                     :info-progress-width="250"
                     :margin-left='170'
                     @update-show-reservator="updateShowReservator"
@@ -18,7 +18,7 @@
                 />
                 <ItemPeriod 
                     period-name="下午："
-                    :reservator-list="localFormInfo.reservatorList.slice(6)"
+                    :reservator-list="schedulesList.slice(6)"
                     :info-progress-width="500"
                     :margin-left='170'
                     @update-show-reservator="updateShowReservator"
@@ -88,7 +88,7 @@
   export default {
     name: 'ReserveForm',
     emits: ['close-form', 'showDiv', 'hideDiv', 'update-form'],
-    props: ['formInfo', 'formDisplay'],
+    props: ['formInfo', 'formDisplay', 'roomName', 'schedulesList'],
     data() {
       return {
         time_period: [],

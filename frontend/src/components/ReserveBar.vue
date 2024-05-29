@@ -93,7 +93,10 @@
     },
     methods: {
       updateAllRooms() {
-        const dayTime = this.currentDate
+        this.variables.rules = [];
+        this.variables.equipments = [];
+
+        const dayTime = this.currentDate;
         
         const startTime = dayTime+'-'+this.selectedStartPeriod + ':00';
         const startTimeStamp = this.transferToTimestamp(startTime);

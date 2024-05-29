@@ -1,7 +1,7 @@
 <template>
   <ReserveBar @updateAllRooms="updateAllRooms"/>
   <ReserveList  @showDiv="showDiv" @hideDiv="hideDiv" :openForm="openForm" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction" :roomItems="roomItems"/>
-  <ReserveForm  @showDiv="showDiv" @hideDiv="hideDiv" :formDisplay="formDisplay" :formInfo="formInfo" @close-form="closeForm" @update-form="updateForm"/>
+  <ReserveForm  @showDiv="showDiv" @hideDiv="hideDiv" :formDisplay="formDisplay" :formInfo="formInfo" :roomName="roomName" :schedulesList="schedulesList" @close-form="closeForm" @update-form="updateForm"/>
   <EventInfo ref="eventInfo"/>
   <comm-with-gql @fetch-available-rooms="fetchAvailableRooms" @query-users="queryUsers" ref="commWithGql"></comm-with-gql>
   <js-preloader ref="jsPreloader"></js-preloader>
@@ -36,7 +36,11 @@ export default {
       formDisplay: false,
       oneHourInMilliseconds: 3600000,
       users: [],
+      updateVariables: {},
 
+      timeList: ['9:0', '9:30', '10:0', '10:30', '11:0', '11:30', '12:0', '12:30', '13:0', '13:30', '14:0', '14:30', '15:0', '15:30', '16:0', '16:30', '17:0', '17:30', '18:0'],
+      reservatorList: ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+    
       eventInput: {
         title: "Team Meeting",
         description: "",
@@ -71,13 +75,17 @@ export default {
         zIndex: 1000,
       },
       roomItems: [],
+      roomName: '',
+      roomId: '',
+      schedulesList: [],
     };
   },
   methods: {
     openForm(item) {
       this.formDisplay = true;
-      this.formInfo.roomId = item.id;
-      this.formInfo.roomName = item.name;
+      this.roomName = item.name;
+      this.roomId = item.id;
+      this.schedulesList = item.schedulesList;
     },
     updateForm(formInfo) {
       this.eventInput.title = formInfo.title;
@@ -88,18 +96,19 @@ export default {
       const endTime = this.dayTime+'-'+formInfo.end_time + ':00';
       this.eventInput.endAt = this.transferToTimestamp(endTime);
 
-      this.eventInput.roomId = this.formInfo.roomId;
+      this.eventInput.roomId = this.roomId;
       const namesArray = formInfo.namesString.split(',');
       const idsArray = namesArray.map(name => {
         const user = this.users.find(user => user.name === name);
         return user ? user.id : null;
       });
       this.eventInput.participantsIDs = idsArray
-      
+
       this.eventInput.notes = formInfo.notes;
       this.eventInput.remindAt = this.eventInput.startAt + this.oneHourInMilliseconds
 
       this.$refs.commWithGql.createEvent(this.eventInput);
+      this.updateAllRooms({})
     },
     closeForm() {
       this.formDisplay = false;
@@ -110,20 +119,72 @@ export default {
     hideDiv() {
       this.$refs.eventInfo.hideDiv();
     },
-    fetchAvailable(availables) {
-      this.startTimeStamp = availables; // endTimeStamp
+    fetchAvailable(available) {
+      this.startTimeStamp = available; // endTimeStamp
     },
     fetchAvailableRooms(rooms) {
-      this.roomItems = rooms
+      this.roomItems = rooms;
+
+      this.roomItems.forEach(room => {
+        let finalReservatiorList = Array(this.timeList.length).fill('');
+
+        room.schedules.forEach(schedule => {
+          const reservatorName = this.findUserNameById(schedule.creator.id);
+          const eventTitle = this.findUserNameById(schedule.title);
+          const { hours: startHours, minutes: startMinutes } = this.getHours(schedule.startAt);
+          const { hours: endHours, minutes: endMinutes } = this.getHours(schedule.endAt);
+          
+          let nickName;
+          if (reservatorName.length === 3) {
+            nickName = reservatorName.substring(1);
+          } else {
+            const nameParts = reservatorName.split(' ');
+            nickName = nameParts[0];
+          }
+
+          const newReservatorList = this.transferReservatorList(startHours, startMinutes, endHours, endMinutes, reservatorName);
+          const scheduleInfo = {
+              id: schedule.creator.id,
+              name: reservatorName,
+              nickName: nickName,
+              startHours,
+              startMinutes,
+              endHours,
+              endMinutes,
+              eventTitle
+            };
+          finalReservatiorList = finalReservatiorList.map((slot, index) => slot.name === reservatorName ? slot : newReservatorList[index] ? scheduleInfo : slot);
+          // finalReservatiorList = finalReservatiorList.map((slot, index) => slot === reservatorName ? slot : newReservatorList[index]);
+          console.log(finalReservatiorList)
+        });
+
+        room.schedulesList = finalReservatiorList.slice(0, -1);
+      });
+
+    },
+    transferReservatorList(startHours, startMinutes, endHours, endMinutes, eventName) {
+      const startTime = startHours * 60 + startMinutes;
+      const endTime = endHours * 60 + endMinutes;
+
+      return this.timeList.map(time => {
+        const [hours, minutes] = time.split(':').map(Number);
+        const timeInMinutes = hours * 60 + minutes;
+
+        return timeInMinutes >= startTime && timeInMinutes < endTime ? eventName : '';
+      });
     },
     queryUsers(users) {
       this.users = users
     },
     updateAllRooms(variables) {
-      // this.$refs.commWithGql.queryUsers();
-      this.dayTime = variables.dayTime;
+
+      if (Object.keys(variables).length !== 0) {
+        this.dayTime = variables.dayTime;
+        this.updateVariables = variables;
+      }
+
       this.loadPreLoader(1000).then(() => {
-        this.$refs.commWithGql.fetchAvailableRooms(variables);
+        this.$refs.commWithGql.fetchAvailableRooms(this.updateVariables);
       });
     },
     loadPreLoader(duration) {
@@ -140,6 +201,18 @@ export default {
       const formattedTime = formattedTime_.replace(/T(\d):/, 'T0$1:');
       const date = new Date(formattedTime);
       return date.getTime();
+    },
+    getHours(timestamp) {
+      const date = new Date(timestamp);
+      const day = date.getDate();
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+
+      return { day, hours, minutes}
+    },
+    findUserNameById(inputId) {
+      const user = this.users.find(user => user.id === inputId);
+      return user ? user.name : 'User not found';
     },
   },
   mounted() {

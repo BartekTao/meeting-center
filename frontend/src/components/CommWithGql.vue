@@ -107,11 +107,11 @@
             }
           `;
 
-
           const variables = {
             input: eventInput
           };
 
+          console.log('variables:', variables);
           return this.client.mutate({
             mutation: CREATE_EVENT_MUTATION,
             variables
@@ -164,7 +164,6 @@
               }
             }
           `;
-          // console.log(roomId)
           return this.client.mutate({
             mutation: DELETE_ROOM_MUTATION,
             variables: {
@@ -178,38 +177,30 @@
         },
         fetchAvailableRooms(variables) {
 
-          const GET_AVAILABLE_ROOMS = gql`
-            query getAvailableRooms($startAt: Int64!, $endAt: Int64!, $rules: [Rule!], $equipments: [Equipment!], $first: Int = 20, $after: String) {
-              paginatedAvailableRooms(startAt: $startAt, endAt: $endAt, rules: $rules, equipments: $equipments, first: $first, after: $after) {
-                edges {
-                  node {
-                    id
-                    name
-                    capacity
-                    equipments
-                    rules
-                    isDelete
-                  }
-                  cursor
-                }
-                pageInfo {
-                  endCursor
-                }
-              }
-            }
-          `;
-          
           this.calculateStartOfDay(variables.startAt);
           this.calculateEndOfDay(variables.endAt);
-          
-          this.client.query({
-            query: GET_AVAILABLE_ROOMS,
-            variables
-          }).then(response => {
-            this.rooms = response.data.paginatedAvailableRooms.edges.map(edge => edge.node);
-            this.ids = this.rooms.map(room => room.id);
+
+          variables.ids = [];
+          this.queryRoomSchedules(variables)
+            .then(response => {
+              const edges = response.data.paginatedRoomSchedules.edges;
+              this.rooms = edges.map(edge => {
+                return {
+                  ...edge.node.room,
+                  schedules: edge.node.schedules
+                };
+              });
+            })
+            .catch(error => {
+              this.error = error;
+              console.error("Error in queryRoomSchedules:", error);
+            });
             
-          this.queryRoomSchedules(this.ids, this.startOfDayTimestamp, this.endOfDayTimestamp)
+          variables.ids = this.rooms.map(room => room.id); // = [];
+          variables.startAt = this.startOfDayTimestamp;
+          variables.endAt = this.endOfDayTimestamp;
+
+          this.queryRoomSchedules(variables)
             .then(response => {
               const edges = response.data.paginatedRoomSchedules.edges;
               this.rooms = edges.map(edge => {
@@ -219,18 +210,13 @@
                 };
               });
               this.$emit('fetchAvailableRooms', this.rooms);
-              this.pageInfo = response.data.paginatedRoomSchedules.pageInfo;
             })
             .catch(error => {
               this.error = error;
               console.error("Error in queryRoomSchedules:", error);
             });
-
-          }).catch(error => {
-            console.error('Error fetching available rooms:', error);
-          });
         },   
-        queryRoomSchedules(ids, startAt, endAt) {
+        queryRoomSchedules(variables) {
 
           const GET_ROOM_SCHEDULES = gql`
             query getRoomSchedules(
@@ -264,6 +250,10 @@
                     schedules {
                       startAt
                       endAt
+                      title
+                      creator {
+                        id
+                      }
                     }
                   }
                   cursor
@@ -275,19 +265,9 @@
             }
           `;
 
-          const defaultVariables = {
-            ids: ids, //["6655178de1dfe965fa4b1951"],
-            startAt: startAt, // 1625077800,
-            endAt:endAt, // 1625081400,
-            rules: [],
-            equipments: [],
-            first: 20,
-            after: null
-          };
-
           return this.client.query({
             query: GET_ROOM_SCHEDULES,
-            variables: defaultVariables,
+            variables, //: defaultVariables,
           }).then(response => {
             return response
           }).catch(error => {
