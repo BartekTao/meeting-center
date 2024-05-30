@@ -19,6 +19,7 @@
           ids: [],
           edges: [],
           users: [],
+          eventList: [],
         };
       },
       created() {
@@ -30,7 +31,7 @@
           return {
             headers: {
               ...headers,
-              authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNjk5NTIwNiwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.ZV9ZaG8CCS9u7o2V920ch0B2vrz4VxQ68Bk2qJq0rT8",
+              authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNzExNTY5NCwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.B3scEl92nu_TAAF8FDVKscdpnQoM2hZlRf5XqCvqN50",
             }
           }
         });
@@ -111,7 +112,6 @@
             input: eventInput
           };
 
-          console.log('variables:', variables);
           return this.client.mutate({
             mutation: CREATE_EVENT_MUTATION,
             variables
@@ -176,11 +176,15 @@
           });
         },
         fetchAvailableRooms(variables) {
+        return new Promise((resolve, reject) => {
 
           this.calculateStartOfDay(variables.startAt);
           this.calculateEndOfDay(variables.endAt);
 
-          variables.ids = [];
+          // First queryRoomSchedules
+          if (!variables.ids) {
+            variables.ids = [];
+          }
           this.queryRoomSchedules(variables)
             .then(response => {
               const edges = response.data.paginatedRoomSchedules.edges;
@@ -190,17 +194,14 @@
                   schedules: edge.node.schedules
                 };
               });
-            })
-            .catch(error => {
-              this.error = error;
-              console.error("Error in queryRoomSchedules:", error);
-            });
-            
-          variables.ids = this.rooms.map(room => room.id); // = [];
-          variables.startAt = this.startOfDayTimestamp;
-          variables.endAt = this.endOfDayTimestamp;
 
-          this.queryRoomSchedules(variables)
+              // Second queryRoomSchedules inside the then block of the first
+              variables.ids = this.rooms.map(room => room.id);
+              variables.startAt = this.startOfDayTimestamp;
+              variables.endAt = this.endOfDayTimestamp;
+
+              return this.queryRoomSchedules(variables);
+            })
             .then(response => {
               const edges = response.data.paginatedRoomSchedules.edges;
               this.rooms = edges.map(edge => {
@@ -210,11 +211,15 @@
                 };
               });
               this.$emit('fetchAvailableRooms', this.rooms);
+              // return this.rooms;
+              resolve(this.rooms);
             })
             .catch(error => {
               this.error = error;
-              console.error("Error in queryRoomSchedules:", error);
+              // console.error("Error in queryRoomSchedules:", error);
+              reject(error);
             });
+          });
         },   
         queryRoomSchedules(variables) {
 
@@ -323,6 +328,89 @@
             this.$emit('queryUsers', this.users);
           }).catch(error => {
             console.error('Error fetching users:', error);
+          });
+        },
+        getUserEvents(variables) {
+          const GET_USER_EVENTS = gql`
+            query getUserEvents($userIDs: [ID!]!, $startAt: Int64!, $endAt: Int64!) {
+              userEvents(userIDs: $userIDs, startAt: $startAt, endAt: $endAt) {
+                events {
+                  id
+                  startAt
+                  endAt
+                  roomReservation {
+                    room {
+                      id
+                    }
+                    status
+                  }
+                  isDelete
+                }
+              }
+            }
+          `;
+
+          this.client.query({
+            query: GET_USER_EVENTS,
+            variables
+          }).then(response => {
+            const events = response.data.userEvents[1].events;
+            if (events) {
+              this.eventList = [];
+              for (let i = 0; i < events.length; i++) {
+                const event = events[i];
+                const processedEvent = {
+                  eventId: event.id,
+                  startAt: event.startAt,
+                  endAt: event.endAt,
+                  roomId: [event.roomReservation.room.id],
+                };
+                this.eventList.push(processedEvent);
+              }
+              // this.$emit('getEventList', this.eventList);
+
+              let returnEventList = [];
+
+              // Use the first event from the eventList to call fetchAvailableRooms
+              if (this.eventList.length > 0) {
+                let promises = this.eventList.map(event => {
+                  const fetchVariables = {
+                    startAt: event.startAt,
+                    endAt: event.endAt,
+                    ids: event.roomId
+                  };
+                  return this.fetchAvailableRooms(fetchVariables)
+                    .then(rooms => {
+                    return {
+                      originalData: event,
+                      roomsData: rooms
+                    };
+                    })
+                    .catch(error => {
+                      console.error('Error fetching available rooms:', error);
+                      return {
+                        originalData: event,
+                        roomsData: null,
+                        error: error
+                      };
+                    });
+                });
+
+
+                // Wait for all fetchAvailableRooms promises to resolve
+                Promise.all(promises)
+                  .then(results => {
+                    returnEventList = results;
+                    this.$emit('getEventList', returnEventList);
+                  })
+                  .catch(error => {
+                    console.error('Error processing events:', error);
+                  });
+
+              }
+            }
+          }).catch(error => {
+            console.error('Error fetching user events:', error);
           });
         }
       },

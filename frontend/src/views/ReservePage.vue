@@ -147,6 +147,7 @@ export default {
               id: schedule.creator.id,
               name: reservatorName,
               nickName: nickName,
+              title: schedule.title,
               startHours,
               startMinutes,
               endHours,
@@ -154,8 +155,7 @@ export default {
               eventTitle
             };
           finalReservatiorList = finalReservatiorList.map((slot, index) => slot.name === reservatorName ? slot : newReservatorList[index] ? scheduleInfo : slot);
-          // finalReservatiorList = finalReservatiorList.map((slot, index) => slot === reservatorName ? slot : newReservatorList[index]);
-          console.log(finalReservatiorList)
+          
         });
 
         room.schedulesList = finalReservatiorList.slice(0, -1);
