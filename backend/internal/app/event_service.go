@@ -9,6 +9,7 @@ import (
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/lock"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/notification"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 type UpsertEventRequest struct {
@@ -88,35 +89,59 @@ func (s *eventService) Upsert(ctx context.Context, req UpsertEventRequest) (*dom
 		}(res)
 
 		return res, err
-	} else {
-		event.RoomReservation = &domain.RoomReservation{
-			RoomID:            req.RoomID,
-			ReservationStatus: domain.ReservationStatus_Confirmed,
+	}
+
+	event.RoomReservation = &domain.RoomReservation{
+		RoomID:            req.RoomID,
+		ReservationStatus: domain.ReservationStatus_Confirmed,
+	}
+
+	var res *domain.Event
+	var oldEvent *domain.Event
+	var err error
+	if event.ID != nil {
+		oldEvent, err = s.eventRepository.GetByID(ctx, *event.ID)
+		if err != nil {
+			return nil, err
+		}
+		if oldEvent == nil {
+			return nil, gqlerror.Errorf("Event not exist")
 		}
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
+	if oldEvent != nil && oldEvent.StartAt == event.StartAt &&
+		oldEvent.EndAt == event.EndAt &&
+		*oldEvent.RoomReservation.RoomID == *event.RoomReservation.RoomID {
 
-	key := *req.RoomID
-	locked, err := s.locker.TryLockWithWait(key, 500*time.Millisecond, 3)
-	if err != nil {
-		return nil, err
-	}
-	defer s.locker.Unlock(locked)
+		res, err = s.eventRepository.Upsert(ctx, event)
+		if err != nil {
+			return nil, err
+		}
+	} else {
 
-	available, err := s.eventRepository.CheckAvailableRoom(ctx, *event.RoomReservation.RoomID, event.StartAt, event.EndAt)
-	if err != nil {
-		return nil, err
-	}
+		ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+		defer cancel()
 
-	if !available {
-		event.RoomReservation.ReservationStatus = domain.ReservationStatus_Canceled
-	}
+		key := *req.RoomID
+		locked, err := s.locker.TryLockWithWait(key, 500*time.Millisecond, 3)
+		if err != nil {
+			return nil, err
+		}
+		defer s.locker.Unlock(locked)
 
-	res, err := s.eventRepository.Upsert(ctx, event)
-	if err != nil {
-		return nil, err
+		available, err := s.eventRepository.CheckAvailableRoom(ctx, *event.RoomReservation.RoomID, event.StartAt, event.EndAt)
+		if err != nil {
+			return nil, err
+		}
+
+		if !available {
+			event.RoomReservation.ReservationStatus = domain.ReservationStatus_Canceled
+		}
+
+		res, err = s.eventRepository.Upsert(ctx, event)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// sent invited email
@@ -127,7 +152,7 @@ func (s *eventService) Upsert(ctx context.Context, req UpsertEventRequest) (*dom
 		}
 	}(res)
 
-	return res, err
+	return res, nil
 }
 
 func (s *eventService) sendEmail(ctx context.Context, res *domain.Event, mailPrefix string, content string) error {

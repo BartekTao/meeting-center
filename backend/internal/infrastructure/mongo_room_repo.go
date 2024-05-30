@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Room struct {
@@ -91,7 +92,8 @@ func (m *mongoRoomRepository) Upsert(ctx context.Context, room domain.Room) (*do
 		}
 
 		var updatedRoom Room
-		err = collection.FindOneAndUpdate(ctx, filter, update).Decode(&updatedRoom)
+		err = collection.FindOneAndUpdate(ctx, filter, update,
+			options.FindOneAndUpdate().SetReturnDocument(options.After)).Decode(&updatedRoom)
 		if err != nil {
 			// ErrNoDocuments means that the filter did not match any documents in the collection.
 			if errors.Is(err, mongo.ErrNoDocuments) {
