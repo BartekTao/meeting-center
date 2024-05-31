@@ -6,6 +6,10 @@
     import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client/core';
     import { setContext } from '@apollo/client/link/context';
     import gql from 'graphql-tag';
+
+
+    console.log('Authorization:', process.env.VUE_APP_AUTHORIZATION);
+    console.log('URI:', process.env.VUE_APP_URI);
     
     export default {
       name: 'GraphQLTester',
@@ -24,14 +28,14 @@
       },
       created() {
         const httpLink = createHttpLink({
-          uri: 'http://localhost:8080/query', 
+          uri: process.env.VUE_APP_URI, 
         });
 
         const authLink = setContext((_, { headers }) => {
           return {
             headers: {
               ...headers,
-              authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNzIwMDc1MCwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.Ppez0jkZA_Ah1TPfLIaFWyZGO2UNpKCvtmgXqVLYxgw",
+              authorization: process.env.VUE_APP_AUTHORIZATION,
             }
           }
         });

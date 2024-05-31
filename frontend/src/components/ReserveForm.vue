@@ -5,7 +5,7 @@
         <form id="submitForm">
             <div class="row mb-4">
                 <div class="col-sm-12">
-                    <h3 class="text-center">會議室名稱：{{ localFormInfo.name }}</h3>
+                    <h3 class="text-center">會議室名稱：{{ localFormInfo.roomName }}</h3>
                 </div>
             </div>
             <div class="row mb-2">

@@ -85,8 +85,9 @@ export default {
   },
   methods: {
     openForm(item) {
+      console.log('item:', item);
       this.formDisplay = true;
-      this.roomName = item.name;
+      this.formInfo.roomName = item.name;
       this.roomId = item.id;
       this.formInfo.roomId = item.id;
       this.schedulesList = item.schedulesList;
@@ -113,7 +114,7 @@ export default {
     openCommentForm(item) {
       this.commentDisplay = true;
       this.roomInfo.id = item.id;
-      this.roomInfo.roomName = item.roomId;
+      this.roomInfo.roomName = item.name;
       this.formInfo.eventId = item.eventId;
       this.formInfo.summary = item.summary;
     },

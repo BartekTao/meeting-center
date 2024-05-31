@@ -5,7 +5,7 @@
       <div class="row">
         <div class="col-lg-12">
           <div class="section-heading">
-            <button @click="openForm('none')">Open Form</button>
+            <button @click="openForm('none')">新建會議室</button>
           </div>
         </div>
         <div class="col-lg-12">
