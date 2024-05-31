@@ -12,7 +12,7 @@
               <div class="row">
                 <div class="col-lg-3 align-self-center">
                   <fieldset>
-                    <input type="number" id="number_of_people" name="number_of_people" v-model="selectedNumberOfPeople" min="1" placeholder="最多人數" aria-label="Number of People" required>
+                    <input type="number" id="number_of_people" name="number_of_people" min="1" placeholder="最多人數" aria-label="Number of People" required>
                   </fieldset>
                 </div>
                 <div class="col-lg-3 align-self-center">
@@ -38,7 +38,7 @@
                 </div>
                 <div class="col-lg-3 align-self-center">
                   <fieldset>
-                    <input type="number" name="time_period" v-model="selectedTimePeriod" placeholder="連續時間(小時)" id="time_period" required min="0" max="9" step="0.5">
+                    <input type="number" name="time_period" placeholder="連續時間(小時)" id="time_period" required min="0" max="9" step="0.5">
                   </fieldset>
                 </div>
                 <div class="col-lg-3">                        

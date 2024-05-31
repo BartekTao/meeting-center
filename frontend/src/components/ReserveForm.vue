@@ -67,11 +67,25 @@
                 </div>
             </div>
 
-            <div class="row mb-2">
-                <label for="file" class="col-sm-2 col-form-label">上傳文件：</label>
-                <div class="col-sm-9">
-                    <input type="file" id="file" name="file" class="form-control">
+            <div>
+                <div class="row mb-2 align-items-center">
+                    <label for="file" class="col-sm-2 col-form-label">上傳文件：</label>
+                    <div class="col-sm-10 d-flex align-items-center">
+                        <input type="file" id="file" name="file" class="form-control me-2 w-50" @change="onFileChange">
+                        <a @click="uploadFile" class="btn btn-primary me-2" style="cursor: pointer;">上傳檔案</a>
+                    </div>
                 </div>
+            </div>
+
+            <div class="row mb-2">
+                <label class="col-sm-2 col-form-label">Uploaded file URL:</label>
+                <div class="col-sm-10">
+                    <a :href="downLoadUrl" target="_blank">{{ this.localFormInfo.fileUrl }}</a>
+                </div>
+            </div>
+
+            <div class="row mb-2">
+                <label class="col-sm-2 col-form-label"><strong>會議會在前十分鐘提醒</strong></label>
             </div>
 
             <div class="row mb-2">
@@ -87,6 +101,7 @@
   <script>
   import ItemPeriod from './ItemPeriod.vue';
   import CommWithGql from '@/components/CommWithGql.vue'
+  import axios from 'axios';
 
   export default {
     name: 'ReserveForm',
@@ -94,6 +109,10 @@
     props: ['users', 'formInfo', 'formDisplay', 'roomName', 'schedulesList'],
     data() {
       return {
+
+        selectedFile: null,
+        fileName: '',
+        downLoadUrl: '',
         time_period: [],
         showReservator: '',
       };
@@ -104,9 +123,38 @@
         },
     },
     methods: {
+      onFileChange(event) {
+        this.selectedFile = event.target.files[0];
+        this.localFormInfo.fileName = this.selectedFile ? this.selectedFile.name : '';
+      },
+      uploadFile() {
+            const formData = new FormData();
+            const operations = JSON.stringify({
+                query: `mutation ($file: Upload!) { uploadFile(file: $file) }`,
+                variables: { file: null }
+            });
+            const map = JSON.stringify({
+                "0": ["variables.file"]
+            });
+
+            formData.append('operations', operations);
+            formData.append('map', map);
+            formData.append('0', this.selectedFile);
+
+            axios.post('http://localhost:8080/query', formData, {
+                headers: {
+                'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNzIwMDc1MCwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.Ppez0jkZA_Ah1TPfLIaFWyZGO2UNpKCvtmgXqVLYxgw',
+                'Content-Type': 'multipart/form-data'
+                }
+            }).then(response => {
+                this.downLoadUrl = response.data.data.uploadFile;
+            }).catch(error => {
+                console.error('Error uploading file:', error);
+            });
+      },
       submitForm() {
         
-        const {dayTime, roomId } = this.formInfo;
+        const {dayTime, roomId} = this.formInfo;
         const startTime = dayTime+'-'+ this.localFormInfo.start_time + ':00';
         const startAt = this.transferToTimestamp(startTime);
 
@@ -119,15 +167,20 @@
             return user ? user.id : null;
         });
         const participantsIDs = idsArray
-        const remindAt = startAt + 3600000
+        const remindAt = startAt + 600000
 
-        const newFormInfo = { title: this.localFormInfo.title, description: this.localFormInfo.description, startAt, endAt, roomId, participantsIDs, remindAt };
+        const attachedFile = {
+            url: this.localFormInfo.fileUrl,
+            name: this.localFormInfo.fileName
+        }
+
+        const newFormInfo = { attachedFile, title: this.localFormInfo.title, description: this.localFormInfo.description, startAt, endAt, roomId, participantsIDs, remindAt };
 
         if (this.localFormInfo.eventId !== '') {
             newFormInfo.id = this.localFormInfo.eventId;
         }
-        
-        console.log('newFormInfo:', newFormInfo);   
+          
+        console.log('newFormInfo:', newFormInfo);
         this.$refs.commWithGql.createEvent(newFormInfo);
         this.$emit('update-form');
         this.closeForm();

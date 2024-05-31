@@ -41,9 +41,10 @@ export default {
       formDisplay: false,
       commentDisplay: false,
       ignoreRoom: [],
+      
 
       formInfo: {
-        title: '',
+        title: 'test title',
         description: 'test description',
         roomId: '',
         roomName: '',
@@ -95,6 +96,9 @@ export default {
       this.formInfo.title = item.title;
       this.formInfo.description = item.description;
       this.formInfo.summary = item.summary;
+
+      this.formInfo.fileName = item.fileName;
+      this.formInfo.fileUrl = item.fileUrl;
 
       const { hours: startHours, minutes: startMinutes } = this.getHours(item.startAt);
       const { hours: endHours, minutes: endMinutes } = this.getHours(item.endAt);
@@ -164,6 +168,8 @@ export default {
               eventId: event.originalData.eventId,
               title: event.originalData.title,
               description: event.originalData.description,
+              fileName: event.originalData.fileName,
+              fileUrl: event.originalData.fileUrl,
               summary: event.originalData.summary,
               startAt: event.originalData.startAt,
               endAt: event.originalData.endAt,

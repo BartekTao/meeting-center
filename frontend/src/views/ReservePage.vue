@@ -53,7 +53,7 @@ export default {
             },
 
       formInfo: {
-        title: '',
+        title: 'test title',
         description: 'test description',
         roomId: '',
         roomName: '',
@@ -65,8 +65,8 @@ export default {
         start_time: '10:00',
         end_time: '12:00',
         notes: 'test content',
-        fileName: '',
-        fileUrl: '',
+        fileName: 'test file name',
+        fileUrl: 'test file url',
         reservatorList: ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ],
         schedulesList: [],
       },
@@ -89,6 +89,8 @@ export default {
       this.roomId = item.id;
       this.formInfo.roomId = item.id;
       this.schedulesList = item.schedulesList;
+      this.formInfo.fileName = item.fileName;
+      this.formInfo.fileUrl = item.fileUrl;
     },
 
     updateForm() {
