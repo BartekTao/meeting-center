@@ -20,4 +20,14 @@ spec:
                   secretKeyRef:
                     name: my-secret
                     key: MONGO_URI
+              - name: SENDER_EMAIL
+                valueFrom:
+                  secretKeyRef:
+                    name: my-secret
+                    key: SENDER_EMAIL
+              - name: SENDER_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: my-secret
+                    key: SENDER_PASSWORD
           restartPolicy: OnFailure
