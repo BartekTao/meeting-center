@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: reminder-cronjob
+  namespace: default
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: reminder
+            image: ghcr.io/jammy0611/meetingcenter-cronjob:reminder
+            imagePullPolicy: IfNotPresent
+            command: ["./app"]
+            env:
+              - name: MONGO_URI
+                valueFrom:
+                  secretKeyRef:
+                    name: my-secret
+                    key: MONGO_URI
+              - name: SENDER_EMAIL
+                valueFrom:
+                  secretKeyRef:
+                    name: my-secret
+                    key: SENDER_EMAIL
+              - name: SENDER_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: my-secret
+                    key: SENDER_PASSWORD
+          restartPolicy: OnFailure
