@@ -28,6 +28,9 @@ spec:
                 secretKeyRef:
                   name: my-secret
                   key: MONGO_INITDB_ROOT_PASSWORD
+          volumeMounts:
+            - name: mongo-persistent-storage
+              mountPath: /data/db
         - name: mongo-express-container
           image: mongo-express
           ports:
@@ -48,6 +51,38 @@ spec:
                 secretKeyRef:
                   name: my-secret
                   key: ME_CONFIG_MONGODB_URL
+          volumeMounts:
+            - name: mongo-express-persistent-storage
+              mountPath: /config
+      volumes:
+        - name: mongo-persistent-storage
+          persistentVolumeClaim:
+            claimName: mongo-pvc
+        - name: mongo-express-persistent-storage
+          persistentVolumeClaim:
+            claimName: mongo-express-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-express-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
 ---
 apiVersion: v1
 kind: Service

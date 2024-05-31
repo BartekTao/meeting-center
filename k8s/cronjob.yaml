@@ -14,4 +14,10 @@ spec:
             image: ghcr.io/jammy0611/meetingcenter-cronjob:reminder
             imagePullPolicy: IfNotPresent
             command: ["./app"]
+            env:
+              - name: MONGO_URI
+                valueFrom:
+                  secretKeyRef:
+                    name: my-secret
+                    key: MONGO_URI
           restartPolicy: OnFailure
