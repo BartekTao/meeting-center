@@ -10,22 +10,30 @@ import (
 	"os/signal"
 	"time"
 
+	cloudstorage "cloud.google.com/go/storage"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/BartekTao/nycu-meeting-room-api/internal/app"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph"
 	"github.com/BartekTao/nycu-meeting-room-api/internal/graph/resolvers"
 	infra "github.com/BartekTao/nycu-meeting-room-api/internal/infrastructure"
-	"github.com/BartekTao/nycu-meeting-room-api/internal/meeting"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/auth"
+	"github.com/BartekTao/nycu-meeting-room-api/pkg/lock"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/middleware"
+	"github.com/BartekTao/nycu-meeting-room-api/pkg/notification"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/otelwrapper"
+	"github.com/BartekTao/nycu-meeting-room-api/pkg/storage"
+	"github.com/go-redsync/redsync/v4"
+	"github.com/go-redsync/redsync/v4/redis/goredis/v9"
+	goredislib "github.com/redis/go-redis/v9"
 	"github.com/rs/cors"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
+	"google.golang.org/api/option"
 )
 
 const defaultPort = "8080"
@@ -58,13 +66,32 @@ func run() (err error) {
 	mongoClient := infra.SetUpMongoDB()
 	defer infra.ShutdownMongoDB(mongoClient)
 
+	redisUri := os.Getenv("REDIS_URI")
+	if redisUri == "" {
+		log.Fatal("You must set the REDIS_URI environment variable")
+	}
+	client := goredislib.NewClient(&goredislib.Options{
+		Addr: redisUri,
+	})
+	defer client.Close()
+
+	credentials := os.Getenv("GCS_CREDENTIALS_JSON")
+	if credentials == "" {
+		log.Fatal("GCS_CREDENTIALS_JSON environment variable is not set")
+	}
+
+	gcsClient, err := cloudstorage.NewClient(ctx, option.WithCredentialsFile(credentials))
+	if err != nil {
+		log.Fatalf("Failed to create client: %v", err)
+	}
+
 	// Start HTTP server.
 	srv := &http.Server{
 		Addr:         ":8080",
 		BaseContext:  func(_ net.Listener) context.Context { return ctx },
 		ReadTimeout:  time.Second,
 		WriteTimeout: 10 * time.Second,
-		Handler:      newHTTPHandler(mongoClient),
+		Handler:      newHTTPHandler(mongoClient, client, gcsClient),
 	}
 	srvErr := make(chan error, 1)
 	go func() {
@@ -87,7 +114,7 @@ func run() (err error) {
 	return
 }
 
-func newHTTPHandler(mongoClient *mongo.Client) http.Handler {
+func newHTTPHandler(mongoClient *mongo.Client, rsClient *goredislib.Client, gcsClient *cloudstorage.Client) http.Handler {
 	mux := http.NewServeMux()
 
 	c := cors.New(cors.Options{
@@ -98,22 +125,39 @@ func newHTTPHandler(mongoClient *mongo.Client) http.Handler {
 		MaxAge:           86400,
 	})
 
-	mongoMeetingRepo := infra.NewMongoMeetingRepository(mongoClient)
-	meetingManager := meeting.NewBasicMeetingManager(mongoMeetingRepo)
-
 	jwtSecret := os.Getenv("JWT_KEY")
 	if jwtSecret == "" {
 		log.Fatal("You must set the JWT_KEY environment variable")
 	}
 	jwtMiddleware := middleware.JWTMiddleware(jwtSecret)
 
-	authHandler := auth.NewGoogleOAuthHandler()
+	userRepo := infra.NewMongoUserRepo(mongoClient)
+	authHandler := auth.NewGoogleOAuthHandler(userRepo)
+	mailHandler, err := notification.NewGmailHandler()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 
 	mux.HandleFunc("/auth/google/login", authHandler.Login)
 	mux.HandleFunc("/auth/google/callback", authHandler.Callback)
 
 	// Setup GraphQL server
-	graphqlServer := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolvers.NewResolver(meetingManager)}))
+	pool := goredis.NewPool(rsClient)
+	rs := redsync.New(pool)
+	locker := lock.NewRedsyncLocker(rs)
+	roomRepo := infra.NewMongoRoomRepository(mongoClient)
+	eventRepo := infra.NewMongoEventRepository(mongoClient)
+	roomScheduleRepo := infra.NewRoomScheduleRepository(mongoClient)
+	storageHandler := storage.NewStorageHandler(gcsClient)
+
+	graphqlServer := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
+		Resolvers: resolvers.NewResolver(
+			app.NewRoomService(roomRepo, roomScheduleRepo),
+			app.NewEventService(eventRepo, locker, userRepo, mailHandler),
+			app.NewUserService(userRepo),
+			storageHandler,
+		),
+	}))
 	graphqlServer.AroundFields(tracer())
 	graphqlServer.SetErrorPresenter(func(ctx context.Context, e error) *gqlerror.Error {
 		gqlErr := graphql.DefaultErrorPresenter(ctx, e)

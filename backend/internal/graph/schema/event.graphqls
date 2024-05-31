@@ -1,0 +1,69 @@
+scalar Upload
+
+extend type Query {
+  event(id: ID!): Event
+  userEvents(userIDs: [ID!]!, startAt: Int64!, endAt: Int64!): [UserEvent]
+}
+
+extend type Mutation {
+  upsertEvent(input: UpsertEventInput!): Event!
+  deleteEvent(id: ID!): Event!
+  updateEventSummary(id: ID!, summary: String!): Boolean!
+  uploadFile(file: Upload!): String!
+}
+
+type Event @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.Event") {
+  id: ID!
+  title: String!
+  description: String
+  startAt: Int64!
+  endAt: Int64!
+  roomReservation: RoomReservation
+  participants: [User!]! @goField(forceResolver: true)
+  notes: String
+  remindAt: Int64!
+  summary: String
+  creator: User! @goField(forceResolver: true)
+  isDelete: Boolean
+  attachedFile: AttachedFile
+}
+
+type RoomReservation @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.RoomReservation") {
+  room: Room @goField(forceResolver: true)
+  status: ReservationStatus
+}
+
+enum ReservationStatus @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.ReservationStatus") {
+  CONFIRMED
+  CANCELED
+}
+
+type UserEvent {
+  user: User! @goField(forceResolver: true)
+  events: [Event!]
+}
+
+type AttachedFile @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.File") {
+  url: String!
+  name: String!
+}
+
+input AttachedFileInput @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/domain.File") {
+  url: String!
+  name: String!
+}
+
+input UpsertEventInput @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/internal/app.UpsertEventRequest") {
+  id: ID
+  title: String!
+  description: String
+  startAt: Int64!
+  endAt: Int64!
+  roomId: ID
+  participantsIDs: [ID!]
+  notes: String
+  remindAt: Int64!
+  attachedFile: AttachedFileInput
+}
+
+

@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vue-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vue-frontend
+  template:
+    metadata:
+      labels:
+        app: vue-frontend
+    spec:
+      containers:
+        - name: vue-frontend-container
+          image: ghcr.io/jammy0611/meetingcenter-frontend:latest
+          ports:
+            - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vue-frontend
+spec:
+  type: ClusterIP
+  selector:
+    app: vue-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80

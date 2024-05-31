@@ -23,6 +23,9 @@
 go.work
 
 meeting-room-api
+reminder-cronjob
 backend/.env
 
 .DS_Store
+backend/nycu-cncf-9ba3d1230fc5.json
+backend/testfile.txt

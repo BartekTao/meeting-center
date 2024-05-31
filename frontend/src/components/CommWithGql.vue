@@ -6,7 +6,6 @@
     import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client/core';
     import { setContext } from '@apollo/client/link/context';
     import gql from 'graphql-tag';
-
     
     export default {
       name: 'GraphQLTester',

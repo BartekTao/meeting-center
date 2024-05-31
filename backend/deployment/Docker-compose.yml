@@ -18,7 +18,7 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=nycu
       - MONGO_INITDB_ROOT_PASSWORD=nycu
     volumes:
-      - mongo-data:/data/db
+      - mongo-data-v2:/data/db
   db-client:
     image: mongo-express
     restart: always
@@ -30,15 +30,26 @@ services:
       - ME_CONFIG_MONGODB_URL=mongodb://nycu:nycu@db:27017/
     depends_on:
       - db
+  
+  redis:
+    image: redis:latest
+    container_name: redis-server
+    ports:
+      - 6379:6379
+    restart: always
+
   meeting-center-api:
     image: meeting-center-api
     ports:
       - 8080:8080
+    volumes:
+      - ../nycu-cncf-9ba3d1230fc5.json:/etc/gcp/credentials.json:ro
     env_file:
       - ../.env
     depends_on:
       - db
       - jaeger
+      - redis
 
 volumes:
-  mongo-data:
+  mongo-data-v2:
