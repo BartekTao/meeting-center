@@ -8,13 +8,14 @@
             @mouseover="updateSharedData(unit, index, $event)"
             @mouseleave="hideDiv()">
             <div :class="['unselectable', 'progress-bar', unit ? 'bg-info' : '']">
-            {{ unit }}
+            {{ unit.nickName }}
             </div>
         </div>
         </div>
     </div>
 </template>
   
+ 
   <script>
   // import { inject } from 'vue';
   export default {
