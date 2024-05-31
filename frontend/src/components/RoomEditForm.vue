@@ -137,7 +137,6 @@ export default {
     submitForm() {
       this.$refs.commWithGql.createRoom(this.localFormInfo)
       this.$emit('update-all-rooms');
-      // this.updateAllRooms();
       this.closeForm();
     },
     closeForm() {

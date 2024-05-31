@@ -1,9 +1,10 @@
 <template>
   <div>
     <head-page pageContent="已預約空間"></head-page>
-    <ReserveList :openForm="openForm" :openCommentForm="openCommentForm" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction" :roomItems="roomItems"/>
-    <ReserveForm @close-form="closeForm" :formDisplay="formDisplay" :roomInfo="roomInfo" :userName="userName"/>
-    <CommentForm @close-comment-form="closeCommentForm" :commentDisplay="commentDisplay" :roomInfo="roomInfo" :userName="userName"/>
+    <ReserveList @showDiv="showDiv" @hideDiv="hideDiv" :openForm="openForm" :openCommentForm="openCommentForm" @update-form="updateAllRooms" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction" :roomItems="roomItems"/>
+    <ReserveForm @showDiv="showDiv" @hideDiv="hideDiv" :formDisplay="formDisplay" :formInfo="formInfo" :schedulesList="schedulesList" @close-form="closeForm" @update-form="updateAllRooms" :users="users"/>
+    <CommentForm @close-comment-form="closeCommentForm" @update-form="updateAllRooms" :commentDisplay="commentDisplay" :formInfo="formInfo" :users="users"/>
+    <EventInfo ref="eventInfo"/>
     <comm-with-gql @fetch-available-rooms="fetchAvailableRooms" @get-event-list="getEventList" @query-users="queryUsers" ref="commWithGql"></comm-with-gql>
     <js-preloader ref="jsPreloader"></js-preloader>
 
@@ -14,6 +15,7 @@
 import HeadPage from '@/components/HeadPage.vue';
 import ReserveList from '@/components/ReserveList.vue';
 import ReserveForm from '@/components/ReserveForm.vue';
+import EventInfo from '@/components/EventInfo.vue';
 import CommentForm from '@/components/CommentForm.vue';
 import CommWithGql from '@/components/CommWithGql.vue';
 import JsPreloader from '@/components/JsPreloader.vue';
@@ -24,6 +26,7 @@ export default {
     HeadPage,
     ReserveList,
     ReserveForm,
+    EventInfo,
     CommentForm,
     CommWithGql,
     JsPreloader
@@ -39,7 +42,25 @@ export default {
       commentDisplay: false,
       ignoreRoom: [],
 
-      roomItems: [],
+      formInfo: {
+        title: '',
+        description: 'test description',
+        roomId: '',
+        roomName: '',
+        userId: ['6645ece136e2a0f035961bdd'],
+        userName: ['Ivan Lee'],
+        namesString: 'Ivan Lee',
+        eventId: '',
+        dayTime: this.getDaytime(),
+        start_time: '10:00',
+        end_time: '12:00',
+        notes: '',
+        summary: '',
+        fileName: '',
+        fileUrl: '',
+        reservatorList: ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ],
+      },
+
       users: [],
       eventList: [],
       updateVariables: {
@@ -56,15 +77,35 @@ export default {
           id: '',
           roomName: '',
       },
-      userName: "Ray",
+      roomItems: [],
+      roomName: "",
+      roomId: "",
+      schedulesList: [],
     };
   },
   methods: {
     openForm(item) {
       this.formDisplay = true;
-      this.roomInfo.id = item.id;
-      this.roomInfo.roomName = item.roomId;
-      this.roomInfo.reservatorList = item.reservatorList;
+      this.roomName = item.name;
+      this.roomId = item.id;
+      this.formInfo.roomId = item.id;
+      this.schedulesList = item.schedulesList;
+
+      this.formInfo.title = item.title;
+      this.formInfo.description = item.description;
+      this.formInfo.summary = item.summary;
+
+      const { hours: startHours, minutes: startMinutes } = this.getHours(item.startAt);
+      const { hours: endHours, minutes: endMinutes } = this.getHours(item.endAt);
+
+      this.formInfo.start_time = `${startHours}:${startMinutes.toString().padStart(2, '0')}`;
+      this.formInfo.end_time = `${endHours}:${endMinutes.toString().padStart(2, '0')}`;
+
+      const namesArray = item.participants.map(participant => participant.name);
+      this.formInfo.namesString = namesArray.join(', ');
+      this.formInfo.eventId = item.eventId;
+      
+
     },
     closeForm() {
       this.formDisplay = false;
@@ -73,6 +114,8 @@ export default {
       this.commentDisplay = true;
       this.roomInfo.id = item.id;
       this.roomInfo.roomName = item.roomId;
+      this.formInfo.eventId = item.eventId;
+      this.formInfo.summary = item.summary;
     },
     closeCommentForm() {
       this.commentDisplay = false;
@@ -81,8 +124,7 @@ export default {
       this.users = users
     },
     updateAllRooms() {
-
-      this.loadPreLoader(100).then(() => {
+      this.loadPreLoader(500).then(() => {
         this.$refs.commWithGql.getUserEvents(this.updateVariables);
       });
           
@@ -101,16 +143,35 @@ export default {
       today.setHours(0, 0, 0, 0);
       return today.getTime();
     },
+    showDiv(data) {
+      this.$refs.eventInfo.showDiv(data);
+    },
+    hideDiv() {
+      this.$refs.eventInfo.hideDiv();
+    },
     getEventList(eventList) {
       
+      this.roomItems = []; // clear
       this.eventList = eventList;
 
+      // Iterate through eventList and extract roomsData along with originalData
       eventList.forEach(event => {
         if (Array.isArray(event.roomsData)) {
-          this.roomItems.push(...event.roomsData);
+          event.roomsData.forEach(room => {
+            this.roomItems.push({
+              ...room,
+              eventId: event.originalData.eventId,
+              title: event.originalData.title,
+              description: event.originalData.description,
+              summary: event.originalData.summary,
+              startAt: event.originalData.startAt,
+              endAt: event.originalData.endAt,
+              participants: event.originalData.participants,
+              roomId: event.originalData.roomId
+            });
+          });
         }
       });
-
 
       this.roomItems.forEach(room => {
         let finalReservatiorList = Array(this.timeList.length).fill('');
@@ -175,6 +236,13 @@ export default {
 
         return timeInMinutes >= startTime && timeInMinutes < endTime ? eventName : '';
       });
+    },
+    getDaytime() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0'); // 月份從0開始，需要+1，並且補零
+      const day = String(today.getDate()).padStart(2, '0'); // 日期補零
+      return `${year}-${month}-${day}`;
     },
   },
   mounted() {

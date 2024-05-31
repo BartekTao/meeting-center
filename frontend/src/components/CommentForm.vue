@@ -1,22 +1,23 @@
   <template>
+    <comm-with-gql ref="commWithGql"></comm-with-gql>
     <div id="form-popup" v-if="commentDisplay" class="container mt-3">
         <form id="submitForm">
             <div class="row mb-4">
                 <div class="col-sm-12">
-                    <h3 class="text-center">會議室名稱：{{ roomInfo.roomName }}</h3>
+                    <h3 class="text-center">會議室名稱：{{ localFormInfo.name }}</h3>
                 </div>
             </div>
             <div class="row mb-2">
                 <label for="name" class="col-sm-2 col-form-label">會議標題：</label>
                 <div class="col-sm-9">
-                    <input type="text" id="name" name="name" class="form-control" v-model="formInfo.name" disabled>
+                    <input type="text" id="name" name="name" class="form-control" v-model="localFormInfo.title" disabled>
                 </div>
             </div>
 
             <div class="row mb-2 comment-text">
                 <label for="content" class="col-sm-2">會議結論：</label>
                 <div class="col-sm-9">
-                    <textarea id="content" name="content" class="form-control" maxlength="500" v-model="formInfo.content"  style="height: 200px;"></textarea>
+                    <textarea id="content" name="content" class="form-control" maxlength="500" v-model="localFormInfo.summary"  style="height: 200px;"></textarea>
                 </div>
             </div>
 
@@ -31,38 +32,43 @@
   </template>
   
   <script>
+  import CommWithGql from '@/components/CommWithGql.vue'
 
   export default {
     name: 'ReserveForm',
-    emits: ['close-comment-form'],
-    props: ['roomInfo', 'commentDisplay', 'userName'],
+    emits: ['close-comment-form', 'update-form'],
+    props: ['users','formInfo', 'roomInfo', 'commentDisplay', 'userName'],
+    components: {
+        CommWithGql,
+    },
     data() {
       return {
-        formInfo: {
-          name: this.userName,
-          email: 'example@gmail.com',
-          start_time: '10:00',
-          end_time: '12:00',
-          content: 'test content',
-          file: ''
-        },
         time_period: [],
-        showReservator: '',
       };
+    },
+    computed: {
+        localFormInfo() {
+        return JSON.parse(JSON.stringify(this.formInfo));
+        },
     },
     methods: {
       submitForm() {
-        console.log(this.formInfo);
-        console.log(this.roomInfo);
         
+        const newFormInfo = { summary: this.localFormInfo.summary, id: this.localFormInfo.eventId};
+
+        this.$refs.commWithGql.editSummary(newFormInfo);
+        this.$emit('update-form');
         this.closeCommentForm();
-      },
-      updateShowReservator(value) {
-        this.showReservator = value;
       },
       closeCommentForm() {
         this.$emit('close-comment-form');
-      }
+      },
+      transferToTimestamp(time) {
+        const formattedTime_ = time.replace(/(\d{4})-(\d{2})-(\d{2})-(\d{1,2}):(\d{2}):(\d{2})/, '$1-$2-$3T$4:$5:$6');
+        const formattedTime = formattedTime_.replace(/T(\d):/, 'T0$1:');
+        const date = new Date(formattedTime);
+        return date.getTime();
+      },
     },
     mounted() {
       this.time_period = this.$names;

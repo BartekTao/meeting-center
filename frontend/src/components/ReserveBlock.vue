@@ -1,5 +1,6 @@
 <template>
   
+  <comm-with-gql ref="commWithGql"></comm-with-gql>
     <div class="col-lg-12">
       <div class="listing-item">
         <div class="left-image">
@@ -44,7 +45,7 @@
               <a class="openFormBtn" v-if="editAction"  @click="$emit('openForm', item)"><img :src="docImage" alt="Edit">編輯</a>
             </div>
             <div class="main-white-button">
-              <a class="openFormBtn" v-if="deleteAction" ><img :src="deleteImage" alt="Delete">刪除</a>
+              <a class="openFormBtn" v-if="deleteAction" @click="deleteEvent(item)" ><img :src="deleteImage" alt="Delete">刪除</a>
             </div>
             <div class="main-white-button">
               <a class="openFormBtn" v-if="editCommentAction"  @click="$emit('openCommentForm', item)"><img :src="docImage" alt="Edit">編輯會議結論</a>
@@ -54,19 +55,26 @@
         </div>
       </div>
     </div>
-  </template>
+</template>
   
   <script>
   import ItemPeriod from './ItemPeriod.vue';
+  import CommWithGql from '@/components/CommWithGql.vue'
 
   export default {
     name: 'ReserveBlock',
-    emits: ['showDiv', 'hideDiv', 'openForm', 'openCommentForm'],
+    emits: ['showDiv', 'hideDiv', 'openForm', 'openCommentForm', 'update-form'],
     props: ['item', 'bookingAction', 'editAction', 'deleteAction', 'editCommentAction'],
     methods: {
       updateShowReservator(value) {
         this.showReservator = value;
-      }
+      },
+      deleteEvent(item) {
+
+        console.log('item:', item);
+        this.$refs.commWithGql.deleteEvent(item.eventId);
+        this.$emit('update-form');
+      },
     },
     data() {
         return {
@@ -81,7 +89,8 @@
         };
     },
     components: {
-        ItemPeriod
+        ItemPeriod,
+        CommWithGql
     }
   }
   </script>

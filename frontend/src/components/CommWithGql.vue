@@ -31,7 +31,7 @@
           return {
             headers: {
               ...headers,
-              authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNzExNTY5NCwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.B3scEl92nu_TAAF8FDVKscdpnQoM2hZlRf5XqCvqN50",
+              authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNzIwMDc1MCwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.Ppez0jkZA_Ah1TPfLIaFWyZGO2UNpKCvtmgXqVLYxgw",
             }
           }
         });
@@ -98,6 +98,7 @@
                 }
                 notes
                 remindAt
+                summary
                 creator {
                   id
                   name
@@ -116,7 +117,7 @@
             mutation: CREATE_EVENT_MUTATION,
             variables
           }).then(response => {
-            console.log("Room created or updated successfully:", response.data);
+            console.log("Event created or updated successfully:", response.data);
           }).catch(error => {
             console.error("Error creating or updating room:", error);
           });
@@ -175,6 +176,30 @@
             console.error('Error deleting room:', error);
           });
         },
+        deleteEvent(eventId) {
+          const DELETE_EVENT_MUTATION = gql`
+            mutation deleteEvent($id: ID!) {
+              deleteEvent(id: $id) {
+                roomReservation {
+                  status
+                }
+                isDelete
+              }
+            }
+          `;
+          return this.client.mutate({
+            mutation: DELETE_EVENT_MUTATION,
+            variables: {
+              id: eventId
+            },
+            fetchPolicy: 'no-cache',
+          }).then(response => {
+            console.log('Event deleted:', response.data.deleteEvent.isDelete);
+            console.log('Room reservation status:', response.data.deleteEvent.roomReservation.status);
+          }).catch(error => {
+            console.error('Error deleting event:', error);
+          });
+        },
         fetchAvailableRooms(variables) {
         return new Promise((resolve, reject) => {
 
@@ -211,7 +236,6 @@
                 };
               });
               this.$emit('fetchAvailableRooms', this.rooms);
-              // return this.rooms;
               resolve(this.rooms);
             })
             .catch(error => {
@@ -221,6 +245,22 @@
             });
           });
         },   
+        editSummary(variables) {
+          const UPDATE_SUMMARY_MUTATION = gql`
+            mutation updateEventSummary($id: ID!, $summary: String!) {
+              updateEventSummary(id: $id, summary: $summary)
+            }
+          `;
+          console.log(variables);
+          return this.client.mutate({
+            mutation: UPDATE_SUMMARY_MUTATION,
+            variables
+          }).then(response => {
+            console.log('Summary edited and New summary', response);
+          }).catch(error => {
+            console.error('Error editing summary:', error);
+          });
+        },
         queryRoomSchedules(variables) {
 
           const GET_ROOM_SCHEDULES = gql`
@@ -253,9 +293,15 @@
                       isDelete
                     }
                     schedules {
+                      id
+                      title
+                      description
                       startAt
                       endAt
-                      title
+                      participants {
+                        id
+                      }
+                      summary
                       creator {
                         id
                       }
@@ -273,6 +319,7 @@
           return this.client.query({
             query: GET_ROOM_SCHEDULES,
             variables, //: defaultVariables,
+            fetchPolicy: 'no-cache',
           }).then(response => {
             return response
           }).catch(error => {
@@ -336,39 +383,50 @@
               userEvents(userIDs: $userIDs, startAt: $startAt, endAt: $endAt) {
                 events {
                   id
+                  title
+                  description
                   startAt
                   endAt
                   roomReservation {
                     room {
                       id
+                      name
+                      capacity
+                      equipments
+                      rules
                     }
                     status
                   }
-                  isDelete
+                    participants {
+                      id
+                      name
+                    }
+                  summary
                 }
               }
             }
           `;
-
           this.client.query({
             query: GET_USER_EVENTS,
             variables
           }).then(response => {
-            const events = response.data.userEvents[1].events;
-            if (events) {
+            if (response.data.userEvents.length > 0) {
+              const events = response.data.userEvents[1].events;
               this.eventList = [];
               for (let i = 0; i < events.length; i++) {
                 const event = events[i];
                 const processedEvent = {
                   eventId: event.id,
+                  title: event.title,
+                  description: event.description,
+                  participants: event.participants,
                   startAt: event.startAt,
                   endAt: event.endAt,
+                  summary: event.summary,
                   roomId: [event.roomReservation.room.id],
                 };
                 this.eventList.push(processedEvent);
               }
-              // this.$emit('getEventList', this.eventList);
-
               let returnEventList = [];
 
               // Use the first event from the eventList to call fetchAvailableRooms

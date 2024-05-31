@@ -1,7 +1,7 @@
 <template>
   <ReserveBar @updateAllRooms="updateAllRooms"/>
   <ReserveList  @showDiv="showDiv" @hideDiv="hideDiv" :openForm="openForm" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction" :roomItems="roomItems"/>
-  <ReserveForm  @showDiv="showDiv" @hideDiv="hideDiv" :formDisplay="formDisplay" :formInfo="formInfo" :roomName="roomName" :schedulesList="schedulesList" @close-form="closeForm" @update-form="updateForm"/>
+  <ReserveForm  @showDiv="showDiv" @hideDiv="hideDiv" :formDisplay="formDisplay" :formInfo="formInfo" :roomName="roomName" :schedulesList="schedulesList" :users="users" @close-form="closeForm" @update-form="updateForm"/>
   <EventInfo ref="eventInfo"/>
   <comm-with-gql @fetch-available-rooms="fetchAvailableRooms" @query-users="queryUsers" ref="commWithGql"></comm-with-gql>
   <js-preloader ref="jsPreloader"></js-preloader>
@@ -48,25 +48,27 @@ export default {
         endAt: 1716831999999,
         roomId: "6655178de1dfe965fa4b1951",
         participantsIDs: ["6645ece136e2a0f035961bdd"],
-        notes: "Bring all relevant documents",
+        notes: "",
         remindAt: 1625074200
             },
 
       formInfo: {
         title: '',
+        description: 'test description',
         roomId: '',
         roomName: '',
         userId: ['6645ece136e2a0f035961bdd'],
         userName: ['Ivan Lee'],
         namesString: 'Ivan Lee',
         eventId: '',
-        dayTime: '',
+        dayTime: this.getDaytime(),
         start_time: '10:00',
         end_time: '12:00',
         notes: 'test content',
         fileName: '',
         fileUrl: '',
         reservatorList: ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ],
+        schedulesList: [],
       },
       showDivStyle: {
         display: 'none',
@@ -85,29 +87,11 @@ export default {
       this.formDisplay = true;
       this.roomName = item.name;
       this.roomId = item.id;
+      this.formInfo.roomId = item.id;
       this.schedulesList = item.schedulesList;
     },
-    updateForm(formInfo) {
-      this.eventInput.title = formInfo.title;
 
-      const startTime = this.dayTime+'-'+formInfo.start_time + ':00';
-      this.eventInput.startAt = this.transferToTimestamp(startTime);
-
-      const endTime = this.dayTime+'-'+formInfo.end_time + ':00';
-      this.eventInput.endAt = this.transferToTimestamp(endTime);
-
-      this.eventInput.roomId = this.roomId;
-      const namesArray = formInfo.namesString.split(',');
-      const idsArray = namesArray.map(name => {
-        const user = this.users.find(user => user.name === name);
-        return user ? user.id : null;
-      });
-      this.eventInput.participantsIDs = idsArray
-
-      this.eventInput.notes = formInfo.notes;
-      this.eventInput.remindAt = this.eventInput.startAt + this.oneHourInMilliseconds
-
-      this.$refs.commWithGql.createEvent(this.eventInput);
+    updateForm() {
       this.updateAllRooms({})
     },
     closeForm() {
@@ -213,6 +197,13 @@ export default {
     findUserNameById(inputId) {
       const user = this.users.find(user => user.id === inputId);
       return user ? user.name : 'User not found';
+    },
+    getDaytime() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0'); // 月份從0開始，需要+1，並且補零
+      const day = String(today.getDate()).padStart(2, '0'); // 日期補零
+      return `${year}-${month}-${day}`;
     },
   },
   mounted() {

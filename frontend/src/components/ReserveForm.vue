@@ -1,9 +1,11 @@
   <template>
+    <comm-with-gql ref="commWithGql"></comm-with-gql>
+  
     <div id="form-popup" v-if="formDisplay" class="container mt-3">
         <form id="submitForm">
             <div class="row mb-4">
                 <div class="col-sm-12">
-                    <h3 class="text-center">會議室名稱：{{ roomName }}</h3>
+                    <h3 class="text-center">會議室名稱：{{ localFormInfo.name }}</h3>
                 </div>
             </div>
             <div class="row mb-2">
@@ -29,7 +31,7 @@
             <div class="row mb-2">
                 <label for="name" class="col-sm-2 col-form-label">會議標題：</label>
                 <div class="col-sm-9">
-                    <input type="text" id="name" name="name" class="form-control" v-model="localFormInfo.eventName" required>
+                    <input type="text" id="name" name="name" class="form-control" v-model="localFormInfo.title" required>
                 </div>
             </div>
 
@@ -61,7 +63,7 @@
             <div class="row mb-2">
                 <label for="content" class="col-sm-2 col-form-label">會議內容：</label>
                 <div class="col-sm-9">
-                    <textarea id="content" name="content" class="form-control" maxlength="200" v-model="localFormInfo.notes"></textarea>
+                    <textarea id="content" name="content" class="form-control" maxlength="200" v-model="localFormInfo.description"></textarea>
                 </div>
             </div>
 
@@ -84,22 +86,50 @@
   
   <script>
   import ItemPeriod from './ItemPeriod.vue';
+  import CommWithGql from '@/components/CommWithGql.vue'
 
   export default {
     name: 'ReserveForm',
     emits: ['close-form', 'showDiv', 'hideDiv', 'update-form'],
-    props: ['formInfo', 'formDisplay', 'roomName', 'schedulesList'],
+    props: ['users', 'formInfo', 'formDisplay', 'roomName', 'schedulesList'],
     data() {
       return {
         time_period: [],
         showReservator: '',
-        localFormInfo: { ...this.formInfo }
       };
+    },
+    computed: {
+        localFormInfo() {
+        return JSON.parse(JSON.stringify(this.formInfo));
+        },
     },
     methods: {
       submitForm() {
-        // console.log(this.formInfo);
-        this.$emit('update-form', this.localFormInfo);
+        
+        const {dayTime, roomId } = this.formInfo;
+        const startTime = dayTime+'-'+ this.localFormInfo.start_time + ':00';
+        const startAt = this.transferToTimestamp(startTime);
+
+        const endTime = dayTime+'-'+ this.localFormInfo.end_time + ':00';
+        const endAt = this.transferToTimestamp(endTime);
+        
+        const namesArray = this.localFormInfo.namesString.split(',');
+        const idsArray = namesArray.map(name => {
+            const user = this.users.find(user => user.name === name);
+            return user ? user.id : null;
+        });
+        const participantsIDs = idsArray
+        const remindAt = startAt + 3600000
+
+        const newFormInfo = { title: this.localFormInfo.title, description: this.localFormInfo.description, startAt, endAt, roomId, participantsIDs, remindAt };
+
+        if (this.localFormInfo.eventId !== '') {
+            newFormInfo.id = this.localFormInfo.eventId;
+        }
+        
+        console.log('newFormInfo:', newFormInfo);   
+        this.$refs.commWithGql.createEvent(newFormInfo);
+        this.$emit('update-form');
         this.closeForm();
       },
       updateShowReservator(value) {
@@ -108,15 +138,19 @@
       closeForm() {
         this.$emit('close-form');
       },
-        //   updateForm() {
-        //     this.$emit('update-form', this.formInfo);
-        //   }
+      transferToTimestamp(time) {
+        const formattedTime_ = time.replace(/(\d{4})-(\d{2})-(\d{2})-(\d{1,2}):(\d{2}):(\d{2})/, '$1-$2-$3T$4:$5:$6');
+        const formattedTime = formattedTime_.replace(/T(\d):/, 'T0$1:');
+        const date = new Date(formattedTime);
+        return date.getTime();
+      },
     },
     components: {
-        ItemPeriod
+        ItemPeriod,
+        CommWithGql,
     },
     mounted() {
-      this.time_period = this.$names;
+        this.time_period = this.$names;
     }
   }
   </script>
