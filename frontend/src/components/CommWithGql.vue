@@ -31,7 +31,7 @@
           return {
             headers: {
               ...headers,
-              authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNzIwMDc1MCwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.Ppez0jkZA_Ah1TPfLIaFWyZGO2UNpKCvtmgXqVLYxgw',
+              authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNzI5MjQ2MCwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.e4RoODIN2_aQYbyjtx5uV3dxWnbtIQA-v2lrSb9jeFo',
             }
           }
         });
@@ -116,7 +116,6 @@
           const variables = {
             input: eventInput
           };
-
           return this.client.mutate({
             mutation: CREATE_EVENT_MUTATION,
             variables
@@ -419,8 +418,10 @@
           `;
           this.client.query({
             query: GET_USER_EVENTS,
-            variables
+            variables,
+            fetchPolicy: 'no-cache'
           }).then(response => {
+            let returnEventList = [];
             if (response.data.userEvents.length > 0) {
               const events = response.data.userEvents[1].events;
               this.eventList = [];
@@ -430,8 +431,8 @@
                   eventId: event.id,
                   title: event.title,
                   description: event.description,
-                  fileName: event.attachedFile.url,
-                  fileUrl: event.attachedFile.name,
+                  fileName: event.attachedFile.name,
+                  fileUrl: event.attachedFile.url,
                   participants: event.participants,
                   startAt: event.startAt,
                   endAt: event.endAt,
@@ -440,7 +441,6 @@
                 };
                 this.eventList.push(processedEvent);
               }
-              let returnEventList = [];
 
               // Use the first event from the eventList to call fetchAvailableRooms
               if (this.eventList.length > 0) {
@@ -479,6 +479,9 @@
                   });
 
               }
+            } else {
+
+              this.$emit('getEventList', returnEventList);
             }
           }).catch(error => {
             console.error('Error fetching user events:', error);

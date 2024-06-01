@@ -80,7 +80,9 @@
             <div class="row mb-2">
                 <label class="col-sm-2 col-form-label">Uploaded file URL:</label>
                 <div class="col-sm-10">
-                    <a :href="downLoadUrl" target="_blank">{{ this.localFormInfo.fileUrl }}</a>
+                    <!-- <a :href="localFormInfo.fileUrl" target="_blank">{{ localFormInfo.fileUrl }}</a> -->
+                    <a v-if="localFormInfo.fileUrl" :href="localFormInfo.fileUrl" target="_blank">{{ localFormInfo.fileUrl }}</a>
+                    <a v-else-if="fileUrl" :href="fileUrl" target="_blank">{{ fileUrl }}</a>
                 </div>
             </div>
 
@@ -112,6 +114,7 @@
 
         selectedFile: null,
         fileName: '',
+        fileUrl: '',
         downLoadUrl: '',
         time_period: [],
         showReservator: '',
@@ -143,11 +146,12 @@
 
             axios.post('http://localhost:8080/query', formData, {
                 headers: {
-                'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNzIwMDc1MCwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.Ppez0jkZA_Ah1TPfLIaFWyZGO2UNpKCvtmgXqVLYxgw',
+                'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNzI5MjQ2MCwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.e4RoODIN2_aQYbyjtx5uV3dxWnbtIQA-v2lrSb9jeFo',
                 'Content-Type': 'multipart/form-data'
                 }
             }).then(response => {
-                this.downLoadUrl = response.data.data.uploadFile;
+                this.localFormInfo.fileUrl = response.data.data.uploadFile;
+                this.fileUrl = response.data.data.uploadFile;
             }).catch(error => {
                 console.error('Error uploading file:', error);
             });
@@ -174,13 +178,16 @@
             name: this.localFormInfo.fileName
         }
 
-        const newFormInfo = { attachedFile, title: this.localFormInfo.title, description: this.localFormInfo.description, startAt, endAt, roomId, participantsIDs, remindAt };
-
         if (this.localFormInfo.eventId !== '') {
             newFormInfo.id = this.localFormInfo.eventId;
         }
+
+        const newFormInfo = {title: this.localFormInfo.title, description: this.localFormInfo.description, startAt, endAt, roomId, participantsIDs, remindAt };
+
+        if (this.localFormInfo.fileUrl !== '' && this.localFormInfo.fileName !== '') {
+            newFormInfo.attachedFile = attachedFile;
+        }
           
-        console.log('newFormInfo:', newFormInfo);
         this.$refs.commWithGql.createEvent(newFormInfo);
         this.$emit('update-form');
         this.closeForm();

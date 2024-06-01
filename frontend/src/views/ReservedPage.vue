@@ -42,7 +42,6 @@ export default {
       commentDisplay: false,
       ignoreRoom: [],
       
-
       formInfo: {
         title: 'test title',
         description: 'test description',
@@ -86,7 +85,6 @@ export default {
   },
   methods: {
     openForm(item) {
-      console.log('item:', item);
       this.formDisplay = true;
       this.formInfo.roomName = item.name;
       this.roomId = item.id;
@@ -97,9 +95,6 @@ export default {
       this.formInfo.description = item.description;
       this.formInfo.summary = item.summary;
 
-      this.formInfo.fileName = item.fileName;
-      this.formInfo.fileUrl = item.fileUrl;
-
       const { hours: startHours, minutes: startMinutes } = this.getHours(item.startAt);
       const { hours: endHours, minutes: endMinutes } = this.getHours(item.endAt);
 
@@ -109,7 +104,8 @@ export default {
       const namesArray = item.participants.map(participant => participant.name);
       this.formInfo.namesString = namesArray.join(', ');
       this.formInfo.eventId = item.eventId;
-      
+      this.formInfo.fileName = item.fileName;
+      this.formInfo.fileUrl = item.fileUrl;
 
     },
     closeForm() {
@@ -130,9 +126,9 @@ export default {
     },
     updateAllRooms() {
       this.loadPreLoader(500).then(() => {
+        console.log('this.updateVariables:', 'this.updateVariables');
         this.$refs.commWithGql.getUserEvents(this.updateVariables);
       });
-          
     },
     loadPreLoader(duration) {
       this.$refs.jsPreloader.isLoaded = false;
@@ -215,7 +211,6 @@ export default {
 
         room.schedulesList = finalReservatiorList.slice(0, -1);
       });
-
       
     },
     fetchAvailableRooms(room) {
