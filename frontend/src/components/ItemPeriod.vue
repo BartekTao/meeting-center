@@ -2,15 +2,20 @@
     <div class="period-container">
         <div class="period-name">{{ periodName }}</div>
         <div class="progress-stacked" :style="{ width: infoProgressWidth + 'px', 'margin-left': marginLeft + 'px' }">
-        <div v-for="(unit, index) in reservatorList" :key="index" 
-            class="progress bordered" 
-            :style="{ width: unitWidth + '%' }"
-            @mouseover="updateSharedData(unit, index, $event)"
-            @mouseleave="hideDiv()">
-            <div :class="['unselectable', 'progress-bar', unit ? 'bg-info' : '']">
-            {{ unit.nickName }}
-            </div>
-        </div>
+          
+          <div v-for="(unit, index) in reservatorList" :key="index" 
+              class="progress bordered" 
+              :style="{ width: unitWidth + '%' }"
+              @mouseover="updateSharedData(unit, index, $event)"
+              @mouseleave="hideDiv()">
+              <div :class="['unselectable', 'progress-bar', 
+                            unit.state === 'current' ? 'bg-success' : '',
+                            unit.state === 'occupied' ? 'bg-info' : '']">
+                  {{ unit.nickName }}
+              </div>
+          </div>
+
+
         </div>
     </div>
 </template>

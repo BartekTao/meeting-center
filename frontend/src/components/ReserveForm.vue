@@ -86,9 +86,9 @@
                 </div>
             </div>
 
-            <div class="row mb-2">
+            <!-- <div class="row mb-2">
                 <label class="col-sm-2 col-form-label"><strong>會議會在前十分鐘提醒</strong></label>
-            </div>
+            </div> -->
 
             <div class="row mb-2">
                 <div class="col-sm-12 d-flex justify-content-center">
@@ -178,12 +178,12 @@
             name: this.localFormInfo.fileName
         }
 
+        const newFormInfo = {title: this.localFormInfo.title, description: this.localFormInfo.description, startAt, endAt, roomId, participantsIDs, remindAt };
+
         if (this.localFormInfo.eventId !== '') {
             newFormInfo.id = this.localFormInfo.eventId;
         }
-
-        const newFormInfo = {title: this.localFormInfo.title, description: this.localFormInfo.description, startAt, endAt, roomId, participantsIDs, remindAt };
-
+        
         if (this.localFormInfo.fileUrl !== '' && this.localFormInfo.fileName !== '') {
             newFormInfo.attachedFile = attachedFile;
         }

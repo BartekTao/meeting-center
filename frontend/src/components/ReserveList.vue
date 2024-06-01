@@ -10,7 +10,7 @@
             <div class="">
               <div class="item">
                 <div class="row">
-                  <ReserveBlock v-for="item in roomItems" :key="item.name" :item="item" @showDiv="$emit('showDiv', $event)" @hideDiv="$emit('hideDiv')" @update-form="$emit('update-form')" @openForm="openForm" @openCommentForm="openCommentForm" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction"/>
+                  <ReserveBlock v-for="item in roomItems" :key="item.name" :item="item" @showDiv="$emit('showDiv', $event)" @hideDiv="$emit('hideDiv')" @update-form="$emit('update-form')" @openForm="openForm" @openCommentForm="openCommentForm" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction" :pageState="pageState"/>
                 </div>
               </div>
             </div>
@@ -61,7 +61,7 @@
       ReserveBlock,
       CommWithGql
     },
-    props: ['openForm', 'openCommentForm', 'bookingAction', 'editAction', 'deleteAction', 'editCommentAction', 'roomItems']
+    props: ['pageState', 'openForm', 'openCommentForm', 'bookingAction', 'editAction', 'deleteAction', 'editCommentAction', 'roomItems']
   }
   </script>
   

@@ -1,6 +1,6 @@
 <template>
   <ReserveBar @updateAllRooms="updateAllRooms"/>
-  <ReserveList  @showDiv="showDiv" @hideDiv="hideDiv" :openForm="openForm" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction" :roomItems="roomItems"/>
+  <ReserveList  @showDiv="showDiv" @hideDiv="hideDiv" :openForm="openForm" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction" :roomItems="roomItems" :pageState="pageState"/>
   <ReserveForm  @showDiv="showDiv" @hideDiv="hideDiv" :formDisplay="formDisplay" :formInfo="formInfo" :roomName="roomName" :schedulesList="schedulesList" :users="users" @close-form="closeForm" @update-form="updateForm"/>
   <EventInfo ref="eventInfo"/>
   <comm-with-gql @fetch-available-rooms="fetchAvailableRooms" @query-users="queryUsers" ref="commWithGql"></comm-with-gql>
@@ -34,6 +34,7 @@ export default {
       editCommentAction: false,
       deleteAction: false,
       formDisplay: false,
+      pageState: 'reserve',
       oneHourInMilliseconds: 3600000,
       users: [],
       updateVariables: {},

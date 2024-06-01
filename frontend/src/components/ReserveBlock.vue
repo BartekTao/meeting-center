@@ -7,8 +7,18 @@
           <a><img :src="image_url" :alt="item.name"></a>
         </div>
         <div class="right-content align-self-center">
-          <a><h4>會議室名稱：{{ item.name }}</h4></a>
-          <!-- <div>{{ showReservator }}</div> -->
+          <a v-if="this.pageState === 'reserved'">
+            <h4>會議室：{{ item.name }} | 會議名稱：{{ item.title }} </h4>
+          </a>
+          <a v-else>
+            <h4>會議室：{{ item.name }}</h4>
+          </a>
+          <!-- <a>日期：5/28 | 時段：10:00~12:00 </a> -->
+          <!-- <a>日期：{{ item.eventDay }} | 時段：{{ item.start_time }}~{{ item.end_time }} </a> -->
+          <a v-if="this.pageState === 'reserved'">
+            日期：{{ item.eventDay }} | 時段：{{ item.start_time }}~{{ item.end_time }}
+          </a>
+          <a></a>
           <ItemPeriod 
             period-name="早上："
             :reservator-list="item.schedulesList.slice(0, 6)"
@@ -64,7 +74,7 @@
   export default {
     name: 'ReserveBlock',
     emits: ['showDiv', 'hideDiv', 'openForm', 'openCommentForm', 'update-form'],
-    props: ['item', 'bookingAction', 'editAction', 'deleteAction', 'editCommentAction'],
+    props: ['pageState', 'item', 'bookingAction', 'editAction', 'deleteAction', 'editCommentAction'],
     methods: {
       updateShowReservator(value) {
         this.showReservator = value;

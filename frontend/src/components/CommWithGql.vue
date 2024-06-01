@@ -412,6 +412,10 @@
                     url
                     name
                   }
+                  creator {
+                    id
+                    name
+                  }
                 }
               }
             }
@@ -433,6 +437,7 @@
                   description: event.description,
                   fileName: event.attachedFile.name,
                   fileUrl: event.attachedFile.url,
+                  creatorId: event.creator.id,
                   participants: event.participants,
                   startAt: event.startAt,
                   endAt: event.endAt,
