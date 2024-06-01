@@ -243,10 +243,6 @@ export default {
           } else if (scheduleUnit && !currentScheduleUnit) {
             room.schedulesList[i].state = 'occupied';
           } 
-          // else if (!scheduleUnit && !currentScheduleUnit) {
-          //   // room.schedulesList[i].state = 'free';
-          //   console.log('room.schedulesList[i].state:', room.schedulesList[i].state);
-          // }
         }
         
       });

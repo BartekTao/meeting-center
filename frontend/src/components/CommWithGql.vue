@@ -152,12 +152,19 @@
             query: GET_ALL_ROOMS_QUERY,
             fetchPolicy: 'no-cache'
           }).then(response => {
-            this.rooms = response.data.paginatedRooms.edges.map(edge => edge.node);
-            this.pageInfo = response.data.paginatedRooms.pageInfo;
-            this.$emit('queryAllRooms', this.rooms);
+            const paginatedRooms = response.data.paginatedRooms;
+
+            if (paginatedRooms && paginatedRooms.edges.length > 0) {
+              this.rooms = paginatedRooms.edges.map(edge => edge.node);
+              this.pageInfo = paginatedRooms.pageInfo;
+              this.$emit('queryAllRooms', this.rooms);
+            } else {
+              this.$emit('queryAllRooms', []);
+            }
           }).catch(error => {
             console.error("Failed to fetch rooms:", error);
           });
+
           
         },
         deleteRoom(roomId) {

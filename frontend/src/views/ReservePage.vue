@@ -137,7 +137,8 @@ export default {
               startMinutes,
               endHours,
               endMinutes,
-              eventTitle
+              eventTitle,
+              state: 'occupied',
             };
           finalReservatiorList = finalReservatiorList.map((slot, index) => slot.name === reservatorName ? slot : newReservatorList[index] ? scheduleInfo : slot);
           
