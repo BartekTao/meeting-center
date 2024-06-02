@@ -165,7 +165,7 @@ export default {
     updateAllRooms(variables) {
 
       if (Object.keys(variables).length !== 0) {
-        this.dayTime = variables.dayTime;
+        this.formInfo.dayTime = variables.dayTime;
         this.updateVariables = variables;
       }
 
