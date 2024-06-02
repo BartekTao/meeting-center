@@ -209,7 +209,8 @@ export default {
     },
   },
   mounted() {
-    // this.$refs.commWithGql.queryUsers();
+    this.$refs.commWithGql.queryUsers();
+    // console.log('users:', this.users);
     this.$refs.commWithGql.queryUsers().then(() => {
       this.formInfo.userId = [this.users[0].id];
     }).catch(error => {

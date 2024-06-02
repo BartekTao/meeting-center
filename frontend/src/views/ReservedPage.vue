@@ -7,7 +7,6 @@
     <EventInfo ref="eventInfo"/>
     <comm-with-gql @fetch-available-rooms="fetchAvailableRooms" @get-event-list="getEventList" @query-users="queryUsers" ref="commWithGql"></comm-with-gql>
     <js-preloader ref="jsPreloader"></js-preloader>
-
   </div>
 </template>
 
