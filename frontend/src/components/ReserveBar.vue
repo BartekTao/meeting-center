@@ -10,11 +10,11 @@
           <div class="col-lg-12">
             <form id="search-form" name="gs" method="submit" role="search" action="#">
               <div class="row">
-                <div class="col-lg-3 align-self-center">
+                <!-- <div class="col-lg-3 align-self-center">
                   <fieldset>
                     <input type="number" id="number_of_people" name="number_of_people" min="1" placeholder="最多人數" aria-label="Number of People" required>
                   </fieldset>
-                </div>
+                </div> -->
                 <div class="col-lg-3 align-self-center">
                   <fieldset>
                     <input type="date" name="date" class="form-control" v-model="currentDate" required>
@@ -36,11 +36,11 @@
                     </select>
                   </fieldset>
                 </div>
-                <div class="col-lg-3 align-self-center">
+                <!-- <div class="col-lg-3 align-self-center">
                   <fieldset>
                     <input type="number" name="time_period" placeholder="連續時間(小時)" id="time_period" required min="0" max="9" step="0.5">
                   </fieldset>
-                </div>
+                </div> -->
                 <div class="col-lg-3">                        
                   <fieldset>
                     <button class="main-button" @click.prevent="updateAllRooms"><i class="fa fa-search"></i> 查詢</button>
