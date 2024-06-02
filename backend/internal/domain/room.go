@@ -14,10 +14,11 @@ const (
 type Equipment string
 
 const (
-	EQUIPMENT_PROJECTOR Equipment = "PROJECTOR"
-	EQUIPMENT_TABLE     Equipment = "TABLE"
-	EQUIPMENT_TV        Equipment = "TV"
-	EQUIPMENT_CAMERA    Equipment = "CAMERA"
+	EQUIPMENT_PROJECTOR  Equipment = "PROJECTOR"
+	EQUIPMENT_TABLE      Equipment = "TABLE"
+	EQUIPMENT_TV         Equipment = "TV"
+	EQUIPMENT_CAMERA     Equipment = "CAMERA"
+	EQUIPMENT_WHITEBOARD Equipment = "WHITEBOARD"
 )
 
 type Room struct {
