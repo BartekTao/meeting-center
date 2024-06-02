@@ -97,12 +97,6 @@ export default {
       this.formInfo.description = item.description;
       this.formInfo.summary = item.summary;
 
-      // const { hours: startHours, minutes: startMinutes } = this.getHours(item.startAt);
-      // const { hours: endHours, minutes: endMinutes } = this.getHours(item.endAt);
-
-      // this.formInfo.start_time = `${startHours}:${startMinutes.toString().padStart(2, '0')}`;
-      // this.formInfo.end_time = `${endHours}:${endMinutes.toString().padStart(2, '0')}`;
-
       this.formInfo.start_time = item.start_time;
       this.formInfo.end_time = item.end_time;
 
@@ -285,8 +279,14 @@ export default {
     },
   },
   mounted() {
-    this.$refs.commWithGql.queryUsers();
+    // this.$refs.commWithGql.queryUsers();
     this.updateAllRooms();
+    this.$refs.commWithGql.queryUsers().then(() => {
+      this.formInfo.userId = [this.users[0].id];
+      this.updateVariables.userIDs = [this.users[0].id];
+    }).catch(error => {
+      console.error("Failed to fetch users:", error);
+    });
   }
 }
 </script>

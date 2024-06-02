@@ -146,7 +146,7 @@
 
             axios.post('http://localhost:8080/query', formData, {
                 headers: {
-                'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNzI5MjQ2MCwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.e4RoODIN2_aQYbyjtx5uV3dxWnbtIQA-v2lrSb9jeFo',
+                'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNzM4Mzg4OSwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.e11L-qZmR5mU4wEXJNaExIfKW-qFDy0lCW_j_yS114c',
                 'Content-Type': 'multipart/form-data'
                 }
             }).then(response => {

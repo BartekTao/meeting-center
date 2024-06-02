@@ -31,7 +31,7 @@
           return {
             headers: {
               ...headers,
-              authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNzI5MjQ2MCwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.e4RoODIN2_aQYbyjtx5uV3dxWnbtIQA-v2lrSb9jeFo',
+              authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNzM4Mzg4OSwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.e11L-qZmR5mU4wEXJNaExIfKW-qFDy0lCW_j_yS114c',
             }
           }
         });
@@ -380,14 +380,16 @@
             after: null
           };
 
-          this.client.query({
+          return this.client.query({
             query: GET_PAGINATED_USERS,
             variables
           }).then(response => {
             this.users = response.data.paginatedUsers.edges.map(edge => edge.node);
             this.$emit('queryUsers', this.users);
+            return this.users; // 返回查詢到的用戶
           }).catch(error => {
             console.error('Error fetching users:', error);
+            throw error; // 繼續拋出錯誤，以便在外部捕獲
           });
         },
         getUserEvents(variables) {
