@@ -33,10 +33,32 @@ type mongoUserRepo struct {
 }
 
 func NewMongoUserRepo(client *mongo.Client) domain.UserRepo {
-	return &mongoUserRepo{
+	userRepo := &mongoUserRepo{
 		client:         client,
 		userCollection: client.Database("meetingCenter").Collection("users"),
 	}
+	err := userRepo.ensureIndexes()
+	if err != nil {
+		log.Fatalf("Failed to create user index. %s", err.Error())
+	}
+	return userRepo
+}
+
+func (r *mongoUserRepo) ensureIndexes() error {
+	indexModels := []mongo.IndexModel{
+		{
+			Keys: bson.D{{Key: "sub", Value: 1}}, // Index on isDelete
+		},
+		{
+			Keys: bson.D{{Key: "createdAt", Value: 1}}, // Index on creatorID
+		},
+	}
+
+	_, err := r.userCollection.Indexes().CreateMany(context.Background(), indexModels)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *mongoUserRepo) GetByID(ctx context.Context, id string) (*domain.User, error) {

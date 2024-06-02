@@ -34,10 +34,38 @@ type mongoRoomRepository struct {
 }
 
 func NewMongoRoomRepository(client *mongo.Client) domain.RoomRepository {
-	return &mongoRoomRepository{
+	roomRepo := &mongoRoomRepository{
 		client:         client,
 		roomCollection: client.Database("meetingCenter").Collection("rooms"),
 	}
+	err := roomRepo.ensureIndexes()
+	if err != nil {
+		log.Fatalf("Failed to create room index. %s", err.Error())
+	}
+	return roomRepo
+}
+
+func (m *mongoRoomRepository) ensureIndexes() error {
+	indexModels := []mongo.IndexModel{
+		{
+			Keys: bson.D{{Key: "isDelete", Value: 1}}, // Index on isDelete
+		},
+		{
+			Keys: bson.D{{Key: "capacity", Value: 1}}, // Index on creatorID
+		},
+		{
+			Keys: bson.D{{Key: "equipments", Value: 1}}, // Index on roomReservation.roomID
+		},
+		{
+			Keys: bson.D{{Key: "rules", Value: 1}}, // Index on roomReservation.reservationStatus
+		},
+	}
+
+	_, err := m.roomCollection.Indexes().CreateMany(context.Background(), indexModels)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (m *mongoRoomRepository) Upsert(ctx context.Context, room domain.Room) (*domain.Room, error) {
