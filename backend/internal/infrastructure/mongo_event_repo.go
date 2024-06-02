@@ -50,10 +50,50 @@ type mongoEventRepository struct {
 }
 
 func NewMongoEventRepository(client *mongo.Client) domain.EventRepository {
-	return &mongoEventRepository{
+	eventRepo := &mongoEventRepository{
 		client:          client,
 		eventCollection: client.Database("meetingCenter").Collection("events"),
 	}
+	err := eventRepo.ensureIndexes()
+	if err != nil {
+		log.Fatalf("Failed to create event index. %s", err.Error())
+	}
+	return eventRepo
+}
+
+func (m *mongoEventRepository) ensureIndexes() error {
+	indexModels := []mongo.IndexModel{
+		{
+			Keys: bson.D{{Key: "participantsIDs", Value: 1}}, // Index on participantsIDs
+		},
+		{
+			Keys: bson.D{{Key: "startAt", Value: 1}}, // Index on startAt
+		},
+		{
+			Keys: bson.D{{Key: "endAt", Value: 1}}, // Index on endAt
+		},
+		{
+			Keys: bson.D{{Key: "isDelete", Value: 1}}, // Index on isDelete
+		},
+		{
+			Keys: bson.D{{Key: "creatorID", Value: 1}}, // Index on creatorID
+		},
+		{
+			Keys: bson.D{{Key: "roomReservation.roomID", Value: 1}}, // Index on roomReservation.roomID
+		},
+		{
+			Keys: bson.D{{Key: "roomReservation.reservationStatus", Value: 1}}, // Index on roomReservation.reservationStatus
+		},
+		{
+			Keys: bson.D{{Key: "remindAt", Value: 1}}, // Index on remindAt
+		},
+	}
+
+	_, err := m.eventCollection.Indexes().CreateMany(context.Background(), indexModels)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (m *mongoEventRepository) Upsert(ctx context.Context, event domain.Event) (*domain.Event, error) {
