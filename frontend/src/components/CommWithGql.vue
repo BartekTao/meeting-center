@@ -31,7 +31,7 @@
           return {
             headers: {
               ...headers,
-              authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNzIwMDc1MCwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.Ppez0jkZA_Ah1TPfLIaFWyZGO2UNpKCvtmgXqVLYxgw',
+              authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNzM4Mzg4OSwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.e11L-qZmR5mU4wEXJNaExIfKW-qFDy0lCW_j_yS114c',
             }
           }
         });
@@ -116,7 +116,6 @@
           const variables = {
             input: eventInput
           };
-
           return this.client.mutate({
             mutation: CREATE_EVENT_MUTATION,
             variables
@@ -153,12 +152,19 @@
             query: GET_ALL_ROOMS_QUERY,
             fetchPolicy: 'no-cache'
           }).then(response => {
-            this.rooms = response.data.paginatedRooms.edges.map(edge => edge.node);
-            this.pageInfo = response.data.paginatedRooms.pageInfo;
-            this.$emit('queryAllRooms', this.rooms);
+            const paginatedRooms = response.data.paginatedRooms;
+
+            if (paginatedRooms && paginatedRooms.edges.length > 0) {
+              this.rooms = paginatedRooms.edges.map(edge => edge.node);
+              this.pageInfo = paginatedRooms.pageInfo;
+              this.$emit('queryAllRooms', this.rooms);
+            } else {
+              this.$emit('queryAllRooms', []);
+            }
           }).catch(error => {
             console.error("Failed to fetch rooms:", error);
           });
+
           
         },
         deleteRoom(roomId) {
@@ -374,14 +380,16 @@
             after: null
           };
 
-          this.client.query({
+          return this.client.query({
             query: GET_PAGINATED_USERS,
             variables
           }).then(response => {
             this.users = response.data.paginatedUsers.edges.map(edge => edge.node);
             this.$emit('queryUsers', this.users);
+            return this.users; // 返回查詢到的用戶
           }).catch(error => {
             console.error('Error fetching users:', error);
+            throw error; // 繼續拋出錯誤，以便在外部捕獲
           });
         },
         getUserEvents(variables) {
@@ -413,14 +421,20 @@
                     url
                     name
                   }
+                  creator {
+                    id
+                    name
+                  }
                 }
               }
             }
           `;
           this.client.query({
             query: GET_USER_EVENTS,
-            variables
+            variables,
+            fetchPolicy: 'no-cache'
           }).then(response => {
+            let returnEventList = [];
             if (response.data.userEvents.length > 0) {
               const events = response.data.userEvents[1].events;
               this.eventList = [];
@@ -430,8 +444,9 @@
                   eventId: event.id,
                   title: event.title,
                   description: event.description,
-                  fileName: event.attachedFile.url,
-                  fileUrl: event.attachedFile.name,
+                  fileName: event.attachedFile.name,
+                  fileUrl: event.attachedFile.url,
+                  creatorId: event.creator.id,
                   participants: event.participants,
                   startAt: event.startAt,
                   endAt: event.endAt,
@@ -440,7 +455,6 @@
                 };
                 this.eventList.push(processedEvent);
               }
-              let returnEventList = [];
 
               // Use the first event from the eventList to call fetchAvailableRooms
               if (this.eventList.length > 0) {
@@ -479,6 +493,9 @@
                   });
 
               }
+            } else {
+
+              this.$emit('getEventList', returnEventList);
             }
           }).catch(error => {
             console.error('Error fetching user events:', error);

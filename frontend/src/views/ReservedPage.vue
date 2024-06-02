@@ -1,13 +1,12 @@
 <template>
   <div>
     <head-page pageContent="已預約空間"></head-page>
-    <ReserveList @showDiv="showDiv" @hideDiv="hideDiv" :openForm="openForm" :openCommentForm="openCommentForm" @update-form="updateAllRooms" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction" :roomItems="roomItems"/>
+    <ReserveList @showDiv="showDiv" @hideDiv="hideDiv" :openForm="openForm" :openCommentForm="openCommentForm" @update-form="updateAllRooms" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction" :roomItems="roomItems" :pageState="pageState"/>
     <ReserveForm @showDiv="showDiv" @hideDiv="hideDiv" :formDisplay="formDisplay" :formInfo="formInfo" :schedulesList="schedulesList" @close-form="closeForm" @update-form="updateAllRooms" :users="users"/>
     <CommentForm @close-comment-form="closeCommentForm" @update-form="updateAllRooms" :commentDisplay="commentDisplay" :formInfo="formInfo" :users="users"/>
     <EventInfo ref="eventInfo"/>
     <comm-with-gql @fetch-available-rooms="fetchAvailableRooms" @get-event-list="getEventList" @query-users="queryUsers" ref="commWithGql"></comm-with-gql>
     <js-preloader ref="jsPreloader"></js-preloader>
-
   </div>
 </template>
 
@@ -41,8 +40,8 @@ export default {
       formDisplay: false,
       commentDisplay: false,
       ignoreRoom: [],
+      pageState: 'reserved',
       
-
       formInfo: {
         title: 'test title',
         description: 'test description',
@@ -60,6 +59,7 @@ export default {
         fileName: '',
         fileUrl: '',
         reservatorList: ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ],
+        pageState: 'reserved',
       },
 
       users: [],
@@ -86,7 +86,6 @@ export default {
   },
   methods: {
     openForm(item) {
-      console.log('item:', item);
       this.formDisplay = true;
       this.formInfo.roomName = item.name;
       this.roomId = item.id;
@@ -97,19 +96,14 @@ export default {
       this.formInfo.description = item.description;
       this.formInfo.summary = item.summary;
 
-      this.formInfo.fileName = item.fileName;
-      this.formInfo.fileUrl = item.fileUrl;
-
-      const { hours: startHours, minutes: startMinutes } = this.getHours(item.startAt);
-      const { hours: endHours, minutes: endMinutes } = this.getHours(item.endAt);
-
-      this.formInfo.start_time = `${startHours}:${startMinutes.toString().padStart(2, '0')}`;
-      this.formInfo.end_time = `${endHours}:${endMinutes.toString().padStart(2, '0')}`;
+      this.formInfo.start_time = item.start_time;
+      this.formInfo.end_time = item.end_time;
 
       const namesArray = item.participants.map(participant => participant.name);
       this.formInfo.namesString = namesArray.join(', ');
       this.formInfo.eventId = item.eventId;
-      
+      this.formInfo.fileName = item.fileName;
+      this.formInfo.fileUrl = item.fileUrl;
 
     },
     closeForm() {
@@ -132,7 +126,6 @@ export default {
       this.loadPreLoader(500).then(() => {
         this.$refs.commWithGql.getUserEvents(this.updateVariables);
       });
-          
     },
     loadPreLoader(duration) {
       this.$refs.jsPreloader.isLoaded = false;
@@ -162,7 +155,15 @@ export default {
       // Iterate through eventList and extract roomsData along with originalData
       eventList.forEach(event => {
         if (Array.isArray(event.roomsData)) {
+
           event.roomsData.forEach(room => {
+
+            const {month_day: eventDay, hours: startHours, minutes: startMinutes } = this.getHours(event.originalData.startAt);
+            const { hours: endHours, minutes: endMinutes } = this.getHours(event.originalData.endAt);
+
+            const start_time = `${startHours}:${startMinutes.toString().padStart(2, '0')}`;
+            const end_time = `${endHours}:${endMinutes.toString().padStart(2, '0')}`;
+            
             this.roomItems.push({
               ...room,
               eventId: event.originalData.eventId,
@@ -172,9 +173,13 @@ export default {
               fileUrl: event.originalData.fileUrl,
               summary: event.originalData.summary,
               startAt: event.originalData.startAt,
+              start_time: start_time,
+              end_time: end_time,
+              eventDay: eventDay,
               endAt: event.originalData.endAt,
               participants: event.originalData.participants,
-              roomId: event.originalData.roomId
+              roomId: event.originalData.roomId,
+              creatorId: event.originalData.creatorId,
             });
           });
         }
@@ -207,16 +212,34 @@ export default {
               startMinutes,
               endHours,
               endMinutes,
-              eventTitle
+              eventTitle,
+              state: '',
             };
           finalReservatiorList = finalReservatiorList.map((slot, index) => slot.name === reservatorName ? slot : newReservatorList[index] ? scheduleInfo : slot);
           
         });
 
         room.schedulesList = finalReservatiorList.slice(0, -1);
-      });
 
-      
+        const { hours: startHours, minutes: startMinutes } = this.getHours(room.startAt);
+        const { hours: endHours, minutes: endMinutes } = this.getHours(room.endAt);
+
+        const reservatorName = this.findUserNameById(room.creatorId);
+        room.currentSchedulesList = this.transferReservatorList(startHours, startMinutes, endHours, endMinutes, reservatorName).slice(0, -1);
+
+        for (let i = 0; i < room.schedulesList.length; i++) {
+          const scheduleUnit = room.schedulesList[i];
+          const currentScheduleUnit = room.currentSchedulesList[i];
+
+          if (scheduleUnit && currentScheduleUnit) {
+            room.schedulesList[i].state = 'current';
+          } else if (scheduleUnit && !currentScheduleUnit) {
+            room.schedulesList[i].state = 'occupied';
+          } 
+        }
+        
+      });
+    console.log('roomItems:', this.roomItems);
     },
     fetchAvailableRooms(room) {
       this.ignoreRoom = room;
@@ -227,11 +250,13 @@ export default {
     },
     getHours(timestamp) {
       const date = new Date(timestamp);
+      const month = date.getMonth() + 1; // getMonth() returns 0-11, so we add 1
       const day = date.getDate();
+      const month_day = `${month}-${day}`;
       const hours = date.getHours();
       const minutes = date.getMinutes();
 
-      return { day, hours, minutes}
+      return { month_day, hours, minutes}
     },
     transferReservatorList(startHours, startMinutes, endHours, endMinutes, eventName) {
       const startTime = startHours * 60 + startMinutes;
@@ -253,8 +278,14 @@ export default {
     },
   },
   mounted() {
-    this.$refs.commWithGql.queryUsers();
+    // this.$refs.commWithGql.queryUsers();
     this.updateAllRooms();
+    this.$refs.commWithGql.queryUsers().then(() => {
+      this.formInfo.userId = [this.users[0].id];
+      this.updateVariables.userIDs = [this.users[0].id];
+    }).catch(error => {
+      console.error("Failed to fetch users:", error);
+    });
   }
 }
 </script>

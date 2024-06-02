@@ -1,6 +1,6 @@
 <template>
   <ReserveBar @updateAllRooms="updateAllRooms"/>
-  <ReserveList  @showDiv="showDiv" @hideDiv="hideDiv" :openForm="openForm" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction" :roomItems="roomItems"/>
+  <ReserveList  @showDiv="showDiv" @hideDiv="hideDiv" :openForm="openForm" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction" :roomItems="roomItems" :pageState="pageState"/>
   <ReserveForm  @showDiv="showDiv" @hideDiv="hideDiv" :formDisplay="formDisplay" :formInfo="formInfo" :roomName="roomName" :schedulesList="schedulesList" :users="users" @close-form="closeForm" @update-form="updateForm"/>
   <EventInfo ref="eventInfo"/>
   <comm-with-gql @fetch-available-rooms="fetchAvailableRooms" @query-users="queryUsers" ref="commWithGql"></comm-with-gql>
@@ -34,6 +34,7 @@ export default {
       editCommentAction: false,
       deleteAction: false,
       formDisplay: false,
+      pageState: 'reserve',
       oneHourInMilliseconds: 3600000,
       users: [],
       updateVariables: {},
@@ -65,8 +66,8 @@ export default {
         start_time: '10:00',
         end_time: '12:00',
         notes: 'test content',
-        fileName: 'test file name',
-        fileUrl: 'test file url',
+        fileName: '',
+        fileUrl: '',
         reservatorList: ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ],
         schedulesList: [],
       },
@@ -89,8 +90,6 @@ export default {
       this.roomId = item.id;
       this.formInfo.roomId = item.id;
       this.schedulesList = item.schedulesList;
-      this.formInfo.fileName = item.fileName;
-      this.formInfo.fileUrl = item.fileUrl;
     },
 
     updateForm() {
@@ -138,7 +137,8 @@ export default {
               startMinutes,
               endHours,
               endMinutes,
-              eventTitle
+              eventTitle,
+              state: 'occupied',
             };
           finalReservatiorList = finalReservatiorList.map((slot, index) => slot.name === reservatorName ? slot : newReservatorList[index] ? scheduleInfo : slot);
           
@@ -210,6 +210,12 @@ export default {
   },
   mounted() {
     this.$refs.commWithGql.queryUsers();
+    // console.log('users:', this.users);
+    this.$refs.commWithGql.queryUsers().then(() => {
+      this.formInfo.userId = [this.users[0].id];
+    }).catch(error => {
+      console.error("Failed to fetch users:", error);
+    });
   }
 }
 </script>
