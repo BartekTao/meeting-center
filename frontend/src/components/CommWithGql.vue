@@ -31,7 +31,7 @@
           return {
             headers: {
               ...headers,
-              authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNzM4Mzg4OSwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.e11L-qZmR5mU4wEXJNaExIfKW-qFDy0lCW_j_yS114c',
+              authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxNzQyODc0NiwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.dmNbZ0Fe7yCz6LE3fzXKXKCsrFw9PD6OETvSj5Ea8is',
             }
           }
         });
@@ -309,7 +309,6 @@
                       endAt
                       participants {
                         id
-                        name
                       }
                       summary
                       creator {
