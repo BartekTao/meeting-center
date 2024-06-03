@@ -309,6 +309,7 @@
                       endAt
                       participants {
                         id
+                        name
                       }
                       summary
                       creator {
