@@ -114,6 +114,15 @@ func (s *eventService) Upsert(ctx context.Context, req UpsertEventRequest) (*dom
 			}
 			defer s.locker.Unlock(locked)
 
+			if oldEvent != nil {
+
+				oldEvent.RoomReservation.ReservationStatus = domain.ReservationStatus_Canceled
+				_, err = s.eventRepository.Upsert(ctx, *oldEvent)
+				if err != nil {
+					return nil, err
+				}
+			}
+
 			available, err := s.eventRepository.CheckAvailableRoom(ctx, *event.RoomReservation.RoomID, event.StartAt, event.EndAt)
 			if err != nil {
 				return nil, err

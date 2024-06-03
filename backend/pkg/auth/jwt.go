@@ -26,7 +26,7 @@ func (j *jwtHandler) GenerateJWT(userinfo *domain.User) (string, error) {
 		"sub":   *userinfo.ID,
 		"name":  userinfo.Name,
 		"email": userinfo.Email,
-		"exp":   time.Now().Add(time.Hour * 24).Unix(),
+		"exp":   time.Now().Add(time.Hour * 24 * 7).Unix(),
 	})
 	tokenString, err := token.SignedString(j.jwtKey)
 	if err != nil {
