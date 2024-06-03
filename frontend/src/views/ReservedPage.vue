@@ -124,6 +124,7 @@ export default {
       this.users = users
     },
     updateAllRooms() {
+      console.log('this.updateVariables:', this.updateVariables);
       this.loadPreLoader(500).then(() => {
         this.$refs.commWithGql.getUserEvents(this.updateVariables);
       });
