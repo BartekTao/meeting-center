@@ -1,5 +1,6 @@
 <template>
   <div>
+    <background-header></background-header>
     <head-page pageContent="已預約空間"></head-page>
     <ReserveList @showDiv="showDiv" @hideDiv="hideDiv" :openForm="openForm" :openCommentForm="openCommentForm" @update-form="updateAllRooms" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction" :roomItems="roomItems" :pageState="pageState"/>
     <ReserveForm @showDiv="showDiv" @hideDiv="hideDiv" :formDisplay="formDisplay" :formInfo="formInfo" :schedulesList="schedulesList" @close-form="closeForm" @update-form="updateAllRooms" :users="users"/>
@@ -18,6 +19,7 @@ import EventInfo from '@/components/EventInfo.vue';
 import CommentForm from '@/components/CommentForm.vue';
 import CommWithGql from '@/components/CommWithGql.vue';
 import JsPreloader from '@/components/JsPreloader.vue';
+import BackgroundHeader from '@/components/BackgroundHeader.vue';
 // import ReservedChildPage from '@/components/ReservedChildPage.vue';
 
 export default {
@@ -28,7 +30,8 @@ export default {
     EventInfo,
     CommentForm,
     CommWithGql,
-    JsPreloader
+    JsPreloader,
+    BackgroundHeader
   },
   data() {
     return {

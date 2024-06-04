@@ -1,5 +1,5 @@
 <template>
-  <background-header></background-header>
+  <!-- <background-header></background-header> -->
 
   <router-view></router-view>
 </template>
@@ -18,7 +18,7 @@
 
 <script>
 
-import BackgroundHeader from '@/components/BackgroundHeader.vue';
+// import BackgroundHeader from '@/components/BackgroundHeader.vue';
 
 export default {
   name: 'App',
@@ -27,9 +27,9 @@ export default {
       first_data: '',
     };
   },
-  components: {
-    BackgroundHeader,
-  },
+  // components: {
+  //   BackgroundHeader,
+  // },
 }
 
 
