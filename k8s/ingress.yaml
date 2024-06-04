@@ -13,3 +13,24 @@ spec:
                 name: vue-frontend
                 port:
                   number: 80
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service:
+                name: meeting-center-api
+                port:
+                  number: 8080
+          - path: /auth/google/login
+            pathType: Prefix
+            backend:
+              service:
+                name: meeting-center-api
+                port:
+                  number: 8080
+          - path: /auth/google/callback
+            pathType: Prefix
+            backend:
+              service:
+                name: meeting-center-api
+                port:
+                  number: 8080

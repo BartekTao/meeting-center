@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: vue-frontend-container
-          image: ghcr.io/jammy0611/meetingcenter-frontend:latest
+          image: ghcr.io/jammy0611/meetingcenter-frontendtest:latest
           ports:
             - containerPort: 80
 

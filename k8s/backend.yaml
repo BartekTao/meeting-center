@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: meeting-center-api
-          image: ghcr.io/jammy0611/meetingcenter-backend:latest
+          image: ghcr.io/jammy0611/meetingcenter-backendtest:latest
           ports:
             - containerPort: 8080
           env:
