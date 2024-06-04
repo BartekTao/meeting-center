@@ -27,6 +27,20 @@ export default {
       first_data: '',
     };
   },
+  mounted() {
+    console.log('Mounted hook is triggered');
+    // Check if there is a token in the URL (after login redirect)
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    
+    // If token exists, store it in localStorage
+    if (token) {
+      localStorage.setItem('token', token);
+      
+      // Remove token from URL to prevent token leakage
+      window.history.replaceState({}, document.title, "/");
+    }
+  }
   // components: {
   //   BackgroundHeader,
   // },

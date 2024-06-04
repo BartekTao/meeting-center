@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -39,6 +40,7 @@ func NewGoogleOAuthHandler(userRepo domain.UserRepo) OAuthHandler {
 	}
 
 	googleOauthConfig := &oauth2.Config{
+		// RedirectURL:  "http://meeting.rextein.com/auth/google/callback",
 		RedirectURL:  "http://localhost:8080/auth/google/callback",
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
@@ -111,12 +113,18 @@ func (g *googleOAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := map[string]string{
-		"token": jwtToken,
+	// redirectURL, err := url.Parse("http://meeting.rextein.com")
+	redirectURL, err := url.Parse("http://localhost:8088")
+	if err != nil {
+		http.Error(w, "Failed to parse redirect URL", http.StatusInternalServerError)
+		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	queryParams := redirectURL.Query()
+	queryParams.Set("token", jwtToken)
+	redirectURL.RawQuery = queryParams.Encode()
+
+	// Redirect user to frontend URL with token as query parameter
+	http.Redirect(w, r, redirectURL.String(), http.StatusTemporaryRedirect)
 }
 
 // httpError simplifies sending error messages

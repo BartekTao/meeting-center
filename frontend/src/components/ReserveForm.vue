@@ -131,6 +131,7 @@
         this.localFormInfo.fileName = this.selectedFile ? this.selectedFile.name : '';
       },
       uploadFile() {
+            const token = localStorage.getItem('token');
             const formData = new FormData();
             const operations = JSON.stringify({
                 query: `mutation ($file: Upload!) { uploadFile(file: $file) }`,
@@ -146,7 +147,7 @@
 
             axios.post('http://localhost:8080/query', formData, {
                 headers: {
-                'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImxlZWl2YW4xMDA3QGdtYWlsLmNvbSIsImV4cCI6MTcxODA2ODI5OCwibmFtZSI6Ikl2YW4gTGVlIiwic3ViIjoiNjY0NWVjZTEzNmUyYTBmMDM1OTYxYmRkIn0.u0a949cBKw2qy3uVOXikTTDGHiU5UN5eUROnpA5QHTw',
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'multipart/form-data'
                 }
             }).then(response => {
