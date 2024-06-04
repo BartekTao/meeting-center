@@ -39,7 +39,7 @@ func NewGoogleOAuthHandler(userRepo domain.UserRepo) OAuthHandler {
 	}
 
 	googleOauthConfig := &oauth2.Config{
-		RedirectURL:  "http://localhost:8080/auth/google/callback",
+		RedirectURL:  "http://meeting.rextein.com/auth/google/callback",
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email"},
