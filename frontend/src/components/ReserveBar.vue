@@ -53,7 +53,7 @@
             <ul class="categories">
               <li><a><span class="icon" :class="{ checked: PROJECTOR }" @click="changeClickSpan('PROJECTOR')"><img :src="projectorImage"></span> 有投影機</a></li>
               <li><a><span class="icon" :class="{ checked: NO_FOOD }" @click="changeClickSpan('NO_FOOD')"><img :src="eatImage"></span> 可否飲食 </a></li>
-              <li><a><span class="icon" :class="{ checked: TABLE }" @click="changeClickSpan('TABLE')"><img :src="whiteBoardImage"></span> 有無桌子</a></li>
+              <li><a><span class="icon" :class="{ checked: TABLE }" @click="changeClickSpan('TABLE')"><img :src="whiteBoardImage"></span> 有白板</a></li>
             </ul>
           </div>
         </div>

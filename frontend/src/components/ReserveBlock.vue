@@ -40,7 +40,7 @@
           <div style="height: 20px;"></div>
           <ul class="info style2" style="padding-left: 0rem;">
             <!-- <li>人數限制：{{ item.capacity }}</li>   -->
-            <li style="flex: 0 0 20%">有大桌子：{{ item.equipments.includes('TABLE') ? '是' : '否' }}</li>
+            <li style="flex: 0 0 20%">有白板：{{ item.equipments.includes('TABLE') ? '是' : '否' }}</li>
             <li style="flex: 0 0 20%">有投影機：{{ item.equipments.includes('PROJECTOR') ? '是' : '否' }}</li>
             <li style="flex: 0 0 20%">可否進食：{{ item.rules.includes('NO_FOOD') ? '否' : '是' }}</li>
             <!-- <li>可否喝水：{{ item.rules.includes('NO_DRINK') ? '否' : '是' }}</li> -->

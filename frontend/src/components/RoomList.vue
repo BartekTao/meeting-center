@@ -22,7 +22,7 @@
                       <a href="#"><h4>會議名稱：{{ item.name }}</h4></a>
                       <ul class="info style1" style="padding-left: 0rem;">
                         <!-- <li>人數限制：{{ item.capacity }}</li>   -->
-                        <li style="flex: 0 0 33%">有大桌子：{{ item.equipments.includes('TABLE') ? '是' : '否' }}</li>
+                        <li style="flex: 0 0 33%">有白板：{{ item.equipments.includes('TABLE') ? '是' : '否' }}</li>
                         <li style="flex: 0 0 33%">有投影機：{{ item.equipments.includes('PROJECTOR') ? '是' : '否' }}</li>
                         <li style="flex: 0 0 33%">可否進食：{{ item.rules.includes('NO_FOOD') ? '否' : '是' }}</li>
                         <!-- <li>可否喝水：{{ item.rules.includes('NO_DRINK') ? '否' : '是' }}</li> -->
