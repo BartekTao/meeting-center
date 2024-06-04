@@ -117,7 +117,9 @@ export default {
         let finalReservatiorList = Array(this.timeList.length).fill('');
 
         room.schedules.forEach(schedule => {
-          const reservatorName = this.findUserNameById(schedule.creator.id);
+          // const reservatorName = this.findUserNameById(schedule.creator.id);
+          // const reservatorName = this.findUserNameById(schedule.participants[0].id);
+          const reservatorName = schedule.participants[0].name;
           const eventTitle = this.findUserNameById(schedule.title);
           const { hours: startHours, minutes: startMinutes } = this.getHours(schedule.startAt);
           const { hours: endHours, minutes: endMinutes } = this.getHours(schedule.endAt);
@@ -132,7 +134,8 @@ export default {
 
           const newReservatorList = this.transferReservatorList(startHours, startMinutes, endHours, endMinutes, reservatorName);
           const scheduleInfo = {
-              id: schedule.creator.id,
+              // id: schedule.creator.id,
+              id: schedule.participants[0].id,
               name: reservatorName,
               nickName: nickName,
               title: schedule.title,
@@ -168,7 +171,7 @@ export default {
     updateAllRooms(variables) {
 
       if (Object.keys(variables).length !== 0) {
-        this.dayTime = variables.dayTime;
+        this.formInfo.dayTime = variables.dayTime;
         this.updateVariables = variables;
       }
 
@@ -213,7 +216,6 @@ export default {
   },
   mounted() {
     this.$refs.commWithGql.queryUsers();
-    // console.log('users:', this.users);
     this.$refs.commWithGql.queryUsers().then(() => {
       this.formInfo.userId = [this.users[0].id];
     }).catch(error => {
@@ -228,20 +230,29 @@ export default {
 
 .info {
   display: flex;        /* 使用 Flexbox 佈局 */
-  flex-wrap: wrap;      /* 允許項目換行 */
+  /* flex-wrap: wrap;      允許項目換行 */
   list-style: none;     /* 去除列表前的標記 */
   padding: 0;           /* 去除預設的內距 */
   margin: 0;            /* 去除預設的外距 */
 }
 
+
 .info li {
-  flex: 0 0 20%;        /* 每個 li 佔總寬度的 20% */
+  /* flex: 0 0 33%;        */
   box-sizing: border-box; /* 盒子模型調整，邊界和內距不再另外計算 */
   padding: 0.5rem;      /* 略微增加內距以便閱讀 */
   border: 1px solid #ccc; /* 加上邊框以視覺區分 */
   text-align: center;   /* 文字置中 */
   background-color: white; /* 淺藍色背景 */
 }
+
+/* .style2 li {
+  flex: 0 0 33%;       
+}
+
+.style1 li {
+  flex: 0 0 33%;       
+} */
 
 .bordered {
   border: 1px solid white;

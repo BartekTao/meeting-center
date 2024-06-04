@@ -80,15 +80,14 @@
             <div class="row mb-2">
                 <label class="col-sm-2 col-form-label">Uploaded file URL:</label>
                 <div class="col-sm-10">
-                    <!-- <a :href="localFormInfo.fileUrl" target="_blank">{{ localFormInfo.fileUrl }}</a> -->
                     <a v-if="localFormInfo.fileUrl" :href="localFormInfo.fileUrl" target="_blank">{{ localFormInfo.fileUrl }}</a>
                     <a v-else-if="fileUrl" :href="fileUrl" target="_blank">{{ fileUrl }}</a>
                 </div>
             </div>
 
-            <!-- <div class="row mb-2">
+            <div class="row mb-2">
                 <label class="col-sm-2 col-form-label"><strong>會議會在前十分鐘提醒</strong></label>
-            </div> -->
+            </div>
 
             <div class="row mb-2">
                 <div class="col-sm-12 d-flex justify-content-center">

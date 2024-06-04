@@ -1107,9 +1107,9 @@ Recent Listing
   width: 100%;
 }
 
-.recent-listing .item .right-content ul.info li:last-child {
+/* .recent-listing .item .right-content ul.info li:last-child {
   margin-bottom: 0px;
-}
+} */
 
 .recent-listing .item .right-content ul.info li img {
   max-width: 30px;

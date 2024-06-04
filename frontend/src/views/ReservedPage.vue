@@ -118,6 +118,7 @@ export default {
       this.roomInfo.roomName = item.name;
       this.formInfo.eventId = item.eventId;
       this.formInfo.summary = item.summary;
+      this.formInfo.title = item.title;
     },
     closeCommentForm() {
       this.commentDisplay = false;
@@ -126,6 +127,7 @@ export default {
       this.users = users
     },
     updateAllRooms() {
+      console.log('this.updateVariables:', this.updateVariables);
       this.loadPreLoader(500).then(() => {
         this.$refs.commWithGql.getUserEvents(this.updateVariables);
       });
@@ -192,7 +194,8 @@ export default {
         let finalReservatiorList = Array(this.timeList.length).fill('');
 
         room.schedules.forEach(schedule => {
-          const reservatorName = this.findUserNameById(schedule.creator.id);
+          // const reservatorName = this.findUserNameById(schedule.creator.id);
+          const reservatorName = schedule.participants[0].name;
           const eventTitle = this.findUserNameById(schedule.title);
           const { hours: startHours, minutes: startMinutes } = this.getHours(schedule.startAt);
           const { hours: endHours, minutes: endMinutes } = this.getHours(schedule.endAt);
@@ -207,7 +210,8 @@ export default {
 
           const newReservatorList = this.transferReservatorList(startHours, startMinutes, endHours, endMinutes, reservatorName);
           const scheduleInfo = {
-              id: schedule.creator.id,
+              // id: schedule.creator.id,
+              id: schedule.participants[0].id,
               name: reservatorName,
               nickName: nickName,
               title: schedule.title,

@@ -221,22 +221,29 @@
           if (!variables.ids) {
             variables.ids = [];
           }
+
+          
           this.queryRoomSchedules(variables)
             .then(response => {
-              const edges = response.data.paginatedRoomSchedules.edges;
-              this.rooms = edges.map(edge => {
-                return {
-                  ...edge.node.room,
-                  schedules: edge.node.schedules
-                };
-              });
+              if (response.data.paginatedRoomSchedules !== null) {
+                
+                const edges = response.data.paginatedRoomSchedules.edges;
+                this.rooms = edges.map(edge => {
+                  return {
+                    ...edge.node.room,
+                    schedules: edge.node.schedules
+                  };
+                });
 
-              // Second queryRoomSchedules inside the then block of the first
-              variables.ids = this.rooms.map(room => room.id);
-              variables.startAt = this.startOfDayTimestamp;
-              variables.endAt = this.endOfDayTimestamp;
+                // Second queryRoomSchedules inside the then block of the first
+                variables.ids = this.rooms.map(room => room.id);
+                variables.startAt = this.startOfDayTimestamp;
+                variables.endAt = this.endOfDayTimestamp;
 
-              return this.queryRoomSchedules(variables);
+                return this.queryRoomSchedules(variables);
+              } else {
+                resolve([]); // 返回一个空数组
+              }
             })
             .then(response => {
               const edges = response.data.paginatedRoomSchedules.edges;
@@ -310,6 +317,7 @@
                       endAt
                       participants {
                         id
+                        name
                       }
                       summary
                       creator {
@@ -456,7 +464,8 @@
                 };
                 this.eventList.push(processedEvent);
               }
-
+              
+              console.log('this.eventList:', this.eventList);
               // Use the first event from the eventList to call fetchAvailableRooms
               if (this.eventList.length > 0) {
                 let promises = this.eventList.map(event => {
@@ -465,6 +474,7 @@
                     endAt: event.endAt,
                     ids: event.roomId
                   };
+                  console.log('fetchVariables:', fetchVariables);
                   return this.fetchAvailableRooms(fetchVariables)
                     .then(rooms => {
                     return {
