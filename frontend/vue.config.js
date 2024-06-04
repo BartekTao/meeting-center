@@ -17,6 +17,8 @@ module.exports = defineConfig({
     ],
   },
   devServer: {
+    hot: false,          // 禁用热模块替换
+    liveReload: false,   // 禁用实时重新加载
     port: 8888
   }
 });

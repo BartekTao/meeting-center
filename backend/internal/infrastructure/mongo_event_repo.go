@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Event struct {
@@ -49,10 +50,50 @@ type mongoEventRepository struct {
 }
 
 func NewMongoEventRepository(client *mongo.Client) domain.EventRepository {
-	return &mongoEventRepository{
+	eventRepo := &mongoEventRepository{
 		client:          client,
 		eventCollection: client.Database("meetingCenter").Collection("events"),
 	}
+	err := eventRepo.ensureIndexes()
+	if err != nil {
+		log.Fatalf("Failed to create event index. %s", err.Error())
+	}
+	return eventRepo
+}
+
+func (m *mongoEventRepository) ensureIndexes() error {
+	indexModels := []mongo.IndexModel{
+		{
+			Keys: bson.D{{Key: "participantsIDs", Value: 1}}, // Index on participantsIDs
+		},
+		{
+			Keys: bson.D{{Key: "startAt", Value: 1}}, // Index on startAt
+		},
+		{
+			Keys: bson.D{{Key: "endAt", Value: 1}}, // Index on endAt
+		},
+		{
+			Keys: bson.D{{Key: "isDelete", Value: 1}}, // Index on isDelete
+		},
+		{
+			Keys: bson.D{{Key: "creatorID", Value: 1}}, // Index on creatorID
+		},
+		{
+			Keys: bson.D{{Key: "roomReservation.roomID", Value: 1}}, // Index on roomReservation.roomID
+		},
+		{
+			Keys: bson.D{{Key: "roomReservation.reservationStatus", Value: 1}}, // Index on roomReservation.reservationStatus
+		},
+		{
+			Keys: bson.D{{Key: "remindAt", Value: 1}}, // Index on remindAt
+		},
+	}
+
+	_, err := m.eventCollection.Indexes().CreateMany(context.Background(), indexModels)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (m *mongoEventRepository) Upsert(ctx context.Context, event domain.Event) (*domain.Event, error) {
@@ -143,7 +184,8 @@ func (m *mongoEventRepository) Upsert(ctx context.Context, event domain.Event) (
 		}
 
 		var updatedEvent Event
-		err = collection.FindOneAndUpdate(ctx, filter, update).Decode(&updatedEvent)
+		err = collection.FindOneAndUpdate(ctx, filter, update,
+			options.FindOneAndUpdate().SetReturnDocument(options.After)).Decode(&updatedEvent)
 		if err != nil {
 			// ErrNoDocuments means that the filter did not match any documents in the collection.
 			if errors.Is(err, mongo.ErrNoDocuments) {

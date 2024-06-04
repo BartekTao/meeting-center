@@ -9,6 +9,7 @@ import (
 	"github.com/BartekTao/nycu-meeting-room-api/internal/domain"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/lock"
 	"github.com/BartekTao/nycu-meeting-room-api/pkg/notification"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 type UpsertEventRequest struct {
@@ -68,66 +69,86 @@ func (s *eventService) Upsert(ctx context.Context, req UpsertEventRequest) (*dom
 		AttachedFile:    req.AttachedFile,
 	}
 
+	var res *domain.Event
+	var err error
+
 	if req.RoomID == nil {
-		res, err := s.eventRepository.Upsert(ctx, event)
+		res, err = s.eventRepository.Upsert(ctx, event)
 		if err != nil {
 			return nil, err
 		}
-
-		go func(event *domain.Event) {
-			var err error
-			if event.IsDelete {
-				err = s.sendEmail(context.Background(), event, "Canceled", "")
-			} else {
-				err = s.sendEmail(context.Background(), event, "Updated", "")
-			}
-
-			if err != nil {
-				log.Printf("Error sending email: %v\n", err.Error())
-			}
-		}(res)
-
-		return res, err
 	} else {
 		event.RoomReservation = &domain.RoomReservation{
 			RoomID:            req.RoomID,
 			ReservationStatus: domain.ReservationStatus_Confirmed,
 		}
+
+		var oldEvent *domain.Event
+
+		if event.ID != nil {
+			oldEvent, err = s.eventRepository.GetByID(ctx, *event.ID)
+			if err != nil {
+				return nil, err
+			}
+			if oldEvent == nil {
+				return nil, gqlerror.Errorf("Event not exist")
+			}
+		}
+
+		if oldEvent != nil && oldEvent.StartAt == event.StartAt &&
+			oldEvent.EndAt == event.EndAt &&
+			*oldEvent.RoomReservation.RoomID == *event.RoomReservation.RoomID {
+
+			res, err = s.eventRepository.Upsert(ctx, event)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+			defer cancel()
+
+			key := *req.RoomID
+			locked, err := s.locker.TryLockWithWait(key, 500*time.Millisecond, 3)
+			if err != nil {
+				return nil, err
+			}
+			defer s.locker.Unlock(locked)
+
+			available, err := s.eventRepository.CheckAvailableRoom(ctx, *event.RoomReservation.RoomID, event.StartAt, event.EndAt)
+			if err != nil {
+				return nil, err
+			}
+
+			if !available {
+				event.RoomReservation.ReservationStatus = domain.ReservationStatus_Canceled
+			}
+
+			res, err = s.eventRepository.Upsert(ctx, event)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-
-	key := *req.RoomID
-	locked, err := s.locker.TryLockWithWait(key, 500*time.Millisecond, 3)
-	if err != nil {
-		return nil, err
-	}
-	defer s.locker.Unlock(locked)
-
-	available, err := s.eventRepository.CheckAvailableRoom(ctx, *event.RoomReservation.RoomID, event.StartAt, event.EndAt)
-	if err != nil {
-		return nil, err
-	}
-
-	if !available {
-		event.RoomReservation.ReservationStatus = domain.ReservationStatus_Canceled
-	}
-
-	res, err := s.eventRepository.Upsert(ctx, event)
-	if err != nil {
-		return nil, err
-	}
-
-	// sent invited email
-	go func(event *domain.Event) {
-		err := s.sendEmail(context.Background(), event, "Invited", "")
+	// sent email
+	go func(event *domain.Event, req UpsertEventRequest) {
+		err := s.sendEmailAfterUpsert(context.Background(), event, req)
 		if err != nil {
 			log.Printf("Error sending email: %v\n", err.Error())
 		}
-	}(res)
+	}(res, req)
 
-	return res, err
+	return res, nil
+}
+
+func (s *eventService) sendEmailAfterUpsert(ctx context.Context, event *domain.Event, req UpsertEventRequest) error {
+	var err error
+	if req.ID == nil {
+		err = s.sendEmail(ctx, event, "Invited", "")
+	} else {
+		err = s.sendEmail(ctx, event, "Updated", "")
+	}
+	return err
 }
 
 func (s *eventService) sendEmail(ctx context.Context, res *domain.Event, mailPrefix string, content string) error {
@@ -157,6 +178,13 @@ func (s *eventService) Delete(ctx context.Context, id string) (*domain.Event, er
 	if err != nil {
 		return nil, err
 	} else {
+		// sent email
+		go func(event *domain.Event) {
+			err := s.sendEmail(context.Background(), event, "Canceled", "")
+			if err != nil {
+				log.Printf("Error sending email: %v\n", err.Error())
+			}
+		}(res)
 		return res, nil
 	}
 }

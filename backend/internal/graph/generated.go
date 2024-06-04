@@ -89,7 +89,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Event                   func(childComplexity int, id string) int
-		PaginatedAvailableRooms func(childComplexity int, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) int
+		PaginatedAvailableRooms func(childComplexity int, ids []string, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) int
 		PaginatedRoomSchedules  func(childComplexity int, ids []string, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) int
 		PaginatedRooms          func(childComplexity int, first *int, after *string) int
 		PaginatedUsers          func(childComplexity int, first *int, after *string) int
@@ -180,7 +180,7 @@ type QueryResolver interface {
 	PaginatedRooms(ctx context.Context, first *int, after *string) (*model.RoomConnection, error)
 	Room(ctx context.Context, id string) (*domain.Room, error)
 	PaginatedRoomSchedules(ctx context.Context, ids []string, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) (*model.RoomScheduleConnection, error)
-	PaginatedAvailableRooms(ctx context.Context, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) (*model.RoomConnection, error)
+	PaginatedAvailableRooms(ctx context.Context, ids []string, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) (*model.RoomConnection, error)
 	Event(ctx context.Context, id string) (*domain.Event, error)
 	UserEvents(ctx context.Context, userIDs []string, startAt int64, endAt int64) ([]*model.UserEvent, error)
 	User(ctx context.Context, id string) (*domain.User, error)
@@ -426,7 +426,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.PaginatedAvailableRooms(childComplexity, args["startAt"].(int64), args["endAt"].(int64), args["rules"].([]domain.Rule), args["equipments"].([]domain.Equipment), args["first"].(*int), args["after"].(*string)), true
+		return e.complexity.Query.PaginatedAvailableRooms(childComplexity, args["ids"].([]string), args["startAt"].(int64), args["endAt"].(int64), args["rules"].([]domain.Rule), args["equipments"].([]domain.Equipment), args["first"].(*int), args["after"].(*string)), true
 
 	case "Query.paginatedRoomSchedules":
 		if e.complexity.Query.PaginatedRoomSchedules == nil {
@@ -978,60 +978,69 @@ func (ec *executionContext) field_Query_event_args(ctx context.Context, rawArgs 
 func (ec *executionContext) field_Query_paginatedAvailableRooms_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 int64
-	if tmp, ok := rawArgs["startAt"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startAt"))
-		arg0, err = ec.unmarshalNInt642int64(ctx, tmp)
+	var arg0 []string
+	if tmp, ok := rawArgs["ids"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ids"))
+		arg0, err = ec.unmarshalOString2ᚕstringᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["startAt"] = arg0
+	args["ids"] = arg0
 	var arg1 int64
-	if tmp, ok := rawArgs["endAt"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endAt"))
+	if tmp, ok := rawArgs["startAt"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startAt"))
 		arg1, err = ec.unmarshalNInt642int64(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["endAt"] = arg1
-	var arg2 []domain.Rule
+	args["startAt"] = arg1
+	var arg2 int64
+	if tmp, ok := rawArgs["endAt"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endAt"))
+		arg2, err = ec.unmarshalNInt642int64(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["endAt"] = arg2
+	var arg3 []domain.Rule
 	if tmp, ok := rawArgs["rules"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rules"))
-		arg2, err = ec.unmarshalORule2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐRuleᚄ(ctx, tmp)
+		arg3, err = ec.unmarshalORule2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐRuleᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["rules"] = arg2
-	var arg3 []domain.Equipment
+	args["rules"] = arg3
+	var arg4 []domain.Equipment
 	if tmp, ok := rawArgs["equipments"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("equipments"))
-		arg3, err = ec.unmarshalOEquipment2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐEquipmentᚄ(ctx, tmp)
+		arg4, err = ec.unmarshalOEquipment2ᚕgithubᚗcomᚋBartekTaoᚋnycuᚑmeetingᚑroomᚑapiᚋinternalᚋdomainᚐEquipmentᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["equipments"] = arg3
-	var arg4 *int
+	args["equipments"] = arg4
+	var arg5 *int
 	if tmp, ok := rawArgs["first"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-		arg4, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		arg5, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["first"] = arg4
-	var arg5 *string
+	args["first"] = arg5
+	var arg6 *string
 	if tmp, ok := rawArgs["after"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-		arg5, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		arg6, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["after"] = arg5
+	args["after"] = arg6
 	return args, nil
 }
 
@@ -2634,7 +2643,7 @@ func (ec *executionContext) _Query_paginatedAvailableRooms(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().PaginatedAvailableRooms(rctx, fc.Args["startAt"].(int64), fc.Args["endAt"].(int64), fc.Args["rules"].([]domain.Rule), fc.Args["equipments"].([]domain.Equipment), fc.Args["first"].(*int), fc.Args["after"].(*string))
+		return ec.resolvers.Query().PaginatedAvailableRooms(rctx, fc.Args["ids"].([]string), fc.Args["startAt"].(int64), fc.Args["endAt"].(int64), fc.Args["rules"].([]domain.Rule), fc.Args["equipments"].([]domain.Equipment), fc.Args["first"].(*int), fc.Args["after"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

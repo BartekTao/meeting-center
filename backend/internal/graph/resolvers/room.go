@@ -128,13 +128,14 @@ func (r *queryResolver) PaginatedRoomSchedules(ctx context.Context, ids []string
 }
 
 // PaginatedAvailableRooms is the resolver for the paginatedAvailableRooms field.
-func (r *queryResolver) PaginatedAvailableRooms(ctx context.Context, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) (*model.RoomConnection, error) {
+func (r *queryResolver) PaginatedAvailableRooms(ctx context.Context, ids []string, startAt int64, endAt int64, rules []domain.Rule, equipments []domain.Equipment, first *int, after *string) (*model.RoomConnection, error) {
 	skip, err := common.DecodeCursor(after)
 	if err != nil {
 		return nil, err
 	}
 	rooms, err := r.roomService.QueryPaginatedAvailable(
 		ctx,
+		ids,
 		equipments,
 		rules,
 		startAt, endAt,

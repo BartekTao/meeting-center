@@ -1,20 +1,16 @@
 <!-- ReserveList.vue -->
 <template>
     <!-- <div id="detailInfo" :style="showDivStyle">{{ reservator }}</div> -->
+    <comm-with-gql ref="commWithGql"></comm-with-gql>
 
     <div class="recent-listing" id="items">
       <div class="container">
         <div class="row">
-          <!-- <div class="col-lg-12">
-            <div class="section-heading">
-              <h2>查詢空間</h2>
-            </div>
-          </div> -->
           <div class="col-lg-12">
             <div class="">
               <div class="item">
                 <div class="row">
-                  <ReserveBlock v-for="item in room_list" :key="item.name" :item="item" @showDiv="$emit('showDiv', $event)" @hideDiv="$emit('hideDiv')" @openForm="openForm" :bookingAction="bookingAction" :editAction="editAction" :deleteAction="deleteAction"/>
+                  <ReserveBlock v-for="item in roomItems" :key="item.name" :item="item" @showDiv="$emit('showDiv', $event)" @hideDiv="$emit('hideDiv')" @update-form="$emit('update-form')" @openForm="openForm" @openCommentForm="openCommentForm" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction" :pageState="pageState"/>
                 </div>
               </div>
             </div>
@@ -26,10 +22,11 @@
   
   <script>
   import ReserveBlock from './ReserveBlock.vue';
+  import CommWithGql from '@/components/CommWithGql.vue'
   
   export default {
     name: 'ReserveList',
-    emits: ['showDiv', 'hideDiv'],
+    emits: ['update-form', 'showDiv', 'hideDiv'],
     data() {
       return {
         room_list: [
@@ -61,9 +58,10 @@
       };
     },
     components: {
-      ReserveBlock
+      ReserveBlock,
+      CommWithGql
     },
-    props: ['openForm', 'bookingAction', 'editAction', 'deleteAction']
+    props: ['pageState', 'openForm', 'openCommentForm', 'bookingAction', 'editAction', 'deleteAction', 'editCommentAction', 'roomItems']
   }
   </script>
   

@@ -23,6 +23,7 @@ type Query {
     after: String,
     ): RoomScheduleConnection
   paginatedAvailableRooms(
+    ids: [String!],
     startAt: Int64!, 
     endAt: Int64!, 
     rules: [Rule!],
@@ -71,6 +72,7 @@ enum Equipment @goModel(model: "github.com/BartekTao/nycu-meeting-room-api/inter
   TABLE
   TV
   CAMERA
+  WHITEBOARD
 }
 
 

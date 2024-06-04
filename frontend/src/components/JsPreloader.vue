@@ -17,13 +17,13 @@
     name: 'JsPreloader',
     data() {
         return {
-        isLoaded: false
+        isLoaded: true
         };
     },
-    mounted() {
-        window.addEventListener('load', () => {
-        this.isLoaded = true;
-        });
-    }
+    // mounted() {
+    //     window.addEventListener('load', () => {
+    //     this.isLoaded = true;
+    //         });
+    //     }
     };
 </script>

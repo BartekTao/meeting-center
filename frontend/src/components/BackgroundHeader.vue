@@ -11,11 +11,8 @@
               <li><router-link to="/" class="nav-link">空間查詢</router-link></li>
               <li><router-link to="/reserved-page" class="nav-link">已預定空間</router-link></li>
               <li><router-link :to="{name: '後台管理'}" class="nav-link">後台管理</router-link></li>
-              <li><div class="main-white-button"><a href="#"><i class="fa fa-plus"></i> 會議預約</a></div></li> 
-            </ul>        
-            <!-- <a class='menu-trigger'>
-              <span>Menu</span>
-            </a> -->
+              <li><div class="main-white-button"><a href="#"><i class="fa fa-plus"></i>返回查詢</a></div></li> 
+            </ul>      
           </nav>
         </div>
       </div>
