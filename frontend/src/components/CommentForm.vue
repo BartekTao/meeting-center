@@ -4,7 +4,7 @@
         <form id="submitForm">
             <div class="row mb-4">
                 <div class="col-sm-12">
-                    <h3 class="text-center">會議室名稱：{{ localFormInfo.name }}</h3>
+                    <h3 class="text-center">編輯結論</h3>
                 </div>
             </div>
             <div class="row mb-2">
@@ -23,7 +23,7 @@
 
             <div class="row mb-2">
                 <div class="col-sm-12 d-flex justify-content-center">
-                    <button type="submit" class="btn btn-primary margin-right-2cm" @click.prevent="submitForm">預約</button>
+                    <button type="submit" class="btn btn-primary margin-right-2cm" @click.prevent="submitForm">編輯</button>
                     <button type="button" class="btn btn-secondary" @click="closeCommentForm">取消</button>
                 </div>
             </div>

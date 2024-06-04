@@ -32,15 +32,15 @@
         </div>
       </div>
 
-      <div class="row mb-2">
+      <!-- <div class="row mb-2">
         <label for="can_drink" class="col-sm-2 col-form-label">可否喝水：</label>
         <div class="col-sm-9">
           <input type="checkbox" id="can_drink" name="can_drink" class="form-check-input mt-2" v-model="canDrink">
         </div>
-      </div>
+      </div> -->
 
       <div class="row mb-2">
-        <label for="has_big_table" class="col-sm-2 col-form-label">有大桌子：</label>
+        <label for="has_big_table" class="col-sm-2 col-form-label">有白板：</label>
         <div class="col-sm-9">
           <input type="checkbox" id="has_big_table" name="has_big_table" class="form-check-input mt-2" v-model="hasBigTable">
         </div>

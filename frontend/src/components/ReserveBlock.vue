@@ -8,7 +8,7 @@
         </div>
         <div class="right-content align-self-center">
           <a v-if="this.pageState === 'reserved'">
-            <h4>會議室：{{ item.name }} | 會議名稱：{{ item.title }} </h4>
+            <h4>會議名稱：{{ item.title }} | 會議室：{{ item.name }}</h4>
           </a>
           <a v-else>
             <h4>會議室：{{ item.name }}</h4>
@@ -38,12 +38,12 @@
             @hideDiv="$emit('hideDiv')"
           />
           <div style="height: 20px;"></div>
-          <ul class="info" style="padding-left: 0rem;">
-            <li>人數限制：{{ item.capacity }}</li>  
-            <li>有大桌子：{{ item.equipments.includes('TABLE') ? '是' : '否' }}</li>
-            <li>有投影機：{{ item.equipments.includes('PROJECTOR') ? '是' : '否' }}</li>
-            <li>可否進食：{{ item.rules.includes('NO_FOOD') ? '否' : '是' }}</li>
-            <li>可否喝水：{{ item.rules.includes('NO_DRINK') ? '否' : '是' }}</li>
+          <ul class="info style2" style="padding-left: 0rem;">
+            <!-- <li>人數限制：{{ item.capacity }}</li>   -->
+            <li style="flex: 0 0 20%">有白板：{{ item.equipments.includes('TABLE') ? '是' : '否' }}</li>
+            <li style="flex: 0 0 20%">有投影機：{{ item.equipments.includes('PROJECTOR') ? '是' : '否' }}</li>
+            <li style="flex: 0 0 20%">可否進食：{{ item.rules.includes('NO_FOOD') ? '否' : '是' }}</li>
+            <!-- <li>可否喝水：{{ item.rules.includes('NO_DRINK') ? '否' : '是' }}</li> -->
             <!-- <li>schedules：{{ item.schedulesList }}</li> -->
           </ul><br>
 
