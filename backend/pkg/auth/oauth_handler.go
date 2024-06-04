@@ -114,7 +114,7 @@ func (g *googleOAuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// redirectURL, err := url.Parse("http://meeting.rextein.com")
-	redirectURL, err := url.Parse("http://localhost:8088")
+	redirectURL, err := url.Parse("http://localhost:8888")
 	if err != nil {
 		http.Error(w, "Failed to parse redirect URL", http.StatusInternalServerError)
 		return
