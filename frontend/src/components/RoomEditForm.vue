@@ -16,14 +16,14 @@
         </div>
       </div>
 
-      <div class="row mb-2">
+      <!-- <div class="row mb-2">
         <label for="people_limit" class="col-sm-2 col-form-label">人數限制：
 
         </label>
         <div class="col-sm-9">
           <input type="number" id="people_limit" name="people_limit" class="form-control" v-model="localFormInfo.capacity" required>
         </div>
-      </div>
+      </div> -->
 
       <div class="row mb-2">
         <label for="can_eat" class="col-sm-2 col-form-label">可否進食：</label>
