@@ -1,5 +1,6 @@
 <template>
     <div>
+      <background-header></background-header>
       <head-page pageContent="後台管理"></head-page>
       <room-list @open-form="openForm" @update-all-rooms="updateAllRooms" :testItems="testItems"></room-list>
       <room-edit-form :formDisplay="formDisplay" :roomInfo="roomInfo" @close-form="closeForm" @update-info="handleUpdate" @update-all-rooms="updateAllRooms"></room-edit-form>
@@ -14,6 +15,7 @@
   import CommWithGql from '@/components/CommWithGql.vue'
   import RoomEditForm from '@/components/RoomEditForm.vue';
   import JsPreloader from '@/components/JsPreloader.vue';
+  import BackgroundHeader from '@/components/BackgroundHeader.vue';
   
   export default {
     components: {
@@ -21,7 +23,8 @@
       RoomList,
       CommWithGql,
       RoomEditForm,
-      JsPreloader
+      JsPreloader,
+      BackgroundHeader
     },
     mounted() {
       this.updateAllRooms();

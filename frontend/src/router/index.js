@@ -3,6 +3,11 @@ import ReservePage from '../views/ReservePage.vue'
 
 const routes = [
   {
+    path: '/login-page',
+    name: '登入畫面',
+    component: () => import('../views/LoginPage.vue')
+  },
+  {
     path: '/',
     name: 'home',
     component: ReservePage

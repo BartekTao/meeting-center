@@ -1,6 +1,4 @@
 <template>
-  <background-header></background-header>
-
   <router-view></router-view>
 </template>
 

@@ -1,4 +1,5 @@
 <template>
+  <background-header></background-header>
   <ReserveBar @updateAllRooms="updateAllRooms"/>
   <ReserveList  @showDiv="showDiv" @hideDiv="hideDiv" :openForm="openForm" :bookingAction="bookingAction" :editAction="editAction" :editCommentAction="editCommentAction" :deleteAction="deleteAction" :roomItems="roomItems" :pageState="pageState"/>
   <ReserveForm  @showDiv="showDiv" @hideDiv="hideDiv" :formDisplay="formDisplay" :formInfo="formInfo" :roomName="roomName" :schedulesList="schedulesList" :users="users" @close-form="closeForm" @update-form="updateForm"/>
@@ -14,6 +15,7 @@ import ReserveForm from '@/components/ReserveForm.vue';
 import EventInfo from '@/components/EventInfo.vue';
 import CommWithGql from '@/components/CommWithGql.vue'
 import JsPreloader from '@/components/JsPreloader.vue';
+import BackgroundHeader from '@/components/BackgroundHeader.vue';
 
 export default {
   name: 'ReservePage',
@@ -23,7 +25,8 @@ export default {
     ReserveForm,
     EventInfo,
     CommWithGql,
-    JsPreloader
+    JsPreloader,
+    BackgroundHeader,
   },
   data() {
     return {
