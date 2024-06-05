@@ -16,7 +16,6 @@
 
 <script>
 
-import BackgroundHeader from '@/components/BackgroundHeader.vue';
 
 export default {
   name: 'App',
@@ -24,9 +23,6 @@ export default {
     return {
       first_data: '',
     };
-  },
-  components: {
-    BackgroundHeader,
   },
 }
 
