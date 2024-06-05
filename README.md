@@ -50,3 +50,6 @@ npm run serve
 ```
 
 Visit http://localhost:8888
+
+### Enter the service
+Enter http://localhost:8888/#/login-page to get the token by a Google account.
